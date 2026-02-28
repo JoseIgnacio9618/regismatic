@@ -1,0 +1,3 @@
+-hay partes del modo oscuro que se ven mal
+-se deben poder modificar los registros bajo autorizacion del administrador con un sistema de peticiones / el admin simpre puede modificar
+-cuando un registro quede modificado esto se reflejara en el propio registro y sera visible 

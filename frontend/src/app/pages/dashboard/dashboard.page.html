@@ -1,0 +1,69 @@
+<app-main-layout title="Panel de jornada">
+  <ion-grid fixed>
+    <ion-row>
+      <ion-col size="12" size-md="4">
+        <ion-card class="glass-card">
+          <ion-card-header>
+            <ion-card-title>Estado de hoy</ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            <p>Fecha: {{ status?.date || '--' }}</p>
+            <ion-badge [color]="status?.state === 'OFF' ? 'medium' : 'success'">{{ stateLabel }}</ion-badge>
+
+            <div class="mt-16" *ngIf="status?.state === 'OFF'">
+              <ion-button expand="block" [disabled]="busy" (click)="handleAction('clockIn')">Fichar entrada</ion-button>
+            </div>
+
+            <div class="mt-16" *ngIf="status?.state === 'WORKING'">
+              <ion-button expand="block" color="warning" [disabled]="busy" (click)="handleAction('breakStart')">Iniciar pausa</ion-button>
+              <ion-button expand="block" color="tertiary" [disabled]="busy" (click)="handleAction('clockOut')">Fichar salida</ion-button>
+            </div>
+
+            <div class="mt-16" *ngIf="status?.state === 'ON_BREAK'">
+              <ion-button expand="block" color="success" [disabled]="busy" (click)="handleAction('breakEnd')">Terminar pausa</ion-button>
+            </div>
+          </ion-card-content>
+        </ion-card>
+      </ion-col>
+
+      <ion-col size="12" size-md="8">
+        <ion-card class="glass-card">
+          <ion-card-header>
+            <ion-card-title>Resumen diario</ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            <ion-grid>
+              <ion-row>
+                <ion-col size="6" size-md="3"><strong>Trabajo</strong><p>{{ minutesToHuman(status?.totals?.workedMinutes || 0) }}</p></ion-col>
+                <ion-col size="6" size-md="3"><strong>Pausa</strong><p>{{ minutesToHuman(status?.totals?.breakMinutes || 0) }}</p></ion-col>
+                <ion-col size="6" size-md="3"><strong>Extra</strong><p>{{ minutesToHuman(status?.totals?.overtimeMinutes || 0) }}</p></ion-col>
+                <ion-col size="6" size-md="3"><strong>Ajustes</strong><p>{{ minutesToHuman(status?.totals?.adjustmentsMinutes || 0) }}</p></ion-col>
+              </ion-row>
+            </ion-grid>
+          </ion-card-content>
+        </ion-card>
+
+        <ion-card class="glass-card">
+          <ion-card-header>
+            <ion-card-title>Trazabilidad de eventos</ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            <ion-list lines="inset">
+              <ion-item *ngFor="let event of status?.events">
+                <ion-label>
+                  <h3>{{ eventLabel[event.type] || event.type }}</h3>
+                  <p>{{ formatDateTime(event.eventAt) }}</p>
+                </ion-label>
+                <ion-badge slot="end" color="light">{{ event.source }}</ion-badge>
+              </ion-item>
+
+              <ion-item *ngIf="(status?.events?.length || 0) === 0">
+                <ion-label>No hay fichajes registrados hoy.</ion-label>
+              </ion-item>
+            </ion-list>
+          </ion-card-content>
+        </ion-card>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+</app-main-layout>

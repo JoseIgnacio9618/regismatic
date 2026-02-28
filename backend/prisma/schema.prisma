@@ -1,0 +1,59 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  EMPLOYEE
+}
+
+enum WorkEventType {
+  CLOCK_IN
+  BREAK_START
+  BREAK_END
+  CLOCK_OUT
+  MANUAL_ADJUSTMENT
+}
+
+enum EventSource {
+  WEB
+  MOBILE
+  ADMIN
+  SYSTEM
+}
+
+model User {
+  id           String      @id @default(cuid())
+  email        String      @unique
+  passwordHash String
+  fullName     String
+  role         Role        @default(EMPLOYEE)
+  isActive     Boolean     @default(true)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  events       WorkEvent[]
+}
+
+model WorkEvent {
+  id          String        @id @default(cuid())
+  userId      String
+  user        User          @relation(fields: [userId], references: [id])
+  type        WorkEventType
+  source      EventSource   @default(WEB)
+  eventAt     DateTime
+  note        String?
+  latitude    Float?
+  longitude   Float?
+  ipAddress   String?
+  userAgent   String?
+  metadata    Json?
+  createdAt   DateTime      @default(now())
+
+  @@index([userId, eventAt])
+  @@index([eventAt])
+}

@@ -1,0 +1,13 @@
+node_modules
+dist
+build
+.env
+.env.*
+!.env.example
+backend/generated
+frontend/dist
+frontend/www
+frontend/.angular
+.DS_Store
+coverage
+*.tsbuildinfo

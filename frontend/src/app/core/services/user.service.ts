@@ -1,0 +1,16 @@
+import { Injectable } from "@angular/core";
+import { ApiService } from "./api.service";
+import { Role, TeamUser } from "../models/types";
+
+@Injectable({ providedIn: "root" })
+export class UserService {
+  constructor(private readonly apiService: ApiService) {}
+
+  listUsers(): Promise<TeamUser[]> {
+    return this.apiService.get<TeamUser[]>("/users", true);
+  }
+
+  createUser(payload: { email: string; fullName: string; password: string; role: Role }): Promise<TeamUser> {
+    return this.apiService.post<TeamUser>("/users", payload, true);
+  }
+}

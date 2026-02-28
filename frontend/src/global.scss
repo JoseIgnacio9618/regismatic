@@ -1,0 +1,105 @@
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap");
+
+@import "@ionic/angular/css/core.css";
+@import "@ionic/angular/css/normalize.css";
+@import "@ionic/angular/css/structure.css";
+@import "@ionic/angular/css/typography.css";
+@import "@ionic/angular/css/display.css";
+@import "@ionic/angular/css/padding.css";
+@import "@ionic/angular/css/float-elements.css";
+@import "@ionic/angular/css/text-alignment.css";
+@import "@ionic/angular/css/text-transformation.css";
+@import "@ionic/angular/css/flex-utils.css";
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+ion-app,
+ion-content {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  color: var(--ion-text-color);
+  background:
+    radial-gradient(circle at 10% 12%, var(--app-spot-a) 0%, transparent 35%),
+    radial-gradient(circle at 92% 0%, var(--app-spot-b) 0%, transparent 36%),
+    radial-gradient(circle at 55% 100%, var(--app-spot-c) 0%, transparent 42%),
+    linear-gradient(180deg, var(--ion-background-color) 0%, color-mix(in srgb, var(--ion-background-color), #0f172a 8%) 100%);
+  transition: background 0.35s ease, color 0.25s ease;
+}
+
+h1,
+h2,
+h3 {
+  letter-spacing: -0.02em;
+  font-weight: 700;
+}
+
+p {
+  color: color-mix(in srgb, var(--ion-text-color), transparent 26%);
+}
+
+ion-content {
+  --background: transparent;
+}
+
+ion-header ion-toolbar {
+  --background: color-mix(in srgb, var(--app-surface-strong), transparent 6%);
+  --color: var(--ion-text-color);
+  border-bottom: 1px solid var(--app-border);
+  backdrop-filter: blur(12px);
+}
+
+ion-item {
+  --background: color-mix(in srgb, var(--app-surface), transparent 12%);
+  --border-color: var(--app-border);
+  --highlight-color-focused: var(--ion-color-primary);
+  border-radius: 14px;
+  margin-bottom: 10px;
+}
+
+ion-button {
+  --border-radius: 12px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+ion-badge {
+  border-radius: 999px;
+  padding: 8px 10px;
+  font-weight: 600;
+}
+
+ion-chip {
+  border: 1px solid var(--app-border);
+}
+
+.glass-card {
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  box-shadow: var(--app-shadow);
+  backdrop-filter: blur(8px);
+  border-radius: 18px;
+  overflow: hidden;
+  animation: card-in 0.28s ease;
+}
+
+.muted {
+  color: color-mix(in srgb, var(--ion-text-color), transparent 34%);
+}
+
+@keyframes card-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}

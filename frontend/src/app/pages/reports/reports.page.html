@@ -1,0 +1,75 @@
+<app-main-layout title="Reportes y cumplimiento">
+  <ion-grid fixed>
+    <ion-row>
+      <ion-col size="12">
+        <ion-card class="glass-card">
+          <ion-card-header>
+            <ion-card-title>Filtros de reporte</ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            <ion-grid>
+              <ion-row>
+                <ion-col size="12" size-md="3">
+                  <ion-item>
+                    <ion-label position="stacked">Desde</ion-label>
+                    <ion-input type="date" [(ngModel)]="from"></ion-input>
+                  </ion-item>
+                </ion-col>
+
+                <ion-col size="12" size-md="3">
+                  <ion-item>
+                    <ion-label position="stacked">Hasta</ion-label>
+                    <ion-input type="date" [(ngModel)]="to"></ion-input>
+                  </ion-item>
+                </ion-col>
+
+                <ion-col size="12" size-md="4" *ngIf="authService.isAdmin">
+                  <ion-item>
+                    <ion-label position="stacked">Empleado (opcional)</ion-label>
+                    <ion-select [(ngModel)]="selectedUserId">
+                      <ion-select-option value="">Todos</ion-select-option>
+                      <ion-select-option *ngFor="let user of users" [value]="user.id">{{ user.fullName }}</ion-select-option>
+                    </ion-select>
+                  </ion-item>
+                </ion-col>
+
+                <ion-col size="12" size-md="2" class="actions-col">
+                  <ion-button expand="block" [disabled]="loading" (click)="loadReport()">Consultar</ion-button>
+                  <ion-button expand="block" fill="outline" (click)="downloadCsv()">CSV</ion-button>
+                </ion-col>
+              </ion-row>
+            </ion-grid>
+          </ion-card-content>
+        </ion-card>
+      </ion-col>
+    </ion-row>
+
+    <ion-row>
+      <ion-col size="12">
+        <ion-card class="glass-card">
+          <ion-card-header>
+            <ion-card-title>Resultados ({{ rows.length }})</ion-card-title>
+          </ion-card-header>
+          <ion-card-content>
+            <ion-list lines="inset">
+              <ion-item *ngFor="let row of rows">
+                <ion-label>
+                  <h3>{{ row.employee }}</h3>
+                  <p>
+                    {{ row.date }} | Trabajo: {{ minutesToHuman(row.workedMinutes) }} | Pausa: {{ minutesToHuman(row.breakMinutes) }} |
+                    Extra: {{ minutesToHuman(row.overtimeMinutes) }}
+                  </p>
+                </ion-label>
+                <ion-badge [color]="row.status === 'OPEN' ? 'warning' : 'success'">{{ row.status }}</ion-badge>
+              </ion-item>
+
+              <ion-item *ngIf="rows.length === 0">
+                <ion-label>No hay datos para este rango.</ion-label>
+              </ion-item>
+            </ion-list>
+          </ion-card-content>
+        </ion-card>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+</app-main-layout>

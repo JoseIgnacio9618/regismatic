@@ -1,0 +1,38 @@
+.app-toolbar {
+  --min-height: 64px;
+}
+
+.toolbar-actions {
+  gap: 4px;
+}
+
+.toolbar-actions ion-button {
+  --padding-start: 10px;
+  --padding-end: 10px;
+  --color: var(--ion-text-color);
+}
+
+.theme-toggle {
+  --background: color-mix(in srgb, var(--ion-color-primary), transparent 82%);
+  --border-radius: 999px;
+}
+
+.page-shell {
+  padding: 88px 16px 26px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+@media (max-width: 767px) {
+  .page-shell {
+    padding-top: 74px;
+  }
+
+  .toolbar-actions {
+    gap: 0;
+  }
+
+  .toolbar-actions ion-button {
+    font-size: 0.78rem;
+  }
+}

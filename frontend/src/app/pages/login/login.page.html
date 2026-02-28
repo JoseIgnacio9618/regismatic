@@ -1,0 +1,33 @@
+<ion-content class="login-screen" [fullscreen]="true">
+  <div class="login-wrap">
+    <div class="login-top-actions">
+      <ion-button fill="clear" class="theme-toggle" (click)="toggleTheme()">
+        <ion-icon slot="start" [name]="themeService.isDark ? 'sunny-outline' : 'moon-outline'"></ion-icon>
+        {{ themeService.isDark ? 'Modo claro' : 'Modo oscuro' }}
+      </ion-button>
+    </div>
+
+    <ion-card class="glass-card">
+      <ion-card-content>
+        <h1>Regismatic</h1>
+        <p>Control horario profesional para empresa espanola.</p>
+
+        <ion-item lines="full">
+          <ion-label position="stacked">Email</ion-label>
+          <ion-input [(ngModel)]="email" type="email"></ion-input>
+        </ion-item>
+
+        <ion-item lines="full">
+          <ion-label position="stacked">Contrasena</ion-label>
+          <ion-input [(ngModel)]="password" type="password"></ion-input>
+        </ion-item>
+
+        <ion-button expand="block" class="mt-16" [disabled]="loading" (click)="submit()">
+          {{ loading ? 'Entrando...' : 'Iniciar sesion' }}
+        </ion-button>
+
+        <p class="hint">Demo: admin@regismatic.local / Regismatic2026!</p>
+      </ion-card-content>
+    </ion-card>
+  </div>
+</ion-content>

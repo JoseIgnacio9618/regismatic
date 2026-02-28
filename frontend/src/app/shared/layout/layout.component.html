@@ -1,0 +1,24 @@
+<ion-header translucent="true">
+  <ion-toolbar class="app-toolbar">
+    <ion-title>{{ title }}</ion-title>
+    <ion-buttons slot="end" class="toolbar-actions">
+      <ion-button fill="clear" (click)="go('/dashboard')">Dashboard</ion-button>
+      <ion-button fill="clear" (click)="go('/reports')">Reportes</ion-button>
+      <ion-button fill="clear" *ngIf="authService.isAdmin" (click)="go('/users')">Equipo</ion-button>
+      <ion-button fill="clear" class="theme-toggle" (click)="toggleTheme()">
+        <ion-icon slot="start" [name]="themeService.isDark ? 'sunny-outline' : 'moon-outline'"></ion-icon>
+        {{ themeService.isDark ? 'Claro' : 'Oscuro' }}
+      </ion-button>
+      <ion-chip color="primary" *ngIf="authService.user as user">
+        <ion-label>{{ user.fullName }}</ion-label>
+      </ion-chip>
+      <ion-button color="danger" (click)="logout()">Salir</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content fullscreen="true">
+  <div class="page-shell">
+    <ng-content></ng-content>
+  </div>
+</ion-content>
