@@ -1,32 +1,43 @@
 <ion-content class="login-screen" [fullscreen]="true">
   <div class="login-wrap">
     <div class="login-top-actions">
+      <ion-select
+        class="lang-select"
+        interface="popover"
+        [value]="i18nService.language"
+        (ionChange)="setLanguage($event.detail.value)"
+      >
+        <ion-select-option value="es">{{ "lang.es" | t }}</ion-select-option>
+        <ion-select-option value="en">{{ "lang.en" | t }}</ion-select-option>
+        <ion-select-option value="fr">{{ "lang.fr" | t }}</ion-select-option>
+      </ion-select>
+
       <ion-button fill="clear" class="theme-toggle" (click)="toggleTheme()">
         <ion-icon slot="start" [name]="themeService.isDark ? 'sunny-outline' : 'moon-outline'"></ion-icon>
-        {{ themeService.isDark ? 'Modo claro' : 'Modo oscuro' }}
+        {{ themeService.isDark ? ("theme.to_light" | t) : ("theme.to_dark" | t) }}
       </ion-button>
     </div>
 
     <ion-card class="glass-card">
       <ion-card-content>
-        <h1>Regismatic</h1>
-        <p>Control horario profesional para empresa espanola.</p>
+        <h1>{{ "app.name" | t }}</h1>
+        <p>{{ "login.tagline" | t }}</p>
 
         <ion-item lines="full">
-          <ion-label position="stacked">Email</ion-label>
+          <ion-label position="stacked">{{ "common.email" | t }}</ion-label>
           <ion-input [(ngModel)]="email" type="email"></ion-input>
         </ion-item>
 
         <ion-item lines="full">
-          <ion-label position="stacked">Contrasena</ion-label>
+          <ion-label position="stacked">{{ "common.password" | t }}</ion-label>
           <ion-input [(ngModel)]="password" type="password"></ion-input>
         </ion-item>
 
         <ion-button expand="block" class="mt-16" [disabled]="loading" (click)="submit()">
-          {{ loading ? 'Entrando...' : 'Iniciar sesion' }}
+          {{ loading ? ("login.submitting" | t) : ("login.submit" | t) }}
         </ion-button>
 
-        <p class="hint">Demo: admin@regismatic.local / Regismatic2026!</p>
+        <p class="hint">{{ "login.demo" | t }}</p>
       </ion-card-content>
     </ion-card>
   </div>

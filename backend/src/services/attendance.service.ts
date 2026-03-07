@@ -1,4 +1,11 @@
-import { Prisma, WorkEventType, type EventSource, type WorkEvent } from "@prisma/client";
+import {
+  EditRequestStatus,
+  Prisma,
+  type EventSource,
+  type Role,
+  type WorkEvent,
+  WorkEventType
+} from "@prisma/client";
 import { prisma } from "../config/prisma";
 import { AppError } from "../middlewares/error.middleware";
 import { diffMinutes, madridDateKey, madridDayRange, nowUtc } from "../utils/dates";
@@ -15,6 +22,169 @@ type EventInput = {
   ipAddress?: string;
   userAgent?: string;
   metadata?: Record<string, unknown>;
+};
+
+type ListEventsParams = {
+  fromUtc: Date;
+  toUtc: Date;
+  requesterRole: Role;
+  requesterUserId: string;
+  userId?: string;
+};
+
+type UpdateEventByAdminParams = {
+  eventId: string;
+  adminId: string;
+  eventAt?: Date;
+  note?: string | null;
+  reason: string;
+};
+
+type CreateEditRequestParams = {
+  eventId: string;
+  requesterId: string;
+  requestedEventAt: Date;
+  requestedNote?: string | null;
+  reason: string;
+};
+
+type ListEditRequestsParams = {
+  requesterRole: Role;
+  requesterUserId: string;
+  status?: EditRequestStatus;
+  userId?: string;
+};
+
+type ReviewEditRequestParams = {
+  requestId: string;
+  adminId: string;
+  approve: boolean;
+  reviewComment?: string;
+};
+
+type UserSummary = {
+  id: string;
+  fullName: string;
+  email: string;
+};
+
+export type WorkEventEditRequestRecord = {
+  id: string;
+  status: EditRequestStatus;
+  reason: string;
+  requestedEventAt: Date;
+  requestedNote: string | null;
+  reviewComment: string | null;
+  reviewedAt: Date | null;
+  createdAt: Date;
+  requestedBy: UserSummary;
+  reviewedBy: UserSummary | null;
+  workEvent: {
+    id: string;
+    type: WorkEventType;
+    eventAt: Date;
+    user: UserSummary;
+  };
+};
+
+export type AttendanceEventRecord = {
+  id: string;
+  userId: string;
+  type: WorkEventType;
+  source: EventSource;
+  eventAt: Date;
+  note: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  createdAt: Date;
+  modifiedAt: Date | null;
+  modificationReason: string | null;
+  user: UserSummary;
+  modifiedBy: UserSummary | null;
+  editRequests: Array<{
+    id: string;
+    status: EditRequestStatus;
+    reason: string;
+    requestedEventAt: Date;
+    requestedNote: string | null;
+    reviewComment: string | null;
+    reviewedAt: Date | null;
+    createdAt: Date;
+    requestedBy: UserSummary;
+    reviewedBy: UserSummary | null;
+  }>;
+};
+
+const eventInclude = {
+  user: {
+    select: {
+      id: true,
+      fullName: true,
+      email: true
+    }
+  },
+  modifiedBy: {
+    select: {
+      id: true,
+      fullName: true,
+      email: true
+    }
+  },
+  editRequests: {
+    include: {
+      requestedBy: {
+        select: {
+          id: true,
+          fullName: true,
+          email: true
+        }
+      },
+      reviewedBy: {
+        select: {
+          id: true,
+          fullName: true,
+          email: true
+        }
+      }
+    },
+    orderBy: {
+      createdAt: "desc"
+    }
+  }
+} satisfies Prisma.WorkEventInclude;
+
+type WorkEventWithRelations = Prisma.WorkEventGetPayload<{ include: typeof eventInclude }>;
+type EditRequestWithRelations = Prisma.WorkEventEditRequestGetPayload<{
+  include: {
+    requestedBy: { select: { id: true; fullName: true; email: true } };
+    reviewedBy: { select: { id: true; fullName: true; email: true } };
+    workEvent: {
+      include: {
+        user: { select: { id: true; fullName: true; email: true } };
+      };
+    };
+  };
+}>;
+
+const normalizeOptionalText = (value: string | null | undefined): string | null | undefined => {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (value === null) {
+    return null;
+  }
+
+  const trimmed = value.trim();
+  return trimmed.length === 0 ? null : trimmed;
+};
+
+const isSameMinuteMoment = (left: Date, right: Date): boolean => {
+  return Math.abs(left.getTime() - right.getTime()) < 60_000;
+};
+
+const normalizeEventAtChange = (currentEventAt: Date, nextEventAt: Date): Date => {
+  return isSameMinuteMoment(currentEventAt, nextEventAt) ? currentEventAt : nextEventAt;
 };
 
 const applyEventToState = (state: AttendanceState, eventType: WorkEventType): AttendanceState => {
@@ -119,6 +289,57 @@ const calculateDailyTotals = (events: WorkEvent[]) => {
   };
 };
 
+const mapAttendanceEvent = (event: WorkEventWithRelations): AttendanceEventRecord => {
+  return {
+    id: event.id,
+    userId: event.userId,
+    type: event.type,
+    source: event.source,
+    eventAt: event.eventAt,
+    note: event.note ?? null,
+    latitude: event.latitude ?? null,
+    longitude: event.longitude ?? null,
+    createdAt: event.createdAt,
+    modifiedAt: event.modifiedAt ?? null,
+    modificationReason: event.modificationReason ?? null,
+    user: event.user,
+    modifiedBy: event.modifiedBy ?? null,
+    editRequests: event.editRequests.map((request) => ({
+      id: request.id,
+      status: request.status,
+      reason: request.reason,
+      requestedEventAt: request.requestedEventAt,
+      requestedNote: request.requestedNote ?? null,
+      reviewComment: request.reviewComment ?? null,
+      reviewedAt: request.reviewedAt ?? null,
+      createdAt: request.createdAt,
+      requestedBy: request.requestedBy,
+      reviewedBy: request.reviewedBy ?? null
+    }))
+  };
+};
+
+const mapEditRequest = (request: EditRequestWithRelations): WorkEventEditRequestRecord => {
+  return {
+    id: request.id,
+    status: request.status,
+    reason: request.reason,
+    requestedEventAt: request.requestedEventAt,
+    requestedNote: request.requestedNote ?? null,
+    reviewComment: request.reviewComment ?? null,
+    reviewedAt: request.reviewedAt ?? null,
+    createdAt: request.createdAt,
+    requestedBy: request.requestedBy,
+    reviewedBy: request.reviewedBy ?? null,
+    workEvent: {
+      id: request.workEvent.id,
+      type: request.workEvent.type,
+      eventAt: request.workEvent.eventAt,
+      user: request.workEvent.user
+    }
+  };
+};
+
 const getTodayEvents = async (userId: string) => {
   const { start, end } = madridDayRange(nowUtc());
 
@@ -130,8 +351,90 @@ const getTodayEvents = async (userId: string) => {
         lte: end
       }
     },
+    include: {
+      modifiedBy: {
+        select: {
+          id: true,
+          fullName: true,
+          email: true
+        }
+      }
+    },
     orderBy: [{ eventAt: "asc" }, { createdAt: "asc" }]
   });
+};
+
+const getEventsForMadridDay = async (userId: string, referenceDate: Date): Promise<WorkEvent[]> => {
+  const { start, end } = madridDayRange(referenceDate);
+
+  return prisma.workEvent.findMany({
+    where: {
+      userId,
+      eventAt: {
+        gte: start,
+        lte: end
+      }
+    },
+    orderBy: [{ eventAt: "asc" }, { createdAt: "asc" }]
+  });
+};
+
+const assertValidDaySequence = (events: WorkEvent[]) => {
+  getStateFromEvents(events);
+};
+
+const assertValidTimelineAfterEventDateChange = async (event: WorkEvent, nextEventAt: Date) => {
+  if (event.type === WorkEventType.MANUAL_ADJUSTMENT) {
+    return;
+  }
+
+  const oldDayKey = madridDateKey(event.eventAt);
+  const newDayKey = madridDateKey(nextEventAt);
+  const oldDayEvents = await getEventsForMadridDay(event.userId, event.eventAt);
+
+  if (oldDayKey === newDayKey) {
+    const nextDayEvents = oldDayEvents.map((existing) =>
+      existing.id === event.id ? { ...existing, eventAt: nextEventAt } : existing
+    );
+    assertValidDaySequence(nextDayEvents);
+    return;
+  }
+
+  const oldDayWithoutEvent = oldDayEvents.filter((existing) => existing.id !== event.id);
+  assertValidDaySequence(oldDayWithoutEvent);
+
+  const newDayEvents = await getEventsForMadridDay(event.userId, nextEventAt);
+  const newDayWithEvent: WorkEvent[] = [...newDayEvents, { ...event, eventAt: nextEventAt }];
+  assertValidDaySequence(newDayWithEvent);
+};
+
+const getEventForUser = async (eventId: string, userId: string): Promise<WorkEvent> => {
+  const event = await prisma.workEvent.findFirst({
+    where: {
+      id: eventId,
+      userId
+    }
+  });
+
+  if (!event) {
+    throw new AppError("Registro no encontrado.", 404);
+  }
+
+  return event;
+};
+
+const getEventForAdmin = async (eventId: string): Promise<WorkEvent> => {
+  const event = await prisma.workEvent.findUnique({
+    where: {
+      id: eventId
+    }
+  });
+
+  if (!event) {
+    throw new AppError("Registro no encontrado.", 404);
+  }
+
+  return event;
 };
 
 export const getTodayStatus = async (userId: string) => {
@@ -192,4 +495,286 @@ export const addManualAdjustment = async (params: {
       eventAt: nowUtc()
     }
   });
+};
+
+export const listEvents = async (params: ListEventsParams): Promise<AttendanceEventRecord[]> => {
+  const effectiveUserId = params.requesterRole === "ADMIN" ? params.userId : params.requesterUserId;
+
+  const events = await prisma.workEvent.findMany({
+    where: {
+      eventAt: {
+        gte: params.fromUtc,
+        lte: params.toUtc
+      },
+      ...(effectiveUserId ? { userId: effectiveUserId } : {})
+    },
+    include: eventInclude,
+    orderBy: [{ eventAt: "desc" }, { createdAt: "desc" }]
+  });
+
+  return events.map((event) => mapAttendanceEvent(event));
+};
+
+export const updateEventAsAdmin = async (params: UpdateEventByAdminParams): Promise<AttendanceEventRecord> => {
+  const event = await getEventForAdmin(params.eventId);
+  const nextEventAtCandidate = params.eventAt ?? event.eventAt;
+  const nextEventAt = normalizeEventAtChange(event.eventAt, nextEventAtCandidate);
+  if (!isSameMinuteMoment(event.eventAt, nextEventAt)) {
+    await assertValidTimelineAfterEventDateChange(event, nextEventAt);
+  }
+  const reason = normalizeOptionalText(params.reason);
+  if (!reason) {
+    throw new AppError("El motivo de modificacion es obligatorio.", 400);
+  }
+
+  const nextNote = normalizeOptionalText(params.note);
+  const updated = await prisma.workEvent.update({
+    where: { id: event.id },
+    data: {
+      eventAt: nextEventAt,
+      note: nextNote === undefined ? event.note : nextNote,
+      modifiedAt: nowUtc(),
+      modifiedById: params.adminId,
+      modificationReason: reason
+    },
+    include: eventInclude
+  });
+
+  return mapAttendanceEvent(updated);
+};
+
+export const createEditRequest = async (params: CreateEditRequestParams): Promise<WorkEventEditRequestRecord> => {
+  const event = await getEventForUser(params.eventId, params.requesterId);
+  const reason = normalizeOptionalText(params.reason);
+  if (!reason) {
+    throw new AppError("El motivo de la solicitud es obligatorio.", 400);
+  }
+
+  const normalizedRequestedEventAt = normalizeEventAtChange(event.eventAt, params.requestedEventAt);
+
+  const nextNoteCandidate = normalizeOptionalText(params.requestedNote);
+  const nextNote = nextNoteCandidate === undefined ? event.note ?? null : nextNoteCandidate;
+
+  const noDateChange = normalizedRequestedEventAt.getTime() === event.eventAt.getTime();
+  const noNoteChange = (nextNote ?? null) === (event.note ?? null);
+  if (noDateChange && noNoteChange) {
+    throw new AppError("La solicitud no contiene cambios respecto al registro actual.", 400);
+  }
+
+  const existingPendingRequest = await prisma.workEventEditRequest.findFirst({
+    where: {
+      workEventId: event.id,
+      requestedById: params.requesterId,
+      status: EditRequestStatus.PENDING
+    },
+    select: { id: true }
+  });
+
+  if (existingPendingRequest) {
+    throw new AppError("Ya tienes una solicitud pendiente para este registro.", 409);
+  }
+
+  const created = await prisma.workEventEditRequest.create({
+    data: {
+      workEventId: event.id,
+      requestedById: params.requesterId,
+      requestedEventAt: normalizedRequestedEventAt,
+      requestedNote: nextNote,
+      reason
+    },
+    include: {
+      requestedBy: {
+        select: {
+          id: true,
+          fullName: true,
+          email: true
+        }
+      },
+      reviewedBy: {
+        select: {
+          id: true,
+          fullName: true,
+          email: true
+        }
+      },
+      workEvent: {
+        include: {
+          user: {
+            select: {
+              id: true,
+              fullName: true,
+              email: true
+            }
+          }
+        }
+      }
+    }
+  });
+
+  return mapEditRequest(created);
+};
+
+export const listEditRequests = async (params: ListEditRequestsParams): Promise<WorkEventEditRequestRecord[]> => {
+  const where: Prisma.WorkEventEditRequestWhereInput = {
+    ...(params.status ? { status: params.status } : {})
+  };
+
+  if (params.requesterRole === "ADMIN") {
+    if (params.userId) {
+      where.requestedById = params.userId;
+    }
+  } else {
+    where.requestedById = params.requesterUserId;
+  }
+
+  const requests = await prisma.workEventEditRequest.findMany({
+    where,
+    include: {
+      requestedBy: {
+        select: {
+          id: true,
+          fullName: true,
+          email: true
+        }
+      },
+      reviewedBy: {
+        select: {
+          id: true,
+          fullName: true,
+          email: true
+        }
+      },
+      workEvent: {
+        include: {
+          user: {
+            select: {
+              id: true,
+              fullName: true,
+              email: true
+            }
+          }
+        }
+      }
+    },
+    orderBy: [{ status: "asc" }, { createdAt: "desc" }]
+  });
+
+  return requests.map((request) => mapEditRequest(request));
+};
+
+export const reviewEditRequest = async (params: ReviewEditRequestParams): Promise<WorkEventEditRequestRecord> => {
+  const request = await prisma.workEventEditRequest.findUnique({
+    where: { id: params.requestId },
+    include: {
+      workEvent: true
+    }
+  });
+
+  if (!request) {
+    throw new AppError("Solicitud no encontrada.", 404);
+  }
+
+  if (request.status !== EditRequestStatus.PENDING) {
+    throw new AppError("La solicitud ya fue revisada.", 409);
+  }
+
+  const reviewComment = normalizeOptionalText(params.reviewComment) ?? null;
+
+  if (!params.approve) {
+    const rejected = await prisma.workEventEditRequest.update({
+      where: { id: request.id },
+      data: {
+        status: EditRequestStatus.REJECTED,
+        reviewedById: params.adminId,
+        reviewedAt: nowUtc(),
+        reviewComment
+      },
+      include: {
+        requestedBy: {
+          select: {
+            id: true,
+            fullName: true,
+            email: true
+          }
+        },
+        reviewedBy: {
+          select: {
+            id: true,
+            fullName: true,
+            email: true
+          }
+        },
+        workEvent: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                fullName: true,
+                email: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    return mapEditRequest(rejected);
+  }
+
+  const approvedEventAt = normalizeEventAtChange(request.workEvent.eventAt, request.requestedEventAt);
+  if (!isSameMinuteMoment(request.workEvent.eventAt, approvedEventAt)) {
+    await assertValidTimelineAfterEventDateChange(request.workEvent, approvedEventAt);
+  }
+
+  const approved = await prisma.$transaction(async (tx) => {
+    await tx.workEvent.update({
+      where: { id: request.workEvent.id },
+      data: {
+        eventAt: approvedEventAt,
+        note: request.requestedNote,
+        modifiedAt: nowUtc(),
+        modifiedById: params.adminId,
+        modificationReason: request.reason
+      }
+    });
+
+    return tx.workEventEditRequest.update({
+      where: { id: request.id },
+      data: {
+        status: EditRequestStatus.APPROVED,
+        reviewedById: params.adminId,
+        reviewedAt: nowUtc(),
+        reviewComment
+      },
+      include: {
+        requestedBy: {
+          select: {
+            id: true,
+            fullName: true,
+            email: true
+          }
+        },
+        reviewedBy: {
+          select: {
+            id: true,
+            fullName: true,
+            email: true
+          }
+        },
+        workEvent: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                fullName: true,
+                email: true
+              }
+            }
+          }
+        }
+      }
+    });
+  });
+
+  return mapEditRequest(approved);
 };

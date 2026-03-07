@@ -1,7 +1,9 @@
 import { Component, OnInit } from "@angular/core";
 import { Router } from "@angular/router";
 import { ToastController } from "@ionic/angular";
+import type { AppLanguage } from "src/app/core/i18n/translations";
 import { AuthService } from "src/app/core/services/auth.service";
+import { I18nService } from "src/app/core/services/i18n.service";
 import { ThemeService } from "src/app/core/services/theme.service";
 
 @Component({
@@ -17,6 +19,7 @@ export class LoginPage implements OnInit {
 
   constructor(
     private readonly authService: AuthService,
+    public readonly i18nService: I18nService,
     public readonly themeService: ThemeService,
     private readonly router: Router,
     private readonly toastController: ToastController
@@ -36,7 +39,7 @@ export class LoginPage implements OnInit {
       await this.router.navigateByUrl("/dashboard");
     } catch (error) {
       const toast = await this.toastController.create({
-        message: error instanceof Error ? error.message : "No se pudo iniciar sesion.",
+        message: error instanceof Error ? error.message : this.i18nService.t("login.error_failed"),
         duration: 2200,
         color: "danger"
       });
@@ -48,5 +51,13 @@ export class LoginPage implements OnInit {
 
   toggleTheme(): void {
     this.themeService.toggle();
+  }
+
+  setLanguage(language: string | null | undefined): void {
+    if (!this.i18nService.isSupportedLanguage(language)) {
+      return;
+    }
+
+    this.i18nService.setLanguage(language as AppLanguage);
   }
 }

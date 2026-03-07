@@ -1,6 +1,7 @@
 import { HttpClient, HttpHeaders } from "@angular/common/http";
 import { Injectable } from "@angular/core";
 import { firstValueFrom } from "rxjs";
+import { I18nService } from "./i18n.service";
 import { environment } from "src/environments/environment";
 
 @Injectable({ providedIn: "root" })
@@ -8,8 +9,38 @@ export class ApiService {
   private static readonly TOKEN_KEY = "regismatic_token";
   private readonly baseUrl =
     environment.apiBaseUrl === "API_BASE_URL_PLACEHOLDER" ? "http://localhost:4000/api" : environment.apiBaseUrl;
+  private readonly backendErrorMap: Record<string, string> = {
+    "Too many login attempts. Try again later.": "errors.too_many_login_attempts",
+    "Validation error.": "errors.validation_error",
+    "Not authenticated.": "errors.not_authenticated",
+    "Insufficient permissions.": "errors.insufficient_permissions",
+    "Missing or invalid authorization header.": "errors.missing_or_invalid_auth_header",
+    "Invalid or expired token.": "errors.invalid_or_expired_token",
+    "Unexpected server error.": "errors.unexpected_server_error",
+    "Invalid credentials.": "errors.invalid_credentials",
+    "User not found.": "errors.user_not_found",
+    "Route not found.": "errors.route_not_found",
+    "A user with this email already exists.": "errors.user_email_exists",
+    "Invalid event sequence for current attendance state.": "errors.invalid_event_sequence",
+    "minutesDelta cannot be zero.": "errors.minutes_delta_zero",
+    "Invalid date range format. Use YYYY-MM-DD.": "errors.invalid_date_range_format",
+    "The 'from' date must be before or equal to 'to'.": "errors.from_must_be_before_to",
+    "Date range too large. Maximum supported range is 62 days.": "errors.date_range_too_large",
+    "Debes indicar eventAt o note para modificar el registro.": "errors.required_event_or_note",
+    "Solo los empleados pueden crear solicitudes.": "errors.only_employees_request",
+    "Registro no encontrado.": "errors.record_not_found",
+    "El motivo de modificacion es obligatorio.": "errors.modification_reason_required",
+    "El motivo de la solicitud es obligatorio.": "errors.request_reason_required",
+    "La solicitud no contiene cambios respecto al registro actual.": "errors.request_no_changes",
+    "Ya tienes una solicitud pendiente para este registro.": "errors.request_already_pending",
+    "Solicitud no encontrada.": "errors.request_not_found",
+    "La solicitud ya fue revisada.": "errors.request_already_reviewed"
+  };
 
-  constructor(private readonly http: HttpClient) {}
+  constructor(
+    private readonly http: HttpClient,
+    private readonly i18nService: I18nService
+  ) {}
 
   async get<T>(path: string, auth = false): Promise<T> {
     try {
@@ -23,6 +54,18 @@ export class ApiService {
     try {
       return await firstValueFrom(
         this.http.post<T>(`${this.baseUrl}${path}`, body, {
+          headers: this.buildHeaders(auth)
+        })
+      );
+    } catch (error) {
+      throw this.toError(error);
+    }
+  }
+
+  async patch<T>(path: string, body: unknown, auth = false): Promise<T> {
+    try {
+      return await firstValueFrom(
+        this.http.patch<T>(`${this.baseUrl}${path}`, body, {
           headers: this.buildHeaders(auth)
         })
       );
@@ -59,16 +102,35 @@ export class ApiService {
     if (typeof error === "object" && error !== null) {
       const maybeHttp = error as { error?: { message?: string }; message?: string; status?: number };
       if (maybeHttp.status === 0) {
-        return new Error("No se pudo conectar con la API. Verifica backend en :4000 y que la base de datos este levantada.");
+        return new Error(this.i18nService.t("errors.api_unreachable"));
       }
       if (maybeHttp.error?.message) {
-        return new Error(maybeHttp.error.message);
+        return new Error(this.translateBackendError(maybeHttp.error.message));
       }
       if (maybeHttp.message) {
-        return new Error(maybeHttp.message);
+        return new Error(this.translateBackendError(maybeHttp.message));
       }
     }
 
-    return new Error("Unexpected request error.");
+    return new Error(this.i18nService.t("errors.unexpected_request"));
+  }
+
+  private translateBackendError(message: string): string {
+    const normalized = message.trim();
+    const directKey = this.backendErrorMap[normalized];
+    if (directKey) {
+      return this.i18nService.t(directKey);
+    }
+
+    const missingMatch = normalized.match(/^Missing ([a-zA-Z0-9_]+)\.$/);
+    if (missingMatch) {
+      const rawField = missingMatch[1];
+      const fieldKey = `errors.field.${rawField}`;
+      const translatedField = this.i18nService.t(fieldKey);
+      const fieldLabel = translatedField === fieldKey ? rawField : translatedField;
+      return this.i18nService.t("errors.missing_field", { field: fieldLabel });
+    }
+
+    return normalized;
   }
 }

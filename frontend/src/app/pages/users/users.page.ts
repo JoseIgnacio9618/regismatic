@@ -1,6 +1,7 @@
 import { Component, OnInit } from "@angular/core";
 import { ToastController } from "@ionic/angular";
 import { Role, TeamUser } from "src/app/core/models/types";
+import { I18nService } from "src/app/core/services/i18n.service";
 import { UserService } from "src/app/core/services/user.service";
 
 @Component({
@@ -19,6 +20,7 @@ export class UsersPage implements OnInit {
 
   constructor(
     private readonly userService: UserService,
+    public readonly i18nService: I18nService,
     private readonly toastController: ToastController
   ) {}
 
@@ -41,10 +43,14 @@ export class UsersPage implements OnInit {
       this.role = "EMPLOYEE";
 
       await this.loadUsers();
-      await this.showToast("Usuario creado.", "success");
+      await this.showToast(this.i18nService.t("users.toast_user_created"), "success");
     } catch (error) {
-      await this.showToast(error instanceof Error ? error.message : "No se pudo crear usuario.", "danger");
+      await this.showToast(error instanceof Error ? error.message : this.i18nService.t("users.toast_user_create_failed"), "danger");
     }
+  }
+
+  roleLabel(role: Role): string {
+    return this.i18nService.t(`role.${role}`);
   }
 
   private async loadUsers(): Promise<void> {

@@ -17,10 +17,12 @@ La base de datos es **PostgreSQL (SQL)**, no SQLite.
 ## Funcionalidades
 - Login JWT con roles `ADMIN` y `EMPLOYEE`
 - Fichaje: entrada, pausa inicio/fin, salida
-- Trazabilidad de eventos inmutable (auditoria)
+- Trazabilidad de eventos con auditoria de modificaciones (quien y cuando)
 - Geolocalizacion opcional por evento
 - Ajustes manuales (admin)
 - Reportes por rango + export CSV
+- Solicitudes de correccion por parte de empleados
+- Revision de solicitudes y edicion directa de registros por administradores
 - Gestion de usuarios (admin)
 - Hardening basico de API: CORS configurable, rate limit de login, health checks
 

@@ -1,7 +1,45 @@
+.dashboard-grid {
+  row-gap: 16px;
+}
+
+.panel {
+  position: relative;
+}
+
+.status-panel::before,
+.summary-panel::before,
+.events-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.65;
+}
+
+.status-panel::before {
+  background: radial-gradient(circle at 88% 8%, color-mix(in srgb, var(--ion-color-primary), transparent 80%) 0%, transparent 42%);
+}
+
+.summary-panel::before {
+  background: radial-gradient(circle at 0% 8%, color-mix(in srgb, var(--ion-color-secondary), transparent 84%) 0%, transparent 45%);
+}
+
+.events-panel::before {
+  background: radial-gradient(circle at 92% 92%, color-mix(in srgb, var(--ion-color-tertiary), transparent 82%) 0%, transparent 48%);
+}
+
+.metrics-grid ion-row {
+  row-gap: 10px;
+}
+
 .mt-16 {
   margin-top: 16px;
 }
 
 ion-button + ion-button {
   margin-top: 8px;
+}
+
+.status-error {
+  margin-bottom: 12px;
 }

@@ -27,33 +27,70 @@ enum EventSource {
   SYSTEM
 }
 
+enum EditRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model User {
-  id           String      @id @default(cuid())
-  email        String      @unique
-  passwordHash String
-  fullName     String
-  role         Role        @default(EMPLOYEE)
-  isActive     Boolean     @default(true)
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-  events       WorkEvent[]
+  id                  String                 @id @default(cuid())
+  email               String                 @unique
+  passwordHash        String
+  fullName            String
+  role                Role                   @default(EMPLOYEE)
+  isActive            Boolean                @default(true)
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime               @updatedAt
+  events              WorkEvent[]
+  modifiedEvents      WorkEvent[]            @relation("WorkEventModifier")
+  requestedEditEvents WorkEventEditRequest[] @relation("WorkEventEditRequester")
+  reviewedEditEvents  WorkEventEditRequest[] @relation("WorkEventEditReviewer")
 }
 
 model WorkEvent {
-  id          String        @id @default(cuid())
-  userId      String
-  user        User          @relation(fields: [userId], references: [id])
-  type        WorkEventType
-  source      EventSource   @default(WEB)
-  eventAt     DateTime
-  note        String?
-  latitude    Float?
-  longitude   Float?
-  ipAddress   String?
-  userAgent   String?
-  metadata    Json?
-  createdAt   DateTime      @default(now())
+  id                 String                 @id @default(cuid())
+  userId             String
+  user               User                   @relation(fields: [userId], references: [id])
+  type               WorkEventType
+  source             EventSource            @default(WEB)
+  eventAt            DateTime
+  note               String?
+  latitude           Float?
+  longitude          Float?
+  ipAddress          String?
+  userAgent          String?
+  metadata           Json?
+  modifiedAt         DateTime?
+  modifiedById       String?
+  modifiedBy         User?                  @relation("WorkEventModifier", fields: [modifiedById], references: [id])
+  modificationReason String?
+  createdAt          DateTime               @default(now())
+  editRequests       WorkEventEditRequest[]
 
   @@index([userId, eventAt])
   @@index([eventAt])
+  @@index([modifiedById])
+}
+
+model WorkEventEditRequest {
+  id               String            @id @default(cuid())
+  workEventId      String
+  workEvent        WorkEvent         @relation(fields: [workEventId], references: [id])
+  requestedById    String
+  requestedBy      User              @relation("WorkEventEditRequester", fields: [requestedById], references: [id])
+  requestedEventAt DateTime
+  requestedNote    String?
+  reason           String
+  status           EditRequestStatus @default(PENDING)
+  reviewComment    String?
+  reviewedById     String?
+  reviewedBy       User?             @relation("WorkEventEditReviewer", fields: [reviewedById], references: [id])
+  reviewedAt       DateTime?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  @@index([workEventId, status])
+  @@index([requestedById, createdAt])
+  @@index([status, createdAt])
 }

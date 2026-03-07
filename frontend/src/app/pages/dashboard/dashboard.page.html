@@ -1,66 +1,82 @@
-<app-main-layout title="Panel de jornada">
-  <ion-grid fixed>
+<app-main-layout [title]="'dashboard.layout_title' | t">
+  <ion-grid fixed class="dashboard-grid">
     <ion-row>
       <ion-col size="12" size-md="4">
-        <ion-card class="glass-card">
+        <ion-card class="glass-card panel status-panel">
           <ion-card-header>
-            <ion-card-title>Estado de hoy</ion-card-title>
+            <ion-card-title>{{ "dashboard.today_state_title" | t }}</ion-card-title>
+            <p class="microcopy">{{ "dashboard.realtime_microcopy" | t }}</p>
           </ion-card-header>
           <ion-card-content>
-            <p>Fecha: {{ status?.date || '--' }}</p>
-            <ion-badge [color]="status?.state === 'OFF' ? 'medium' : 'success'">{{ stateLabel }}</ion-badge>
+            <p class="muted">{{ "common.date" | t }}: {{ status?.date || '--' }}</p>
+            <ion-badge [color]="loadError ? 'danger' : effectiveState === 'OFF' ? 'medium' : 'success'">{{ stateLabel }}</ion-badge>
 
-            <div class="mt-16" *ngIf="status?.state === 'OFF'">
-              <ion-button expand="block" [disabled]="busy" (click)="handleAction('clockIn')">Fichar entrada</ion-button>
+            <section class="empty-state mt-16 status-error" *ngIf="loadError">
+              <ion-icon name="cloud-offline-outline" aria-hidden="true"></ion-icon>
+              <h3>{{ "dashboard.error_load_title" | t }}</h3>
+              <p>{{ loadError }}</p>
+              <ion-button size="small" fill="outline" (click)="refreshStatus(true)">{{ "common.retry" | t }}</ion-button>
+            </section>
+
+            <div class="mt-16" *ngIf="effectiveState === 'OFF'">
+              <ion-button expand="block" [disabled]="busy" (click)="handleAction('clockIn')">{{ "dashboard.clock_in" | t }}</ion-button>
             </div>
 
-            <div class="mt-16" *ngIf="status?.state === 'WORKING'">
-              <ion-button expand="block" color="warning" [disabled]="busy" (click)="handleAction('breakStart')">Iniciar pausa</ion-button>
-              <ion-button expand="block" color="tertiary" [disabled]="busy" (click)="handleAction('clockOut')">Fichar salida</ion-button>
+            <div class="mt-16" *ngIf="effectiveState === 'WORKING'">
+              <ion-button expand="block" color="warning" [disabled]="busy" (click)="handleAction('breakStart')">{{ "dashboard.break_start" | t }}</ion-button>
+              <ion-button expand="block" color="tertiary" [disabled]="busy" (click)="handleAction('clockOut')">{{ "dashboard.clock_out" | t }}</ion-button>
             </div>
 
-            <div class="mt-16" *ngIf="status?.state === 'ON_BREAK'">
-              <ion-button expand="block" color="success" [disabled]="busy" (click)="handleAction('breakEnd')">Terminar pausa</ion-button>
+            <div class="mt-16" *ngIf="effectiveState === 'ON_BREAK'">
+              <ion-button expand="block" color="success" [disabled]="busy" (click)="handleAction('breakEnd')">{{ "dashboard.break_end" | t }}</ion-button>
             </div>
           </ion-card-content>
         </ion-card>
       </ion-col>
 
       <ion-col size="12" size-md="8">
-        <ion-card class="glass-card">
+        <ion-card class="glass-card panel summary-panel">
           <ion-card-header>
-            <ion-card-title>Resumen diario</ion-card-title>
+            <ion-card-title>{{ "dashboard.summary_title" | t }}</ion-card-title>
           </ion-card-header>
           <ion-card-content>
-            <ion-grid>
+            <ion-grid class="metrics-grid">
               <ion-row>
-                <ion-col size="6" size-md="3"><strong>Trabajo</strong><p>{{ minutesToHuman(status?.totals?.workedMinutes || 0) }}</p></ion-col>
-                <ion-col size="6" size-md="3"><strong>Pausa</strong><p>{{ minutesToHuman(status?.totals?.breakMinutes || 0) }}</p></ion-col>
-                <ion-col size="6" size-md="3"><strong>Extra</strong><p>{{ minutesToHuman(status?.totals?.overtimeMinutes || 0) }}</p></ion-col>
-                <ion-col size="6" size-md="3"><strong>Ajustes</strong><p>{{ minutesToHuman(status?.totals?.adjustmentsMinutes || 0) }}</p></ion-col>
+                <ion-col size="6" size-md="3" class="metric-tile"><strong>{{ "dashboard.metric.worked" | t }}</strong><p>{{ minutesToHuman(status?.totals?.workedMinutes || 0) }}</p></ion-col>
+                <ion-col size="6" size-md="3" class="metric-tile"><strong>{{ "dashboard.metric.break" | t }}</strong><p>{{ minutesToHuman(status?.totals?.breakMinutes || 0) }}</p></ion-col>
+                <ion-col size="6" size-md="3" class="metric-tile"><strong>{{ "dashboard.metric.overtime" | t }}</strong><p>{{ minutesToHuman(status?.totals?.overtimeMinutes || 0) }}</p></ion-col>
+                <ion-col size="6" size-md="3" class="metric-tile"><strong>{{ "dashboard.metric.adjustments" | t }}</strong><p>{{ minutesToHuman(status?.totals?.adjustmentsMinutes || 0) }}</p></ion-col>
               </ion-row>
             </ion-grid>
           </ion-card-content>
         </ion-card>
 
-        <ion-card class="glass-card">
+        <ion-card class="glass-card panel events-panel">
           <ion-card-header>
-            <ion-card-title>Trazabilidad de eventos</ion-card-title>
+            <ion-card-title>{{ "dashboard.events_title" | t }}</ion-card-title>
           </ion-card-header>
           <ion-card-content>
-            <ion-list lines="inset">
-              <ion-item *ngFor="let event of status?.events">
+            <ion-list lines="none" class="data-list" *ngIf="(status?.events?.length || 0) > 0">
+              <ion-item class="data-item" *ngFor="let event of status?.events">
                 <ion-label>
-                  <h3>{{ eventLabel[event.type] || event.type }}</h3>
-                  <p>{{ formatDateTime(event.eventAt) }}</p>
+                  <h3 class="item-title">{{ ("event_type." + event.type) | t }}</h3>
+                  <ion-note class="item-meta">{{ formatDateTime(event.eventAt) }}</ion-note>
+                  <ion-note class="item-audit" *ngIf="event.modifiedAt && event.modifiedBy">
+                    {{ "common.modified_by" | t: { name: event.modifiedBy.fullName, at: formatDateTime(event.modifiedAt) } }}
+                  </ion-note>
+                  <ion-note class="item-audit" *ngIf="event.modificationReason">
+                    {{ "common.reason_prefix" | t: { reason: event.modificationReason } }}
+                  </ion-note>
                 </ion-label>
-                <ion-badge slot="end" color="light">{{ event.source }}</ion-badge>
-              </ion-item>
-
-              <ion-item *ngIf="(status?.events?.length || 0) === 0">
-                <ion-label>No hay fichajes registrados hoy.</ion-label>
+                <ion-badge slot="end" color="light">{{ ("event_source." + event.source) | t }}</ion-badge>
               </ion-item>
             </ion-list>
+
+            <section class="empty-state" *ngIf="(status?.events?.length || 0) === 0">
+              <ion-icon name="time-outline" aria-hidden="true"></ion-icon>
+              <h3>{{ "dashboard.empty_events_title" | t }}</h3>
+              <p>{{ "dashboard.empty_events_desc" | t }}</p>
+            </section>
           </ion-card-content>
         </ion-card>
       </ion-col>

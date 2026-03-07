@@ -1,21 +1,100 @@
 <ion-header translucent="true">
   <ion-toolbar class="app-toolbar">
-    <ion-title>{{ title }}</ion-title>
-    <ion-buttons slot="end" class="toolbar-actions">
-      <ion-button fill="clear" (click)="go('/dashboard')">Dashboard</ion-button>
-      <ion-button fill="clear" (click)="go('/reports')">Reportes</ion-button>
-      <ion-button fill="clear" *ngIf="authService.isAdmin" (click)="go('/users')">Equipo</ion-button>
-      <ion-button fill="clear" class="theme-toggle" (click)="toggleTheme()">
-        <ion-icon slot="start" [name]="themeService.isDark ? 'sunny-outline' : 'moon-outline'"></ion-icon>
-        {{ themeService.isDark ? 'Claro' : 'Oscuro' }}
+    <ion-title>
+      <span class="title-mark"></span>
+      {{ title }}
+    </ion-title>
+    <ion-buttons slot="end" class="toolbar-actions desktop-actions">
+      <ion-button fill="clear" [class.active-nav]="isActive('/dashboard')" (click)="go('/dashboard')">{{ "nav.dashboard" | t }}</ion-button>
+      <ion-button fill="clear" [class.active-nav]="isActive('/reports')" (click)="go('/reports')">{{ "nav.reports" | t }}</ion-button>
+      <ion-button fill="clear" *ngIf="authService.isAdmin" [class.active-nav]="isActive('/users')" (click)="go('/users')">{{ "nav.team" | t }}</ion-button>
+      <ion-button fill="clear" id="header-actions-trigger" class="more-button" [attr.aria-label]="'nav.more' | t">
+        <ion-icon slot="icon-only" class="menu-toggle-icon" [name]="desktopMenuOpen ? 'close-outline' : 'menu-outline'" aria-hidden="true"></ion-icon>
       </ion-button>
-      <ion-chip color="primary" *ngIf="authService.user as user">
-        <ion-label>{{ user.fullName }}</ion-label>
-      </ion-chip>
-      <ion-button color="danger" (click)="logout()">Salir</ion-button>
+    </ion-buttons>
+
+    <ion-buttons slot="end" class="toolbar-actions mobile-actions">
+      <ion-button fill="clear" id="header-menu-trigger" [attr.aria-label]="'nav.menu' | t">
+        <ion-icon slot="icon-only" class="menu-toggle-icon" [name]="mobileMenuOpen ? 'close-outline' : 'menu-outline'" aria-hidden="true"></ion-icon>
+      </ion-button>
     </ion-buttons>
   </ion-toolbar>
 </ion-header>
+
+<ion-popover
+  trigger="header-actions-trigger"
+  side="bottom"
+  alignment="end"
+  [dismissOnSelect]="true"
+  class="header-menu-popover desktop-popover"
+  (didPresent)="onDesktopMenuDidPresent()"
+  (didDismiss)="onDesktopMenuDidDismiss()"
+>
+  <ng-template>
+    <ion-list lines="none" class="header-menu-list">
+      <ion-item class="menu-language">
+        <ion-label>{{ "common.language" | t }}</ion-label>
+        <ion-select slot="end" interface="popover" [value]="i18nService.language" (ionChange)="setLanguage($event.detail.value)">
+          <ion-select-option value="es">{{ "lang.es" | t }}</ion-select-option>
+          <ion-select-option value="en">{{ "lang.en" | t }}</ion-select-option>
+          <ion-select-option value="fr">{{ "lang.fr" | t }}</ion-select-option>
+        </ion-select>
+      </ion-item>
+      <ion-item button detail="false" (click)="toggleTheme()">
+        <ion-icon slot="start" [name]="themeService.isDark ? 'sunny-outline' : 'moon-outline'"></ion-icon>
+        <ion-label>{{ themeService.isDark ? ("theme.to_light" | t) : ("theme.to_dark" | t) }}</ion-label>
+      </ion-item>
+      <ion-item *ngIf="authService.user as user" class="menu-user">
+        <ion-label>{{ user.fullName }}</ion-label>
+      </ion-item>
+      <ion-item button detail="false" class="danger-item" (click)="logout()">
+        <ion-label>{{ "nav.logout" | t }}</ion-label>
+      </ion-item>
+    </ion-list>
+  </ng-template>
+</ion-popover>
+
+<ion-popover
+  trigger="header-menu-trigger"
+  side="bottom"
+  alignment="end"
+  [dismissOnSelect]="true"
+  class="header-menu-popover mobile-popover"
+  (didPresent)="onMobileMenuDidPresent()"
+  (didDismiss)="onMobileMenuDidDismiss()"
+>
+  <ng-template>
+    <ion-list lines="none" class="header-menu-list">
+      <ion-item button detail="false" (click)="go('/dashboard')" [class.active-item]="isActive('/dashboard')">
+        <ion-label>{{ "nav.dashboard" | t }}</ion-label>
+      </ion-item>
+      <ion-item button detail="false" (click)="go('/reports')" [class.active-item]="isActive('/reports')">
+        <ion-label>{{ "nav.reports" | t }}</ion-label>
+      </ion-item>
+      <ion-item button detail="false" *ngIf="authService.isAdmin" (click)="go('/users')" [class.active-item]="isActive('/users')">
+        <ion-label>{{ "nav.team" | t }}</ion-label>
+      </ion-item>
+      <ion-item class="menu-language">
+        <ion-label>{{ "common.language" | t }}</ion-label>
+        <ion-select slot="end" interface="popover" [value]="i18nService.language" (ionChange)="setLanguage($event.detail.value)">
+          <ion-select-option value="es">{{ "lang.es" | t }}</ion-select-option>
+          <ion-select-option value="en">{{ "lang.en" | t }}</ion-select-option>
+          <ion-select-option value="fr">{{ "lang.fr" | t }}</ion-select-option>
+        </ion-select>
+      </ion-item>
+      <ion-item button detail="false" (click)="toggleTheme()">
+        <ion-icon slot="start" [name]="themeService.isDark ? 'sunny-outline' : 'moon-outline'"></ion-icon>
+        <ion-label>{{ themeService.isDark ? ("theme.to_light" | t) : ("theme.to_dark" | t) }}</ion-label>
+      </ion-item>
+      <ion-item *ngIf="authService.user as user" class="menu-user">
+        <ion-label>{{ user.fullName }}</ion-label>
+      </ion-item>
+      <ion-item button detail="false" class="danger-item" (click)="logout()">
+        <ion-label>{{ "nav.logout" | t }}</ion-label>
+      </ion-item>
+    </ion-list>
+  </ng-template>
+</ion-popover>
 
 <ion-content fullscreen="true">
   <div class="page-shell">

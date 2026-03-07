@@ -1,4 +1,5 @@
 export type Role = "ADMIN" | "EMPLOYEE";
+export type EditRequestStatus = "PENDING" | "APPROVED" | "REJECTED";
 
 export interface AuthUser {
   id: string;
@@ -21,15 +22,64 @@ export interface LoginResponse {
 
 export type WorkEventType = "CLOCK_IN" | "BREAK_START" | "BREAK_END" | "CLOCK_OUT" | "MANUAL_ADJUSTMENT";
 
+export interface UserSummary {
+  id: string;
+  fullName: string;
+  email: string;
+}
+
 export interface WorkEvent {
   id: string;
+  userId?: string;
   type: WorkEventType;
   source: "WEB" | "MOBILE" | "ADMIN" | "SYSTEM";
   eventAt: string;
-  note?: string;
+  note?: string | null;
   latitude?: number;
   longitude?: number;
   createdAt: string;
+  modifiedAt?: string | null;
+  modificationReason?: string | null;
+  modifiedBy?: UserSummary | null;
+}
+
+export interface WorkEventEditRequestSummary {
+  id: string;
+  status: EditRequestStatus;
+  reason: string;
+  requestedEventAt: string;
+  requestedNote: string | null;
+  reviewComment: string | null;
+  reviewedAt: string | null;
+  createdAt: string;
+  requestedBy: UserSummary;
+  reviewedBy: UserSummary | null;
+}
+
+export interface AttendanceEventRecord extends WorkEvent {
+  userId: string;
+  user: UserSummary;
+  modifiedBy: UserSummary | null;
+  editRequests: WorkEventEditRequestSummary[];
+}
+
+export interface WorkEventEditRequestRecord {
+  id: string;
+  status: EditRequestStatus;
+  reason: string;
+  requestedEventAt: string;
+  requestedNote: string | null;
+  reviewComment: string | null;
+  reviewedAt: string | null;
+  createdAt: string;
+  requestedBy: UserSummary;
+  reviewedBy: UserSummary | null;
+  workEvent: {
+    id: string;
+    type: WorkEventType;
+    eventAt: string;
+    user: UserSummary;
+  };
 }
 
 export interface TodayStatus {

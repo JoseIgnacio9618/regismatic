@@ -1,38 +1,158 @@
 .app-toolbar {
-  --min-height: 64px;
+  --min-height: 70px;
+  padding: 0 8px;
+}
+
+ion-title {
+  max-width: min(44vw, 560px);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.title-mark {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  margin-right: 10px;
+  background: linear-gradient(140deg, var(--ion-color-primary) 0%, var(--ion-color-secondary) 100%);
+  box-shadow: 0 0 0 6px color-mix(in srgb, var(--ion-color-primary), transparent 86%);
+  vertical-align: middle;
 }
 
 .toolbar-actions {
+  display: flex;
+  align-items: center;
   gap: 4px;
+  flex-wrap: nowrap;
 }
 
 .toolbar-actions ion-button {
+  --padding-start: 12px;
+  --padding-end: 12px;
+  --color: var(--ion-text-color);
+  --background: transparent;
+  font-size: 0.9rem;
+  min-width: 42px;
+}
+
+.desktop-actions {
+  display: flex;
+  align-items: center;
+}
+
+.desktop-actions ion-button {
+  flex-shrink: 0;
+}
+
+.mobile-actions {
+  display: none;
+}
+
+.mobile-actions ion-button {
   --padding-start: 10px;
   --padding-end: 10px;
+  --background: color-mix(in srgb, var(--app-surface-strong), transparent 4%);
+  --border-radius: 999px;
   --color: var(--ion-text-color);
+  border: 1px solid color-mix(in srgb, var(--app-border), transparent 2%);
+}
+
+.mobile-actions ion-icon {
+  font-size: 1.26rem;
+}
+
+.menu-toggle-icon {
+  color: var(--ion-text-color);
+  font-size: 1.36rem;
+}
+
+.active-nav {
+  --background: color-mix(in srgb, var(--ion-color-primary), transparent 84%) !important;
+  --color: var(--ion-color-primary) !important;
+  border-radius: 999px;
 }
 
 .theme-toggle {
-  --background: color-mix(in srgb, var(--ion-color-primary), transparent 82%);
+  --background: color-mix(in srgb, var(--ion-color-secondary), transparent 85%);
+  --color: var(--ion-text-color);
   --border-radius: 999px;
 }
 
+.header-menu-list {
+  min-width: 260px;
+  max-width: min(92vw, 340px);
+  padding: 8px;
+  background: transparent;
+}
+
+.header-menu-list ion-item {
+  margin-bottom: 6px;
+}
+
+.header-menu-list ion-item:last-child {
+  margin-bottom: 0;
+}
+
+.header-menu-list .menu-language ion-select {
+  min-width: 110px;
+  max-width: 140px;
+}
+
+.header-menu-list .menu-user {
+  opacity: 0.9;
+}
+
+.header-menu-list .danger-item {
+  --color: var(--ion-color-danger);
+}
+
+.header-menu-list .active-item {
+  --background: color-mix(in srgb, var(--ion-color-primary), transparent 86%);
+  --color: var(--ion-color-primary);
+}
+
+.more-button {
+  --background: color-mix(in srgb, var(--app-surface), transparent 10%);
+  --border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--app-border), transparent 8%);
+}
+
 .page-shell {
-  padding: 88px 16px 26px;
-  max-width: 1200px;
+  padding: 92px 16px 28px;
+  max-width: 1220px;
   margin: 0 auto;
 }
 
-@media (max-width: 767px) {
-  .page-shell {
-    padding-top: 74px;
-  }
-
+@media (max-width: 900px) {
   .toolbar-actions {
     gap: 0;
   }
 
   .toolbar-actions ion-button {
+    --padding-start: 8px;
+    --padding-end: 8px;
     font-size: 0.78rem;
+  }
+}
+
+@media (max-width: 1080px) {
+  .desktop-actions {
+    display: none;
+  }
+
+  .mobile-actions {
+    display: flex;
+  }
+}
+
+@media (max-width: 767px) {
+  ion-title {
+    max-width: calc(100vw - 104px);
+  }
+
+  .page-shell {
+    padding-top: 76px;
   }
 }

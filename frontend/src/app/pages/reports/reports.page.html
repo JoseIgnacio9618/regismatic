@@ -1,41 +1,42 @@
-<app-main-layout title="Reportes y cumplimiento">
-  <ion-grid fixed>
+<app-main-layout [title]="'reports.layout_title' | t">
+  <ion-grid fixed class="reports-grid">
     <ion-row>
       <ion-col size="12">
-        <ion-card class="glass-card">
+        <ion-card class="glass-card panel filter-panel">
           <ion-card-header>
-            <ion-card-title>Filtros de reporte</ion-card-title>
+            <ion-card-title>{{ "reports.filters_title" | t }}</ion-card-title>
+            <p class="microcopy">{{ "reports.filters_microcopy" | t }}</p>
           </ion-card-header>
           <ion-card-content>
             <ion-grid>
               <ion-row>
                 <ion-col size="12" size-md="3">
                   <ion-item>
-                    <ion-label position="stacked">Desde</ion-label>
+                    <ion-label position="stacked">{{ "common.from" | t }}</ion-label>
                     <ion-input type="date" [(ngModel)]="from"></ion-input>
                   </ion-item>
                 </ion-col>
 
                 <ion-col size="12" size-md="3">
                   <ion-item>
-                    <ion-label position="stacked">Hasta</ion-label>
+                    <ion-label position="stacked">{{ "common.to" | t }}</ion-label>
                     <ion-input type="date" [(ngModel)]="to"></ion-input>
                   </ion-item>
                 </ion-col>
 
                 <ion-col size="12" size-md="4" *ngIf="authService.isAdmin">
                   <ion-item>
-                    <ion-label position="stacked">Empleado (opcional)</ion-label>
-                    <ion-select [(ngModel)]="selectedUserId">
-                      <ion-select-option value="">Todos</ion-select-option>
+                    <ion-label position="stacked">{{ "reports.employee_optional" | t }}</ion-label>
+                    <ion-select [(ngModel)]="selectedUserId" interface="popover">
+                      <ion-select-option value="">{{ "common.all" | t }}</ion-select-option>
                       <ion-select-option *ngFor="let user of users" [value]="user.id">{{ user.fullName }}</ion-select-option>
                     </ion-select>
                   </ion-item>
                 </ion-col>
 
                 <ion-col size="12" size-md="2" class="actions-col">
-                  <ion-button expand="block" [disabled]="loading" (click)="loadReport()">Consultar</ion-button>
-                  <ion-button expand="block" fill="outline" (click)="downloadCsv()">CSV</ion-button>
+                  <ion-button expand="block" [disabled]="loading" (click)="loadReport()">{{ "reports.action_consult" | t }}</ion-button>
+                  <ion-button expand="block" fill="outline" (click)="downloadCsv()">{{ "reports.action_csv" | t }}</ion-button>
                 </ion-col>
               </ion-row>
             </ion-grid>
@@ -46,27 +47,186 @@
 
     <ion-row>
       <ion-col size="12">
-        <ion-card class="glass-card">
+        <ion-card class="glass-card panel result-panel">
           <ion-card-header>
-            <ion-card-title>Resultados ({{ rows.length }})</ion-card-title>
+            <ion-card-title>{{ "reports.summary_title" | t: { count: rows.length } }}</ion-card-title>
           </ion-card-header>
           <ion-card-content>
-            <ion-list lines="inset">
-              <ion-item *ngFor="let row of rows">
+            <ion-list lines="none" class="data-list" *ngIf="rows.length > 0">
+              <ion-item class="data-item" *ngFor="let row of rows">
                 <ion-label>
-                  <h3>{{ row.employee }}</h3>
-                  <p>
-                    {{ row.date }} | Trabajo: {{ minutesToHuman(row.workedMinutes) }} | Pausa: {{ minutesToHuman(row.breakMinutes) }} |
-                    Extra: {{ minutesToHuman(row.overtimeMinutes) }}
-                  </p>
+                  <h3 class="item-title">{{ row.employee }}</h3>
+                  <ion-note class="item-meta">
+                    {{
+                      "reports.summary_row"
+                        | t: {
+                            date: row.date,
+                            worked: minutesToHuman(row.workedMinutes),
+                            breakTime: minutesToHuman(row.breakMinutes),
+                            overtime: minutesToHuman(row.overtimeMinutes)
+                          }
+                    }}
+                  </ion-note>
                 </ion-label>
-                <ion-badge [color]="row.status === 'OPEN' ? 'warning' : 'success'">{{ row.status }}</ion-badge>
-              </ion-item>
-
-              <ion-item *ngIf="rows.length === 0">
-                <ion-label>No hay datos para este rango.</ion-label>
+                <ion-badge [color]="row.status === 'OPEN' ? 'warning' : 'success'">{{ dayStatusLabel(row.status) }}</ion-badge>
               </ion-item>
             </ion-list>
+
+            <section class="empty-state" *ngIf="rows.length === 0">
+              <ion-icon name="bar-chart-outline" aria-hidden="true"></ion-icon>
+              <h3>{{ "reports.empty_summary_title" | t }}</h3>
+              <p>{{ "reports.empty_summary_desc" | t }}</p>
+            </section>
+          </ion-card-content>
+        </ion-card>
+      </ion-col>
+    </ion-row>
+
+    <ion-row>
+      <ion-col size="12">
+        <ion-card class="glass-card panel detail-panel">
+          <ion-card-header>
+            <ion-card-title>{{ "reports.detail_title" | t: { count: events.length } }}</ion-card-title>
+            <p class="microcopy">{{ "reports.detail_microcopy" | t }}</p>
+          </ion-card-header>
+          <ion-card-content>
+            <ion-list lines="none" class="data-list" *ngIf="events.length > 0">
+              <ng-container *ngFor="let event of events">
+                <ion-item class="data-item event-item">
+                  <ion-label>
+                    <h3 class="item-title">
+                      {{ eventTypeLabel(event.type) }}
+                      <span *ngIf="authService.isAdmin" class="event-user">| {{ event.user.fullName }}</span>
+                    </h3>
+                    <ion-note class="item-meta">
+                      {{ formatDateTime(event.eventAt) }} | {{ "common.source" | t }}: {{ eventSourceLabel(event.source) }}
+                    </ion-note>
+                    <ion-note class="item-meta" *ngIf="event.note">{{ "common.note" | t }}: {{ event.note }}</ion-note>
+                    <ion-note class="item-audit" *ngIf="event.modifiedAt && event.modifiedBy">
+                      {{ "common.modified_by" | t: { name: event.modifiedBy.fullName, at: formatDateTime(event.modifiedAt) } }}
+                    </ion-note>
+                    <ion-note class="item-audit" *ngIf="event.modificationReason">
+                      {{ "common.reason_prefix" | t: { reason: event.modificationReason } }}
+                    </ion-note>
+                    <div class="request-chips" *ngIf="event.editRequests.length > 0">
+                      <ion-chip
+                        [color]="request.status === 'APPROVED' ? 'success' : request.status === 'REJECTED' ? 'danger' : 'warning'"
+                        *ngFor="let request of event.editRequests | slice: 0 : 2"
+                      >
+                        <ion-label>{{ requestStatusLabel(request.status) }} | {{ formatDateTime(request.createdAt) }}</ion-label>
+                      </ion-chip>
+                    </div>
+                  </ion-label>
+
+                  <ion-button size="small" fill="outline" *ngIf="authService.isAdmin" (click)="startAdminEdit(event)">
+                    {{ "reports.action_edit" | t }}
+                  </ion-button>
+
+                  <ion-button
+                    size="small"
+                    fill="outline"
+                    *ngIf="!authService.isAdmin"
+                    [disabled]="hasPendingRequest(event)"
+                    (click)="startRequestEdit(event)"
+                  >
+                    {{ "reports.action_request_change" | t }}
+                  </ion-button>
+                </ion-item>
+
+                <section class="event-editor" *ngIf="editingEventId === event.id">
+                  <ion-item>
+                    <ion-label position="stacked">{{ "reports.new_datetime" | t }}</ion-label>
+                    <ion-input type="datetime-local" step="1" [(ngModel)]="adminEditModel.eventAt"></ion-input>
+                  </ion-item>
+
+                  <ion-item>
+                    <ion-label position="stacked">{{ "reports.note_optional" | t }}</ion-label>
+                    <ion-textarea rows="2" [(ngModel)]="adminEditModel.note"></ion-textarea>
+                  </ion-item>
+
+                  <ion-item>
+                    <ion-label position="stacked">{{ "reports.required_reason" | t }}</ion-label>
+                    <ion-textarea rows="2" [(ngModel)]="adminEditModel.reason"></ion-textarea>
+                  </ion-item>
+
+                  <div class="editor-actions">
+                    <ion-button size="small" (click)="saveAdminEdit(event)">{{ "common.save" | t }}</ion-button>
+                    <ion-button size="small" fill="outline" (click)="cancelAdminEdit()">{{ "common.cancel" | t }}</ion-button>
+                  </div>
+                </section>
+
+                <section class="event-editor" *ngIf="requestingEventId === event.id">
+                  <ion-item>
+                    <ion-label position="stacked">{{ "reports.requested_datetime" | t }}</ion-label>
+                    <ion-input type="datetime-local" step="1" [(ngModel)]="requestModel.requestedEventAt"></ion-input>
+                  </ion-item>
+
+                  <ion-item>
+                    <ion-label position="stacked">{{ "reports.requested_note_optional" | t }}</ion-label>
+                    <ion-textarea rows="2" [(ngModel)]="requestModel.requestedNote"></ion-textarea>
+                  </ion-item>
+
+                  <ion-item>
+                    <ion-label position="stacked">{{ "reports.request_reason" | t }}</ion-label>
+                    <ion-textarea rows="2" [(ngModel)]="requestModel.reason"></ion-textarea>
+                  </ion-item>
+
+                  <div class="editor-actions">
+                    <ion-button size="small" (click)="submitRequest(event)">{{ "reports.send_request" | t }}</ion-button>
+                    <ion-button size="small" fill="outline" (click)="cancelRequestEdit()">{{ "common.cancel" | t }}</ion-button>
+                  </div>
+                </section>
+              </ng-container>
+            </ion-list>
+
+            <section class="empty-state" *ngIf="events.length === 0">
+              <ion-icon name="time-outline" aria-hidden="true"></ion-icon>
+              <h3>{{ "reports.empty_events_title" | t }}</h3>
+              <p>{{ "reports.empty_events_desc" | t }}</p>
+            </section>
+          </ion-card-content>
+        </ion-card>
+      </ion-col>
+    </ion-row>
+
+    <ion-row *ngIf="authService.isAdmin">
+      <ion-col size="12">
+        <ion-card class="glass-card panel requests-panel">
+          <ion-card-header>
+            <ion-card-title>{{ "reports.pending_title" | t: { count: pendingRequests.length } }}</ion-card-title>
+            <p class="microcopy">{{ "reports.pending_microcopy" | t }}</p>
+          </ion-card-header>
+          <ion-card-content>
+            <ion-list lines="none" class="data-list" *ngIf="pendingRequests.length > 0">
+              <ng-container *ngFor="let request of pendingRequests">
+                <ion-item class="data-item">
+                  <ion-label>
+                    <h3 class="item-title">{{ request.workEvent.user.fullName }} | {{ eventTypeLabel(request.workEvent.type) }}</h3>
+                    <ion-note class="item-meta">{{ "common.current" | t }}: {{ formatDateTime(request.workEvent.eventAt) }}</ion-note>
+                    <ion-note class="item-meta">{{ "common.requested" | t }}: {{ formatDateTime(request.requestedEventAt) }}</ion-note>
+                    <ion-note class="item-meta" *ngIf="request.requestedNote">{{ "common.note" | t }}: {{ request.requestedNote }}</ion-note>
+                    <ion-note class="item-audit">{{ "common.reason_prefix" | t: { reason: request.reason } }}</ion-note>
+                  </ion-label>
+                </ion-item>
+
+                <section class="review-box">
+                  <ion-item>
+                    <ion-label position="stacked">{{ "reports.review_comment_optional" | t }}</ion-label>
+                    <ion-textarea rows="2" [(ngModel)]="reviewCommentByRequestId[request.id]"></ion-textarea>
+                  </ion-item>
+                  <div class="editor-actions">
+                    <ion-button size="small" color="success" (click)="reviewRequest(request, 'APPROVE')">{{ "reports.action_approve" | t }}</ion-button>
+                    <ion-button size="small" color="danger" fill="outline" (click)="reviewRequest(request, 'REJECT')">{{ "reports.action_reject" | t }}</ion-button>
+                  </div>
+                </section>
+              </ng-container>
+            </ion-list>
+
+            <section class="empty-state" *ngIf="pendingRequests.length === 0">
+              <ion-icon name="checkmark-done-outline" aria-hidden="true"></ion-icon>
+              <h3>{{ "reports.empty_pending_title" | t }}</h3>
+              <p>{{ "reports.empty_pending_desc" | t }}</p>
+            </section>
           </ion-card-content>
         </ion-card>
       </ion-col>

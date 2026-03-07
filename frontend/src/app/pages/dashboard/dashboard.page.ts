@@ -2,6 +2,7 @@ import { Component, OnInit } from "@angular/core";
 import { ToastController } from "@ionic/angular";
 import { AttendanceService } from "src/app/core/services/attendance.service";
 import { TodayStatus } from "src/app/core/models/types";
+import { I18nService } from "src/app/core/services/i18n.service";
 
 @Component({
   selector: "app-dashboard",
@@ -12,38 +13,41 @@ import { TodayStatus } from "src/app/core/models/types";
 export class DashboardPage implements OnInit {
   status: TodayStatus | null = null;
   busy = false;
-
-  readonly eventLabel: Record<string, string> = {
-    CLOCK_IN: "Entrada",
-    BREAK_START: "Inicio pausa",
-    BREAK_END: "Fin pausa",
-    CLOCK_OUT: "Salida",
-    MANUAL_ADJUSTMENT: "Ajuste manual"
-  };
+  statusLoading = false;
+  loadError: string | null = null;
 
   constructor(
     private readonly attendanceService: AttendanceService,
+    public readonly i18nService: I18nService,
     private readonly toastController: ToastController
   ) {}
 
   async ngOnInit(): Promise<void> {
-    await this.loadStatus();
+    await this.refreshStatus();
   }
 
   get stateLabel(): string {
+    if (this.loadError) {
+      return this.i18nService.t("dashboard.state.no_connection");
+    }
+
     if (!this.status) {
-      return "Sin datos";
+      return this.i18nService.t("dashboard.state.pending");
     }
 
     if (this.status.state === "OFF") {
-      return "Fuera de jornada";
+      return this.i18nService.t("dashboard.state.off");
     }
 
     if (this.status.state === "WORKING") {
-      return "Trabajando";
+      return this.i18nService.t("dashboard.state.working");
     }
 
-    return "En pausa";
+    return this.i18nService.t("dashboard.state.on_break");
+  }
+
+  get effectiveState(): "OFF" | "WORKING" | "ON_BREAK" {
+    return this.status?.state ?? "OFF";
   }
 
   minutesToHuman(minutes: number): string {
@@ -54,7 +58,7 @@ export class DashboardPage implements OnInit {
   }
 
   formatDateTime(iso: string): string {
-    return new Date(iso).toLocaleString("es-ES", {
+    return new Date(iso).toLocaleString(this.i18nService.locale, {
       hour: "2-digit",
       minute: "2-digit",
       second: "2-digit",
@@ -78,17 +82,29 @@ export class DashboardPage implements OnInit {
         await this.attendanceService.clockOut(coords);
       }
 
-      await this.loadStatus();
-      await this.showToast("Evento registrado.", "success");
+      await this.refreshStatus();
+      await this.showToast(this.i18nService.t("dashboard.toast_event_registered"), "success");
     } catch (error) {
-      await this.showToast(error instanceof Error ? error.message : "No se pudo registrar.", "danger");
+      await this.showToast(error instanceof Error ? error.message : this.i18nService.t("dashboard.toast_event_failed"), "danger");
     } finally {
       this.busy = false;
     }
   }
 
-  private async loadStatus(): Promise<void> {
-    this.status = await this.attendanceService.getTodayStatus();
+  async refreshStatus(showErrorToast = false): Promise<void> {
+    this.statusLoading = true;
+    this.loadError = null;
+    try {
+      this.status = await this.attendanceService.getTodayStatus();
+    } catch (error) {
+      this.loadError = error instanceof Error ? error.message : this.i18nService.t("dashboard.error_load_status");
+      this.status = null;
+      if (showErrorToast) {
+        await this.showToast(this.loadError, "danger");
+      }
+    } finally {
+      this.statusLoading = false;
+    }
   }
 
   private async getGeolocation(): Promise<{ latitude?: number; longitude?: number }> {

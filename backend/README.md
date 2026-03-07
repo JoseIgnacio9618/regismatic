@@ -38,5 +38,10 @@ API por defecto: `http://localhost:4000`
 - `POST /api/attendance/break-start`
 - `POST /api/attendance/break-end`
 - `POST /api/attendance/clock-out`
+- `GET /api/attendance/events?from=YYYY-MM-DD&to=YYYY-MM-DD&userId=...`
+- `PATCH /api/attendance/events/:eventId` (admin)
+- `POST /api/attendance/events/:eventId/edit-requests` (employee)
+- `GET /api/attendance/edit-requests`
+- `PATCH /api/attendance/edit-requests/:requestId/review` (admin)
 - `GET /health`
 - `GET /health/ready`

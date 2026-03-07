@@ -1,8 +1,18 @@
-import { WorkEventType } from "@prisma/client";
+import { EditRequestStatus, WorkEventType } from "@prisma/client";
 import type { Request, Response } from "express";
 import { z } from "zod";
 import { AppError } from "../middlewares/error.middleware";
-import { addManualAdjustment, getTodayStatus, registerEvent } from "../services/attendance.service";
+import {
+  addManualAdjustment,
+  createEditRequest,
+  getTodayStatus,
+  listEditRequests,
+  listEvents,
+  registerEvent,
+  reviewEditRequest,
+  updateEventAsAdmin
+} from "../services/attendance.service";
+import { parseReportRange } from "../utils/report-range";
 
 const eventInputSchema = z.object({
   source: z.enum(["WEB", "MOBILE"]).default("WEB"),
@@ -17,6 +27,38 @@ const adjustmentSchema = z.object({
   note: z.string().min(5).max(500)
 });
 
+const listEventsQuerySchema = z.object({
+  from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  userId: z.string().optional()
+});
+
+const updateEventSchema = z
+  .object({
+    eventAt: z.coerce.date().optional(),
+    note: z.string().max(500).nullable().optional(),
+    reason: z.string().min(5).max(500)
+  })
+  .refine((payload) => payload.eventAt !== undefined || payload.note !== undefined, {
+    message: "Debes indicar eventAt o note para modificar el registro."
+  });
+
+const createEditRequestSchema = z.object({
+  requestedEventAt: z.coerce.date(),
+  requestedNote: z.string().max(500).nullable().optional(),
+  reason: z.string().min(5).max(500)
+});
+
+const listEditRequestsQuerySchema = z.object({
+  status: z.nativeEnum(EditRequestStatus).optional(),
+  userId: z.string().optional()
+});
+
+const reviewEditRequestSchema = z.object({
+  action: z.enum(["APPROVE", "REJECT"]),
+  reviewComment: z.string().max(500).optional()
+});
+
 const getClientIp = (req: Request) => {
   const xForwardedFor = req.headers["x-forwarded-for"];
   if (typeof xForwardedFor === "string") {
@@ -26,6 +68,21 @@ const getClientIp = (req: Request) => {
     return xForwardedFor[0];
   }
   return req.socket.remoteAddress;
+};
+
+const getRouteParam = (value: string | string[] | undefined, name: string): string => {
+  if (Array.isArray(value)) {
+    if (value.length === 0 || !value[0]) {
+      throw new AppError(`Missing ${name}.`, 400);
+    }
+    return value[0];
+  }
+
+  if (!value) {
+    throw new AppError(`Missing ${name}.`, 400);
+  }
+
+  return value;
 };
 
 const buildEventHandler = (eventType: WorkEventType) => {
@@ -80,4 +137,98 @@ export const manualAdjustmentController = async (req: Request, res: Response) =>
   });
 
   return res.status(201).json(event);
+};
+
+export const listEventsController = async (req: Request, res: Response) => {
+  if (!req.user) {
+    throw new AppError("Not authenticated.", 401);
+  }
+
+  const query = listEventsQuerySchema.parse(req.query);
+  const range = parseReportRange(query.from, query.to);
+  const events = await listEvents({
+    fromUtc: range.fromUtc,
+    toUtc: range.toUtc,
+    requesterRole: req.user.role,
+    requesterUserId: req.user.id,
+    userId: query.userId
+  });
+
+  return res.json({ events });
+};
+
+export const updateEventController = async (req: Request, res: Response) => {
+  if (!req.user) {
+    throw new AppError("Not authenticated.", 401);
+  }
+
+  const payload = updateEventSchema.parse(req.body);
+  const eventId = getRouteParam(req.params.eventId, "eventId");
+
+  const event = await updateEventAsAdmin({
+    eventId,
+    adminId: req.user.id,
+    eventAt: payload.eventAt,
+    note: payload.note,
+    reason: payload.reason
+  });
+
+  return res.json(event);
+};
+
+export const createEditRequestController = async (req: Request, res: Response) => {
+  if (!req.user) {
+    throw new AppError("Not authenticated.", 401);
+  }
+
+  if (req.user.role !== "EMPLOYEE") {
+    throw new AppError("Solo los empleados pueden crear solicitudes.", 403);
+  }
+
+  const eventId = getRouteParam(req.params.eventId, "eventId");
+
+  const payload = createEditRequestSchema.parse(req.body);
+  const request = await createEditRequest({
+    eventId,
+    requesterId: req.user.id,
+    requestedEventAt: payload.requestedEventAt,
+    requestedNote: payload.requestedNote,
+    reason: payload.reason
+  });
+
+  return res.status(201).json(request);
+};
+
+export const listEditRequestsController = async (req: Request, res: Response) => {
+  if (!req.user) {
+    throw new AppError("Not authenticated.", 401);
+  }
+
+  const query = listEditRequestsQuerySchema.parse(req.query);
+  const requests = await listEditRequests({
+    requesterRole: req.user.role,
+    requesterUserId: req.user.id,
+    status: query.status,
+    userId: query.userId
+  });
+
+  return res.json({ requests });
+};
+
+export const reviewEditRequestController = async (req: Request, res: Response) => {
+  if (!req.user) {
+    throw new AppError("Not authenticated.", 401);
+  }
+
+  const requestId = getRouteParam(req.params.requestId, "requestId");
+
+  const payload = reviewEditRequestSchema.parse(req.body);
+  const request = await reviewEditRequest({
+    requestId,
+    adminId: req.user.id,
+    approve: payload.action === "APPROVE",
+    reviewComment: payload.reviewComment
+  });
+
+  return res.json(request);
 };

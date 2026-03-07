@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@600;700&display=swap");
 
 @import "@ionic/angular/css/core.css";
 @import "@ionic/angular/css/normalize.css";
@@ -26,22 +26,49 @@ body {
   margin: 0;
   color: var(--ion-text-color);
   background:
-    radial-gradient(circle at 10% 12%, var(--app-spot-a) 0%, transparent 35%),
-    radial-gradient(circle at 92% 0%, var(--app-spot-b) 0%, transparent 36%),
-    radial-gradient(circle at 55% 100%, var(--app-spot-c) 0%, transparent 42%),
-    linear-gradient(180deg, var(--ion-background-color) 0%, color-mix(in srgb, var(--ion-background-color), #0f172a 8%) 100%);
-  transition: background 0.35s ease, color 0.25s ease;
+    radial-gradient(circle at 8% 14%, var(--app-bg-a) 0%, transparent 38%),
+    radial-gradient(circle at 92% 2%, var(--app-bg-b) 0%, transparent 34%),
+    radial-gradient(circle at 58% 98%, var(--app-bg-c) 0%, transparent 40%),
+    linear-gradient(180deg, var(--ion-background-color) 0%, color-mix(in srgb, var(--ion-background-color), #000 4%) 100%);
+  transition: background 0.45s ease, color 0.3s ease;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image: radial-gradient(circle at center, rgba(255, 255, 255, 0.08) 0.5px, transparent 0.5px);
+  background-size: 20px 20px;
+  opacity: 0.24;
+  mix-blend-mode: overlay;
+  z-index: -1;
 }
 
 h1,
 h2,
-h3 {
+h3,
+ion-title {
+  margin: 0;
+  font-family: "Sora", "Manrope", sans-serif;
   letter-spacing: -0.02em;
-  font-weight: 700;
 }
 
-p {
-  color: color-mix(in srgb, var(--ion-text-color), transparent 26%);
+p,
+ion-label,
+ion-note {
+  color: var(--app-ink-soft);
+}
+
+.microcopy {
+  margin-top: 8px;
+  margin-bottom: 0;
+  font-size: 0.82rem;
+  color: var(--app-ink-muted);
+}
+
+.muted {
+  color: var(--app-ink-muted);
 }
 
 ion-content {
@@ -49,54 +76,287 @@ ion-content {
 }
 
 ion-header ion-toolbar {
-  --background: color-mix(in srgb, var(--app-surface-strong), transparent 6%);
+  --background: color-mix(in srgb, var(--app-surface-strong), transparent 4%);
   --color: var(--ion-text-color);
   border-bottom: 1px solid var(--app-border);
-  backdrop-filter: blur(12px);
+  backdrop-filter: saturate(165%) blur(18px);
+}
+
+ion-card {
+  margin: 0;
+}
+
+.glass-card,
+.panel {
+  position: relative;
+  isolation: isolate;
+  background: linear-gradient(
+      140deg,
+      color-mix(in srgb, var(--app-hero-a), transparent 60%) 0%,
+      color-mix(in srgb, var(--app-hero-b), transparent 72%) 45%,
+      color-mix(in srgb, var(--app-hero-c), transparent 70%) 100%
+    ),
+    var(--app-surface);
+  border: 1px solid var(--app-border);
+  box-shadow: var(--app-shadow);
+  backdrop-filter: blur(16px) saturate(140%);
+  border-radius: var(--app-radius-xl);
+  overflow: hidden;
+  animation: panel-enter 0.35s ease;
+}
+
+.panel > * {
+  position: relative;
+  z-index: 1;
+}
+
+.panel ion-card-header {
+  padding-bottom: 10px;
+}
+
+.panel ion-card-title {
+  font-size: 1.15rem;
+  color: var(--ion-text-color);
+}
+
+.panel ion-card-content {
+  padding-top: 8px;
 }
 
 ion-item {
-  --background: color-mix(in srgb, var(--app-surface), transparent 12%);
-  --border-color: var(--app-border);
+  --background: color-mix(in srgb, var(--app-surface), transparent 10%);
+  --color: var(--ion-text-color);
+  --border-color: color-mix(in srgb, var(--app-border), transparent 12%);
   --highlight-color-focused: var(--ion-color-primary);
-  border-radius: 14px;
-  margin-bottom: 10px;
+  border: 1px solid color-mix(in srgb, var(--app-border), transparent 22%);
+  border-radius: var(--app-radius-md);
+  margin-bottom: 12px;
+}
+
+ion-item h3,
+ion-item p {
+  color: var(--ion-text-color);
+}
+
+ion-item p {
+  opacity: 0.82;
+}
+
+ion-list {
+  background: transparent;
+}
+
+.data-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 2px 0;
+  margin: 0;
+}
+
+.data-list ion-item {
+  margin-bottom: 0;
+}
+
+.data-item {
+  --background: color-mix(in srgb, var(--app-surface), transparent 8%);
+  --inner-padding-top: 10px;
+  --inner-padding-bottom: 10px;
+  --inner-padding-end: 12px;
+  --inner-padding-start: 12px;
+  --inner-border-width: 0;
+  border-radius: var(--app-radius-md);
+  border: 1px solid color-mix(in srgb, var(--app-border), transparent 20%);
+  overflow: hidden;
+}
+
+.data-item::part(native) {
+  border-radius: inherit;
+  background: transparent;
+}
+
+.item-title {
+  margin-bottom: 4px;
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: var(--ion-text-color);
+}
+
+.item-meta {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.86rem;
+  line-height: 1.35;
+  white-space: normal;
+  color: var(--app-ink-muted);
+}
+
+.item-audit {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.82rem;
+  line-height: 1.35;
+  color: color-mix(in srgb, var(--ion-color-primary), var(--app-ink-soft) 45%);
+}
+
+.empty-state {
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  gap: 8px;
+  padding: 22px 16px;
+  border: 1px dashed color-mix(in srgb, var(--app-border), transparent 10%);
+  border-radius: var(--app-radius-md);
+  background: color-mix(in srgb, var(--app-surface), transparent 12%);
+}
+
+.empty-state ion-icon {
+  font-size: 1.5rem;
+  color: color-mix(in srgb, var(--ion-color-primary), var(--ion-text-color) 18%);
+}
+
+.empty-state h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ion-text-color);
+}
+
+.empty-state p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--app-ink-muted);
 }
 
 ion-button {
   --border-radius: 12px;
-  font-weight: 600;
+  --box-shadow: 0 10px 20px color-mix(in srgb, var(--ion-color-primary), transparent 76%);
+  font-weight: 700;
   letter-spacing: 0.01em;
+}
+
+ion-button[fill="outline"] {
+  --border-width: 1px;
+  --border-color: color-mix(in srgb, var(--ion-color-primary), transparent 40%);
+  --color: var(--ion-color-primary);
+  --background: color-mix(in srgb, var(--ion-color-primary), transparent 88%);
 }
 
 ion-badge {
   border-radius: 999px;
-  padding: 8px 10px;
-  font-weight: 600;
+  padding: 8px 12px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
 }
 
 ion-chip {
-  border: 1px solid var(--app-border);
+  --background: color-mix(in srgb, var(--ion-color-primary), transparent 82%);
+  border: 1px solid color-mix(in srgb, var(--ion-color-primary), transparent 52%);
 }
 
-.glass-card {
-  background: var(--app-surface);
-  border: 1px solid var(--app-border);
-  box-shadow: var(--app-shadow);
-  backdrop-filter: blur(8px);
-  border-radius: 18px;
-  overflow: hidden;
-  animation: card-in 0.28s ease;
+ion-select {
+  color: var(--ion-text-color);
+  --placeholder-color: var(--app-ink-muted);
+  --placeholder-opacity: 1;
+  --highlight-color-focused: var(--ion-color-primary);
 }
 
-.muted {
-  color: color-mix(in srgb, var(--ion-text-color), transparent 34%);
+ion-select::part(container),
+ion-select::part(text),
+ion-input::part(native),
+ion-textarea::part(native),
+ion-datetime::part(native) {
+  color: var(--ion-text-color);
 }
 
-@keyframes card-in {
+ion-select::part(placeholder) {
+  color: var(--app-ink-muted);
+  opacity: 1;
+}
+
+ion-select::part(icon) {
+  color: color-mix(in srgb, var(--ion-text-color), transparent 30%);
+  opacity: 1;
+}
+
+ion-popover,
+ion-alert,
+ion-modal {
+  --color: var(--ion-text-color);
+}
+
+ion-popover {
+  --background: color-mix(in srgb, var(--app-surface-strong), transparent 4%);
+  --box-shadow: 0 22px 48px color-mix(in srgb, #000, transparent 62%);
+}
+
+ion-select-popover {
+  --background: color-mix(in srgb, var(--app-surface-strong), transparent 2%);
+  --color: var(--ion-text-color);
+}
+
+ion-select-popover ion-item {
+  --background: transparent;
+  --color: var(--ion-text-color);
+  --color-focused: var(--ion-text-color);
+  --background-focused: color-mix(in srgb, var(--ion-color-primary), transparent 88%);
+  border: 0;
+  margin-bottom: 0;
+}
+
+ion-select-popover ion-radio {
+  --color: var(--ion-text-color);
+}
+
+ion-alert {
+  --background: color-mix(in srgb, var(--app-surface-strong), transparent 6%);
+}
+
+ion-modal {
+  --background: color-mix(in srgb, var(--app-surface-strong), transparent 2%);
+}
+
+ion-datetime {
+  --background: transparent;
+  --title-color: var(--ion-text-color);
+  --wheel-highlight-background: color-mix(in srgb, var(--ion-color-primary), transparent 80%);
+}
+
+body.dark-theme ion-badge[color="light"] {
+  --background: color-mix(in srgb, var(--app-surface-strong), #d6e4ff 8%);
+  --color: #f6f9ff;
+}
+
+body.dark-theme ion-select {
+  --placeholder-color: color-mix(in srgb, var(--ion-text-color), transparent 34%);
+}
+
+.metric-tile {
+  position: relative;
+  border: 1px solid color-mix(in srgb, var(--app-border), transparent 24%);
+  border-radius: var(--app-radius-md);
+  background: color-mix(in srgb, var(--app-surface), transparent 8%);
+  padding: 14px 12px;
+}
+
+.metric-tile strong {
+  display: block;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--app-ink-muted);
+}
+
+.metric-tile p {
+  margin: 8px 0 0;
+  font-size: 1.12rem;
+  font-weight: 800;
+  color: var(--ion-text-color);
+}
+
+@keyframes panel-enter {
   from {
     opacity: 0;
-    transform: translateY(8px) scale(0.99);
+    transform: translateY(10px) scale(0.992);
   }
   to {
     opacity: 1;

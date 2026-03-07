@@ -1,3 +1,23 @@
+.users-grid {
+  row-gap: 16px;
+}
+
+.form-panel::before,
+.team-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.form-panel::before {
+  background: radial-gradient(circle at 6% 8%, color-mix(in srgb, var(--ion-color-primary), transparent 84%) 0%, transparent 45%);
+}
+
+.team-panel::before {
+  background: radial-gradient(circle at 92% 6%, color-mix(in srgb, var(--ion-color-secondary), transparent 84%) 0%, transparent 48%);
+}
+
 .mt-16 {
   margin-top: 16px;
 }

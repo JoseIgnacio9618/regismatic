@@ -1,54 +1,61 @@
-<app-main-layout title="Gestion de personal">
-  <ion-grid fixed>
+<app-main-layout [title]="'users.layout_title' | t">
+  <ion-grid fixed class="users-grid">
     <ion-row>
       <ion-col size="12" size-md="5">
-        <ion-card class="glass-card">
+        <ion-card class="glass-card panel form-panel">
           <ion-card-header>
-            <ion-card-title>Crear usuario</ion-card-title>
+            <ion-card-title>{{ "users.create_title" | t }}</ion-card-title>
+            <p class="microcopy">{{ "users.create_microcopy" | t }}</p>
           </ion-card-header>
           <ion-card-content>
             <ion-item>
-              <ion-label position="stacked">Nombre completo</ion-label>
+              <ion-label position="stacked">{{ "users.full_name" | t }}</ion-label>
               <ion-input [(ngModel)]="fullName"></ion-input>
             </ion-item>
 
             <ion-item>
-              <ion-label position="stacked">Email</ion-label>
+              <ion-label position="stacked">{{ "common.email" | t }}</ion-label>
               <ion-input type="email" [(ngModel)]="email"></ion-input>
             </ion-item>
 
             <ion-item>
-              <ion-label position="stacked">Password</ion-label>
+              <ion-label position="stacked">{{ "common.password" | t }}</ion-label>
               <ion-input type="text" [(ngModel)]="password"></ion-input>
             </ion-item>
 
             <ion-item>
-              <ion-label position="stacked">Rol</ion-label>
+              <ion-label position="stacked">{{ "common.role" | t }}</ion-label>
               <ion-select [(ngModel)]="role">
-                <ion-select-option value="EMPLOYEE">Empleado</ion-select-option>
-                <ion-select-option value="ADMIN">Admin</ion-select-option>
+                <ion-select-option value="EMPLOYEE">{{ "role.EMPLOYEE" | t }}</ion-select-option>
+                <ion-select-option value="ADMIN">{{ "role.ADMIN" | t }}</ion-select-option>
               </ion-select>
             </ion-item>
 
-            <ion-button expand="block" class="mt-16" (click)="createUser()">Guardar usuario</ion-button>
+            <ion-button expand="block" class="mt-16" (click)="createUser()">{{ "users.save_user" | t }}</ion-button>
           </ion-card-content>
         </ion-card>
       </ion-col>
 
       <ion-col size="12" size-md="7">
-        <ion-card class="glass-card">
+        <ion-card class="glass-card panel team-panel">
           <ion-card-header>
-            <ion-card-title>Plantilla</ion-card-title>
+            <ion-card-title>{{ "users.team_title" | t }}</ion-card-title>
           </ion-card-header>
           <ion-card-content>
-            <ion-list lines="inset">
-              <ion-item *ngFor="let user of users">
+            <ion-list lines="none" class="data-list" *ngIf="users.length > 0">
+              <ion-item class="data-item" *ngFor="let user of users">
                 <ion-label>
-                  <h3>{{ user.fullName }}</h3>
-                  <p>{{ user.email }} | {{ user.role }}</p>
+                  <h3 class="item-title">{{ user.fullName }}</h3>
+                  <ion-note class="item-meta">{{ user.email }} | {{ roleLabel(user.role) }}</ion-note>
                 </ion-label>
               </ion-item>
             </ion-list>
+
+            <section class="empty-state" *ngIf="users.length === 0">
+              <ion-icon name="people-outline" aria-hidden="true"></ion-icon>
+              <h3>{{ "users.empty_title" | t }}</h3>
+              <p>{{ "users.empty_desc" | t }}</p>
+            </section>
           </ion-card-content>
         </ion-card>
       </ion-col>

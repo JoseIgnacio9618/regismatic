@@ -1,7 +1,9 @@
 import { Component, OnInit } from "@angular/core";
 import { ToastController } from "@ionic/angular";
-import { SummaryRow, TeamUser } from "src/app/core/models/types";
+import { AttendanceEventRecord, SummaryRow, TeamUser, WorkEventEditRequestRecord } from "src/app/core/models/types";
+import { AttendanceService } from "src/app/core/services/attendance.service";
 import { AuthService } from "src/app/core/services/auth.service";
+import { I18nService } from "src/app/core/services/i18n.service";
 import { ReportService } from "src/app/core/services/report.service";
 import { UserService } from "src/app/core/services/user.service";
 
@@ -17,12 +19,32 @@ export class ReportsPage implements OnInit {
   selectedUserId = "";
   users: TeamUser[] = [];
   rows: SummaryRow[] = [];
+  events: AttendanceEventRecord[] = [];
+  pendingRequests: WorkEventEditRequestRecord[] = [];
   loading = false;
+
+  editingEventId: string | null = null;
+  requestingEventId: string | null = null;
+  reviewCommentByRequestId: Record<string, string> = {};
+
+  adminEditModel = {
+    eventAt: "",
+    note: "",
+    reason: ""
+  };
+
+  requestModel = {
+    requestedEventAt: "",
+    requestedNote: "",
+    reason: ""
+  };
 
   constructor(
     public readonly authService: AuthService,
+    public readonly i18nService: I18nService,
     private readonly reportService: ReportService,
     private readonly userService: UserService,
+    private readonly attendanceService: AttendanceService,
     private readonly toastController: ToastController
   ) {}
 
@@ -41,14 +63,48 @@ export class ReportsPage implements OnInit {
     return `${h}h ${m}m`;
   }
 
+  formatDateTime(iso: string): string {
+    return new Date(iso).toLocaleString(this.i18nService.locale, {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+  }
+
+  hasPendingRequest(event: AttendanceEventRecord): boolean {
+    return event.editRequests.some((request) => request.status === "PENDING");
+  }
+
+  eventTypeLabel(type: string): string {
+    return this.i18nService.t(`event_type.${type}`);
+  }
+
+  eventSourceLabel(source: string): string {
+    return this.i18nService.t(`event_source.${source}`);
+  }
+
+  dayStatusLabel(status: "OPEN" | "CLOSED"): string {
+    return this.i18nService.t(`day_status.${status}`);
+  }
+
+  requestStatusLabel(status: "PENDING" | "APPROVED" | "REJECTED"): string {
+    return this.i18nService.t(`request_status.${status}`);
+  }
+
   async loadReport(): Promise<void> {
     this.loading = true;
 
     try {
-      const response = await this.reportService.getSummary(this.from, this.to, this.selectedUserId || undefined);
-      this.rows = response.rows;
+      await this.loadSummaryRows();
+      await this.loadEvents();
+
+      if (this.authService.isAdmin) {
+        await this.loadPendingRequests();
+      }
     } catch (error) {
-      await this.showToast(error instanceof Error ? error.message : "No se pudo cargar reporte.", "danger");
+      await this.showToast(error instanceof Error ? error.message : this.i18nService.t("reports.toast_load_failed"), "danger");
     } finally {
       this.loading = false;
     }
@@ -65,8 +121,130 @@ export class ReportsPage implements OnInit {
       anchor.click();
       URL.revokeObjectURL(url);
     } catch (error) {
-      await this.showToast(error instanceof Error ? error.message : "No se pudo descargar CSV.", "danger");
+      await this.showToast(error instanceof Error ? error.message : this.i18nService.t("reports.toast_csv_failed"), "danger");
     }
+  }
+
+  startAdminEdit(event: AttendanceEventRecord): void {
+    this.editingEventId = event.id;
+    this.adminEditModel = {
+      eventAt: this.toLocalDateTimeValue(event.eventAt),
+      note: event.note ?? "",
+      reason: ""
+    };
+    this.requestingEventId = null;
+  }
+
+  cancelAdminEdit(): void {
+    this.editingEventId = null;
+    this.adminEditModel = { eventAt: "", note: "", reason: "" };
+  }
+
+  async saveAdminEdit(event: AttendanceEventRecord): Promise<void> {
+    if (!this.adminEditModel.reason.trim()) {
+      await this.showToast(this.i18nService.t("reports.toast_reason_admin_required"), "danger");
+      return;
+    }
+
+    try {
+      await this.attendanceService.updateEventAsAdmin(event.id, {
+        eventAt: this.localDateTimeToIso(this.adminEditModel.eventAt),
+        note: this.adminEditModel.note.trim() ? this.adminEditModel.note.trim() : null,
+        reason: this.adminEditModel.reason.trim()
+      });
+
+      this.cancelAdminEdit();
+      await this.loadReport();
+      await this.showToast(this.i18nService.t("reports.toast_record_updated"), "success");
+    } catch (error) {
+      await this.showToast(error instanceof Error ? error.message : this.i18nService.t("reports.toast_record_update_failed"), "danger");
+    }
+  }
+
+  startRequestEdit(event: AttendanceEventRecord): void {
+    this.requestingEventId = event.id;
+    this.requestModel = {
+      requestedEventAt: this.toLocalDateTimeValue(event.eventAt),
+      requestedNote: event.note ?? "",
+      reason: ""
+    };
+    this.editingEventId = null;
+  }
+
+  cancelRequestEdit(): void {
+    this.requestingEventId = null;
+    this.requestModel = { requestedEventAt: "", requestedNote: "", reason: "" };
+  }
+
+  async submitRequest(event: AttendanceEventRecord): Promise<void> {
+    if (!this.requestModel.reason.trim()) {
+      await this.showToast(this.i18nService.t("reports.toast_reason_request_required"), "danger");
+      return;
+    }
+
+    try {
+      await this.attendanceService.createEditRequest(event.id, {
+        requestedEventAt: this.localDateTimeToIso(this.requestModel.requestedEventAt),
+        requestedNote: this.requestModel.requestedNote.trim() ? this.requestModel.requestedNote.trim() : null,
+        reason: this.requestModel.reason.trim()
+      });
+
+      this.cancelRequestEdit();
+      await this.loadReport();
+      await this.showToast(this.i18nService.t("reports.toast_request_sent"), "success");
+    } catch (error) {
+      await this.showToast(error instanceof Error ? error.message : this.i18nService.t("reports.toast_request_failed"), "danger");
+    }
+  }
+
+  async reviewRequest(request: WorkEventEditRequestRecord, action: "APPROVE" | "REJECT"): Promise<void> {
+    try {
+      const reviewComment = this.reviewCommentByRequestId[request.id]?.trim();
+      await this.attendanceService.reviewEditRequest(request.id, action, reviewComment || undefined);
+
+      delete this.reviewCommentByRequestId[request.id];
+      await this.loadReport();
+      await this.showToast(
+        this.i18nService.t(action === "APPROVE" ? "reports.toast_approve_success" : "reports.toast_reject_success"),
+        "success"
+      );
+    } catch (error) {
+      await this.showToast(error instanceof Error ? error.message : this.i18nService.t("reports.toast_review_failed"), "danger");
+    }
+  }
+
+  private async loadSummaryRows(): Promise<void> {
+    const response = await this.reportService.getSummary(this.from, this.to, this.selectedUserId || undefined);
+    this.rows = response.rows;
+  }
+
+  private async loadEvents(): Promise<void> {
+    const response = await this.attendanceService.listEvents(this.from, this.to, this.selectedUserId || undefined);
+    this.events = response.events;
+  }
+
+  private async loadPendingRequests(): Promise<void> {
+    const response = await this.attendanceService.listEditRequests("PENDING", this.selectedUserId || undefined);
+    this.pendingRequests = response.requests;
+  }
+
+  private toLocalDateTimeValue(iso: string): string {
+    const date = new Date(iso);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    const seconds = String(date.getSeconds()).padStart(2, "0");
+    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+  }
+
+  private localDateTimeToIso(localDateTime: string): string {
+    const parsed = new Date(localDateTime);
+    if (Number.isNaN(parsed.getTime())) {
+      throw new Error(this.i18nService.t("reports.error_invalid_datetime"));
+    }
+    return parsed.toISOString();
   }
 
   private getWeekStart(): string {
@@ -78,7 +256,7 @@ export class ReportsPage implements OnInit {
   }
 
   private async showToast(message: string, color: "danger" | "success"): Promise<void> {
-    const toast = await this.toastController.create({ message, duration: 2200, color });
+    const toast = await this.toastController.create({ message, duration: 2400, color });
     await toast.present();
   }
 }
