@@ -14,11 +14,11 @@ export class ReportService {
     return this.apiService.get<{ rows: SummaryRow[] }>(`/reports/summary?${params.toString()}`, true);
   }
 
-  downloadCsv(from: string, to: string, userId?: string): Promise<string> {
+  downloadExcel(from: string, to: string, userId?: string): Promise<Blob> {
     const params = new URLSearchParams({ from, to });
     if (userId) {
       params.set("userId", userId);
     }
-    return this.apiService.getText(`/reports/summary.csv?${params.toString()}`, true);
+    return this.apiService.getBlob(`/reports/summary.xlsx?${params.toString()}`, true);
   }
 }

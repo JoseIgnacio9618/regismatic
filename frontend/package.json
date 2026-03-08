@@ -24,6 +24,7 @@
     "@angular/platform-browser-dynamic": "^20.0.0",
     "@angular/router": "^20.0.0",
     "@capacitor/core": "^7.2.0",
+    "@capacitor/push-notifications": "^7.0.0",
     "@ionic/angular": "^8.4.3",
     "ionicons": "^7.4.0",
     "rxjs": "~7.8.0",

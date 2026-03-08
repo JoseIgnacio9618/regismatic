@@ -13,4 +13,8 @@ export class UserService {
   createUser(payload: { email: string; fullName: string; password: string; role: Role }): Promise<TeamUser> {
     return this.apiService.post<TeamUser>("/users", payload, true);
   }
+
+  deleteUser(userId: string): Promise<TeamUser> {
+    return this.apiService.delete<TeamUser>(`/users/${userId}`, true);
+  }
 }

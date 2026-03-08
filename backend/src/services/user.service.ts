@@ -50,3 +50,73 @@ export const listUsers = async () => {
 
   return users;
 };
+
+export const deleteUser = async (params: { userId: string; adminId: string }) => {
+  if (params.userId === params.adminId) {
+    throw new AppError("You cannot delete your own account.", 400);
+  }
+
+  const existing = await prisma.user.findUnique({
+    where: { id: params.userId },
+    select: {
+      id: true,
+      email: true,
+      fullName: true,
+      role: true,
+      isActive: true,
+      createdAt: true
+    }
+  });
+
+  if (!existing) {
+    throw new AppError("User not found.", 404);
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.workEventEditRequest.deleteMany({
+      where: {
+        workEvent: {
+          userId: params.userId
+        }
+      }
+    });
+
+    await tx.workEvent.deleteMany({
+      where: {
+        userId: params.userId
+      }
+    });
+
+    await tx.workEventEditRequest.deleteMany({
+      where: {
+        requestedById: params.userId
+      }
+    });
+
+    await tx.workEventEditRequest.updateMany({
+      where: {
+        reviewedById: params.userId
+      },
+      data: {
+        reviewedById: null
+      }
+    });
+
+    await tx.workEvent.updateMany({
+      where: {
+        modifiedById: params.userId
+      },
+      data: {
+        modifiedById: null
+      }
+    });
+
+    await tx.user.delete({
+      where: {
+        id: params.userId
+      }
+    });
+  });
+
+  return existing;
+};

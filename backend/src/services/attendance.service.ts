@@ -1,5 +1,6 @@
 import {
   EditRequestStatus,
+  NotificationType,
   Prisma,
   type EventSource,
   type Role,
@@ -9,6 +10,7 @@ import {
 import { prisma } from "../config/prisma";
 import { AppError } from "../middlewares/error.middleware";
 import { diffMinutes, madridDateKey, madridDayRange, nowUtc } from "../utils/dates";
+import { createNotificationsForUsers, listAdminUsers } from "./notification.service";
 
 export type AttendanceState = "OFF" | "WORKING" | "ON_BREAK";
 
@@ -340,6 +342,15 @@ const mapEditRequest = (request: EditRequestWithRelations): WorkEventEditRequest
   };
 };
 
+const notifySafely = async (task: () => Promise<void>): Promise<void> => {
+  try {
+    await task();
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error("Notification dispatch failed.", error);
+  }
+};
+
 const getTodayEvents = async (userId: string) => {
   const { start, end } = madridDayRange(nowUtc());
 
@@ -540,6 +551,25 @@ export const updateEventAsAdmin = async (params: UpdateEventByAdminParams): Prom
     include: eventInclude
   });
 
+  if (event.userId !== params.adminId) {
+    await notifySafely(async () => {
+      await createNotificationsForUsers({
+        userIds: [event.userId],
+        type: NotificationType.EVENT_MODIFIED,
+        title: "Registro modificado por administracion",
+        body: "Un administrador ha modificado uno de tus fichajes.",
+        metadata: {
+          eventId: event.id,
+          route: "/reports"
+        },
+        pushData: {
+          eventId: event.id,
+          route: "/reports"
+        }
+      });
+    });
+  }
+
   return mapAttendanceEvent(updated);
 };
 
@@ -609,6 +639,25 @@ export const createEditRequest = async (params: CreateEditRequestParams): Promis
         }
       }
     }
+  });
+
+  await notifySafely(async () => {
+    const admins = await listAdminUsers();
+    await createNotificationsForUsers({
+      userIds: admins.map((admin) => admin.id),
+      type: NotificationType.EDIT_REQUEST_CREATED,
+      title: "Nueva solicitud de correccion",
+      body: `${created.requestedBy.fullName} ha enviado una solicitud de correccion.`,
+      metadata: {
+        requestId: created.id,
+        requestedById: created.requestedBy.id,
+        route: "/reports?focus=incidents"
+      },
+      pushData: {
+        requestId: created.id,
+        route: "/reports?focus=incidents"
+      }
+    });
   });
 
   return mapEditRequest(created);
@@ -718,6 +767,23 @@ export const reviewEditRequest = async (params: ReviewEditRequestParams): Promis
       }
     });
 
+    await notifySafely(async () => {
+      await createNotificationsForUsers({
+        userIds: [rejected.requestedBy.id],
+        type: NotificationType.EDIT_REQUEST_REJECTED,
+        title: "Solicitud de correccion rechazada",
+        body: "Tu solicitud de correccion ha sido rechazada por administracion.",
+        metadata: {
+          requestId: rejected.id,
+          route: "/reports"
+        },
+        pushData: {
+          requestId: rejected.id,
+          route: "/reports"
+        }
+      });
+    });
+
     return mapEditRequest(rejected);
   }
 
@@ -772,6 +838,23 @@ export const reviewEditRequest = async (params: ReviewEditRequestParams): Promis
             }
           }
         }
+      }
+    });
+  });
+
+  await notifySafely(async () => {
+    await createNotificationsForUsers({
+      userIds: [approved.requestedBy.id],
+      type: NotificationType.EDIT_REQUEST_APPROVED,
+      title: "Solicitud de correccion aprobada",
+      body: "Tu solicitud de correccion ha sido aprobada.",
+      metadata: {
+        requestId: approved.id,
+        route: "/reports"
+      },
+      pushData: {
+        requestId: approved.id,
+        route: "/reports"
       }
     });
   });

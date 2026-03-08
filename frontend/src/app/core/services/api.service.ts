@@ -2,6 +2,7 @@ import { HttpClient, HttpHeaders } from "@angular/common/http";
 import { Injectable } from "@angular/core";
 import { firstValueFrom } from "rxjs";
 import { I18nService } from "./i18n.service";
+import { RequestLoadingService } from "./request-loading.service";
 import { environment } from "src/environments/environment";
 
 @Injectable({ providedIn: "root" })
@@ -34,57 +35,70 @@ export class ApiService {
     "La solicitud no contiene cambios respecto al registro actual.": "errors.request_no_changes",
     "Ya tienes una solicitud pendiente para este registro.": "errors.request_already_pending",
     "Solicitud no encontrada.": "errors.request_not_found",
-    "La solicitud ya fue revisada.": "errors.request_already_reviewed"
+    "La solicitud ya fue revisada.": "errors.request_already_reviewed",
+    "You cannot delete your own account.": "errors.cannot_delete_own_user",
+    "Notification not found.": "errors.notification_not_found",
+    "Invalid push token.": "errors.invalid_push_token"
   };
 
   constructor(
     private readonly http: HttpClient,
-    private readonly i18nService: I18nService
+    private readonly i18nService: I18nService,
+    private readonly requestLoadingService: RequestLoadingService
   ) {}
 
   async get<T>(path: string, auth = false): Promise<T> {
-    try {
-      return await firstValueFrom(this.http.get<T>(`${this.baseUrl}${path}`, { headers: this.buildHeaders(auth) }));
-    } catch (error) {
-      throw this.toError(error);
-    }
+    return this.runWithLoading(async () => {
+      return firstValueFrom(this.http.get<T>(`${this.baseUrl}${path}`, { headers: this.buildHeaders(auth) }));
+    });
   }
 
   async post<T>(path: string, body: unknown, auth = false): Promise<T> {
-    try {
-      return await firstValueFrom(
+    return this.runWithLoading(async () => {
+      return firstValueFrom(
         this.http.post<T>(`${this.baseUrl}${path}`, body, {
           headers: this.buildHeaders(auth)
         })
       );
-    } catch (error) {
-      throw this.toError(error);
-    }
+    });
   }
 
   async patch<T>(path: string, body: unknown, auth = false): Promise<T> {
-    try {
-      return await firstValueFrom(
+    return this.runWithLoading(async () => {
+      return firstValueFrom(
         this.http.patch<T>(`${this.baseUrl}${path}`, body, {
           headers: this.buildHeaders(auth)
         })
       );
-    } catch (error) {
-      throw this.toError(error);
-    }
+    });
+  }
+
+  async delete<T>(path: string, auth = false): Promise<T> {
+    return this.runWithLoading(async () => {
+      return firstValueFrom(this.http.delete<T>(`${this.baseUrl}${path}`, { headers: this.buildHeaders(auth) }));
+    });
   }
 
   async getText(path: string, auth = false): Promise<string> {
-    try {
-      return await firstValueFrom(
+    return this.runWithLoading(async () => {
+      return firstValueFrom(
         this.http.get(`${this.baseUrl}${path}`, {
           headers: this.buildHeaders(auth),
           responseType: "text"
         })
       );
-    } catch (error) {
-      throw this.toError(error);
-    }
+    });
+  }
+
+  async getBlob(path: string, auth = false): Promise<Blob> {
+    return this.runWithLoading(async () => {
+      return firstValueFrom(
+        this.http.get(`${this.baseUrl}${path}`, {
+          headers: this.buildHeaders(auth),
+          responseType: "blob"
+        })
+      );
+    });
   }
 
   private buildHeaders(auth: boolean): HttpHeaders {
@@ -113,6 +127,17 @@ export class ApiService {
     }
 
     return new Error(this.i18nService.t("errors.unexpected_request"));
+  }
+
+  private async runWithLoading<T>(requestFn: () => Promise<T>): Promise<T> {
+    const requestId = this.requestLoadingService.beginRequest();
+    try {
+      return await requestFn();
+    } catch (error) {
+      throw this.toError(error);
+    } finally {
+      this.requestLoadingService.endRequest(requestId);
+    }
   }
 
   private translateBackendError(message: string): string {

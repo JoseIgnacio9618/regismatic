@@ -1,3 +1,4 @@
 -hay partes del modo oscuro que se ven mal
--se deben poder modificar los registros bajo autorizacion del administrador con un sistema de peticiones por parte del usuario / el admin simpre puede modificar aun si peticion de por medio el no hace peticiones, modifica directamente los de todos 
--cuando un registro quede modificado esto se reflejara en el propio registro y sera visible tanto quien lo ha modificado como a que hora se modifico
+-El menu desplegable se ve mal haz mejor el css y ademas el toogel solo funciona cuando entramos, si cambiamos de pantalla deja de funcionar
+
+

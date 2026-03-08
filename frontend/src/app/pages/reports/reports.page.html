@@ -36,10 +36,56 @@
 
                 <ion-col size="12" size-md="2" class="actions-col">
                   <ion-button expand="block" [disabled]="loading" (click)="loadReport()">{{ "reports.action_consult" | t }}</ion-button>
-                  <ion-button expand="block" fill="outline" (click)="downloadCsv()">{{ "reports.action_csv" | t }}</ion-button>
+                  <ion-button expand="block" fill="outline" (click)="downloadExcel()">{{ "reports.action_csv" | t }}</ion-button>
+                  <ion-button expand="block" fill="clear" *ngIf="authService.isAdmin" (click)="scrollToIncidents()">
+                    {{ "reports.action_incidents" | t }}
+                  </ion-button>
                 </ion-col>
               </ion-row>
             </ion-grid>
+          </ion-card-content>
+        </ion-card>
+      </ion-col>
+    </ion-row>
+
+    <ion-row *ngIf="authService.isAdmin">
+      <ion-col size="12">
+        <ion-card id="incidents-panel" class="glass-card panel requests-panel">
+          <ion-card-header>
+            <ion-card-title>{{ "reports.pending_title" | t: { count: pendingRequests.length } }}</ion-card-title>
+            <p class="microcopy">{{ "reports.pending_microcopy" | t }}</p>
+          </ion-card-header>
+          <ion-card-content>
+            <ion-list lines="none" class="data-list" *ngIf="pendingRequests.length > 0">
+              <ng-container *ngFor="let request of pendingRequests">
+                <ion-item class="data-item">
+                  <ion-label>
+                    <h3 class="item-title">{{ request.workEvent.user.fullName }} | {{ eventTypeLabel(request.workEvent.type) }}</h3>
+                    <ion-note class="item-meta">{{ "common.current" | t }}: {{ formatDateTime(request.workEvent.eventAt) }}</ion-note>
+                    <ion-note class="item-meta">{{ "common.requested" | t }}: {{ formatDateTime(request.requestedEventAt) }}</ion-note>
+                    <ion-note class="item-meta" *ngIf="request.requestedNote">{{ "common.note" | t }}: {{ request.requestedNote }}</ion-note>
+                    <ion-note class="item-audit">{{ "common.reason_prefix" | t: { reason: request.reason } }}</ion-note>
+                  </ion-label>
+                </ion-item>
+
+                <section class="review-box">
+                  <ion-item>
+                    <ion-label position="stacked">{{ "reports.review_comment_optional" | t }}</ion-label>
+                    <ion-textarea rows="2" [(ngModel)]="reviewCommentByRequestId[request.id]"></ion-textarea>
+                  </ion-item>
+                  <div class="editor-actions">
+                    <ion-button size="small" color="success" (click)="reviewRequest(request, 'APPROVE')">{{ "reports.action_approve" | t }}</ion-button>
+                    <ion-button size="small" color="danger" fill="outline" (click)="reviewRequest(request, 'REJECT')">{{ "reports.action_reject" | t }}</ion-button>
+                  </div>
+                </section>
+              </ng-container>
+            </ion-list>
+
+            <section class="empty-state" *ngIf="pendingRequests.length === 0">
+              <ion-icon name="checkmark-done-outline" aria-hidden="true"></ion-icon>
+              <h3>{{ "reports.empty_pending_title" | t }}</h3>
+              <p>{{ "reports.empty_pending_desc" | t }}</p>
+            </section>
           </ion-card-content>
         </ion-card>
       </ion-col>
@@ -189,47 +235,5 @@
       </ion-col>
     </ion-row>
 
-    <ion-row *ngIf="authService.isAdmin">
-      <ion-col size="12">
-        <ion-card class="glass-card panel requests-panel">
-          <ion-card-header>
-            <ion-card-title>{{ "reports.pending_title" | t: { count: pendingRequests.length } }}</ion-card-title>
-            <p class="microcopy">{{ "reports.pending_microcopy" | t }}</p>
-          </ion-card-header>
-          <ion-card-content>
-            <ion-list lines="none" class="data-list" *ngIf="pendingRequests.length > 0">
-              <ng-container *ngFor="let request of pendingRequests">
-                <ion-item class="data-item">
-                  <ion-label>
-                    <h3 class="item-title">{{ request.workEvent.user.fullName }} | {{ eventTypeLabel(request.workEvent.type) }}</h3>
-                    <ion-note class="item-meta">{{ "common.current" | t }}: {{ formatDateTime(request.workEvent.eventAt) }}</ion-note>
-                    <ion-note class="item-meta">{{ "common.requested" | t }}: {{ formatDateTime(request.requestedEventAt) }}</ion-note>
-                    <ion-note class="item-meta" *ngIf="request.requestedNote">{{ "common.note" | t }}: {{ request.requestedNote }}</ion-note>
-                    <ion-note class="item-audit">{{ "common.reason_prefix" | t: { reason: request.reason } }}</ion-note>
-                  </ion-label>
-                </ion-item>
-
-                <section class="review-box">
-                  <ion-item>
-                    <ion-label position="stacked">{{ "reports.review_comment_optional" | t }}</ion-label>
-                    <ion-textarea rows="2" [(ngModel)]="reviewCommentByRequestId[request.id]"></ion-textarea>
-                  </ion-item>
-                  <div class="editor-actions">
-                    <ion-button size="small" color="success" (click)="reviewRequest(request, 'APPROVE')">{{ "reports.action_approve" | t }}</ion-button>
-                    <ion-button size="small" color="danger" fill="outline" (click)="reviewRequest(request, 'REJECT')">{{ "reports.action_reject" | t }}</ion-button>
-                  </div>
-                </section>
-              </ng-container>
-            </ion-list>
-
-            <section class="empty-state" *ngIf="pendingRequests.length === 0">
-              <ion-icon name="checkmark-done-outline" aria-hidden="true"></ion-icon>
-              <h3>{{ "reports.empty_pending_title" | t }}</h3>
-              <p>{{ "reports.empty_pending_desc" | t }}</p>
-            </section>
-          </ion-card-content>
-        </ion-card>
-      </ion-col>
-    </ion-row>
   </ion-grid>
 </app-main-layout>

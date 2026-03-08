@@ -48,6 +48,18 @@
                   <h3 class="item-title">{{ user.fullName }}</h3>
                   <ion-note class="item-meta">{{ user.email }} | {{ roleLabel(user.role) }}</ion-note>
                 </ion-label>
+                <ion-button
+                  slot="end"
+                  size="small"
+                  fill="outline"
+                  color="danger"
+                  *ngIf="canDeleteUser(user)"
+                  [disabled]="deletingUserId === user.id"
+                  (click)="confirmDeleteUser(user)"
+                >
+                  <ion-icon slot="start" name="trash-outline"></ion-icon>
+                  {{ "users.action_delete" | t }}
+                </ion-button>
               </ion-item>
             </ion-list>
 

@@ -33,6 +33,20 @@ enum EditRequestStatus {
   REJECTED
 }
 
+enum NotificationType {
+  EDIT_REQUEST_CREATED
+  EDIT_REQUEST_APPROVED
+  EDIT_REQUEST_REJECTED
+  EVENT_MODIFIED
+  SYSTEM
+}
+
+enum PushPlatform {
+  WEB
+  ANDROID
+  IOS
+}
+
 model User {
   id                  String                 @id @default(cuid())
   email               String                 @unique
@@ -46,6 +60,8 @@ model User {
   modifiedEvents      WorkEvent[]            @relation("WorkEventModifier")
   requestedEditEvents WorkEventEditRequest[] @relation("WorkEventEditRequester")
   reviewedEditEvents  WorkEventEditRequest[] @relation("WorkEventEditReviewer")
+  notifications       Notification[]
+  pushTokens          PushDeviceToken[]
 }
 
 model WorkEvent {
@@ -93,4 +109,34 @@ model WorkEventEditRequest {
   @@index([workEventId, status])
   @@index([requestedById, createdAt])
   @@index([status, createdAt])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  title     String
+  body      String
+  metadata  Json?
+  isRead    Boolean          @default(false)
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  @@index([userId, createdAt])
+  @@index([userId, isRead, createdAt])
+}
+
+model PushDeviceToken {
+  id         String       @id @default(cuid())
+  userId     String
+  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token      String       @unique
+  platform   PushPlatform
+  isActive   Boolean      @default(true)
+  lastSeenAt DateTime     @default(now())
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  @@index([userId, isActive])
 }

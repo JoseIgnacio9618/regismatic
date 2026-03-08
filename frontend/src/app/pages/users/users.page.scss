@@ -21,3 +21,9 @@
 .mt-16 {
   margin-top: 16px;
 }
+
+.data-item ion-button[color="danger"] {
+  --background: color-mix(in srgb, var(--ion-color-danger), transparent 88%);
+  --border-color: color-mix(in srgb, var(--ion-color-danger), transparent 44%);
+  --color: var(--ion-color-danger);
+}

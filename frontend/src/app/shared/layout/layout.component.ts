@@ -1,8 +1,11 @@
 import { Component, Input } from "@angular/core";
 import { Router } from "@angular/router";
+import { PopoverController } from "@ionic/angular";
 import type { AppLanguage } from "src/app/core/i18n/translations";
+import { UserNotification } from "src/app/core/models/types";
 import { AuthService } from "src/app/core/services/auth.service";
 import { I18nService } from "src/app/core/services/i18n.service";
+import { NotificationService } from "src/app/core/services/notification.service";
 import { ThemeService } from "src/app/core/services/theme.service";
 
 @Component({
@@ -12,18 +15,31 @@ import { ThemeService } from "src/app/core/services/theme.service";
   standalone: false
 })
 export class LayoutComponent {
+  private static nextInstanceId = 0;
+
   @Input() title = "Regismatic";
   desktopMenuOpen = false;
   mobileMenuOpen = false;
+  readonly desktopTriggerId = `header-actions-trigger-${++LayoutComponent.nextInstanceId}`;
+  readonly mobileTriggerId = `header-menu-trigger-${LayoutComponent.nextInstanceId}`;
+  readonly desktopNotificationsTriggerId = `header-desktop-notifications-trigger-${LayoutComponent.nextInstanceId}`;
+  readonly mobileNotificationsTriggerId = `header-mobile-notifications-trigger-${LayoutComponent.nextInstanceId}`;
+  readonly desktopPopoverId = `desktop-menu-popover-${LayoutComponent.nextInstanceId}`;
+  readonly mobilePopoverId = `mobile-menu-popover-${LayoutComponent.nextInstanceId}`;
+  readonly desktopNotificationsPopoverId = `desktop-notifications-popover-${LayoutComponent.nextInstanceId}`;
+  readonly mobileNotificationsPopoverId = `mobile-notifications-popover-${LayoutComponent.nextInstanceId}`;
 
   constructor(
     public readonly authService: AuthService,
     public readonly i18nService: I18nService,
+    public readonly notificationService: NotificationService,
     public readonly themeService: ThemeService,
+    private readonly popoverController: PopoverController,
     private readonly router: Router
   ) {}
 
   go(path: string): void {
+    void this.closeMenus();
     void this.router.navigateByUrl(path);
   }
 
@@ -32,11 +48,13 @@ export class LayoutComponent {
   }
 
   logout(): void {
+    void this.closeMenus();
     this.authService.logout();
   }
 
   toggleTheme(): void {
     this.themeService.toggle();
+    void this.closeMenus();
   }
 
   setLanguage(language: string | null | undefined): void {
@@ -45,6 +63,7 @@ export class LayoutComponent {
     }
 
     this.i18nService.setLanguage(language as AppLanguage);
+    void this.closeMenus();
   }
 
   onDesktopMenuDidPresent(): void {
@@ -61,5 +80,32 @@ export class LayoutComponent {
 
   onMobileMenuDidDismiss(): void {
     this.mobileMenuOpen = false;
+  }
+
+  formatNotificationDate(iso: string): string {
+    return new Date(iso).toLocaleString(this.i18nService.locale, {
+      day: "2-digit",
+      month: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+  }
+
+  async openNotification(notification: UserNotification): Promise<void> {
+    await this.notificationService.goToNotification(notification);
+    await this.closeMenus();
+  }
+
+  async markAllNotificationsAsRead(): Promise<void> {
+    await this.notificationService.markAllAsRead();
+  }
+
+  private async closeMenus(): Promise<void> {
+    this.desktopMenuOpen = false;
+    this.mobileMenuOpen = false;
+    await this.popoverController.dismiss(undefined, undefined, this.desktopPopoverId);
+    await this.popoverController.dismiss(undefined, undefined, this.mobilePopoverId);
+    await this.popoverController.dismiss(undefined, undefined, this.desktopNotificationsPopoverId);
+    await this.popoverController.dismiss(undefined, undefined, this.mobileNotificationsPopoverId);
   }
 }

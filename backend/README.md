@@ -43,5 +43,10 @@ API por defecto: `http://localhost:4000`
 - `POST /api/attendance/events/:eventId/edit-requests` (employee)
 - `GET /api/attendance/edit-requests`
 - `PATCH /api/attendance/edit-requests/:requestId/review` (admin)
+- `GET /api/notifications`
+- `PATCH /api/notifications/read-all`
+- `PATCH /api/notifications/:notificationId/read`
+- `POST /api/notifications/push-token`
+- `GET /api/reports/summary.xlsx`
 - `GET /health`
 - `GET /health/ready`

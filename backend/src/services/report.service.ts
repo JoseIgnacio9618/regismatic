@@ -1,5 +1,6 @@
 import { WorkEventType, type WorkEvent } from "@prisma/client";
 import { Parser } from "json2csv";
+import ExcelJS from "exceljs";
 import { prisma } from "../config/prisma";
 import { diffMinutes, madridDateKey } from "../utils/dates";
 
@@ -192,4 +193,184 @@ export const summaryToCsv = (rows: SummaryRow[]): string => {
   });
 
   return parser.parse(rows);
+};
+
+const minutesToHourNumber = (minutes: number): number => {
+  return Math.round((minutes / 60) * 100) / 100;
+};
+
+export const summaryToExcelBuffer = async (rows: SummaryRow[]): Promise<Buffer> => {
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = "Regismatic";
+  workbook.created = new Date();
+  workbook.modified = new Date();
+
+  const detailSheet = workbook.addWorksheet("Detalle diario");
+  detailSheet.columns = [
+    { header: "Fecha", key: "date", width: 14 },
+    { header: "Empleado", key: "employee", width: 26 },
+    { header: "Email", key: "email", width: 30 },
+    { header: "Primera entrada", key: "firstIn", width: 22 },
+    { header: "Ultima salida", key: "lastOut", width: 22 },
+    { header: "Trabajo (min)", key: "workedMinutes", width: 15 },
+    { header: "Pausa (min)", key: "breakMinutes", width: 13 },
+    { header: "Extra (min)", key: "overtimeMinutes", width: 13 },
+    { header: "Ajustes (min)", key: "adjustmentsMinutes", width: 14 },
+    { header: "Trabajo (h)", key: "workedHours", width: 12 },
+    { header: "Estado", key: "status", width: 12 }
+  ];
+
+  for (const row of rows) {
+    detailSheet.addRow({
+      date: row.date,
+      employee: row.employee,
+      email: row.email,
+      firstIn: row.firstIn ?? "",
+      lastOut: row.lastOut ?? "",
+      workedMinutes: row.workedMinutes,
+      breakMinutes: row.breakMinutes,
+      overtimeMinutes: row.overtimeMinutes,
+      adjustmentsMinutes: row.adjustmentsMinutes,
+      workedHours: minutesToHourNumber(row.workedMinutes),
+      status: row.status
+    });
+  }
+
+  detailSheet.getRow(1).font = { bold: true };
+  detailSheet.getRow(1).alignment = { vertical: "middle", horizontal: "center" };
+  detailSheet.views = [{ state: "frozen", ySplit: 1 }];
+  if (rows.length > 0) {
+    detailSheet.autoFilter = {
+      from: { row: 1, column: 1 },
+      to: { row: 1, column: 11 }
+    };
+  }
+
+  const byEmployee = new Map<
+    string,
+    {
+      employee: string;
+      email: string;
+      days: number;
+      workedMinutes: number;
+      breakMinutes: number;
+      overtimeMinutes: number;
+      adjustmentsMinutes: number;
+    }
+  >();
+
+  const byDate = new Map<
+    string,
+    {
+      date: string;
+      employees: number;
+      workedMinutes: number;
+      breakMinutes: number;
+      overtimeMinutes: number;
+      adjustmentsMinutes: number;
+    }
+  >();
+
+  for (const row of rows) {
+    const employeeCurrent = byEmployee.get(row.userId) ?? {
+      employee: row.employee,
+      email: row.email,
+      days: 0,
+      workedMinutes: 0,
+      breakMinutes: 0,
+      overtimeMinutes: 0,
+      adjustmentsMinutes: 0
+    };
+    employeeCurrent.days += 1;
+    employeeCurrent.workedMinutes += row.workedMinutes;
+    employeeCurrent.breakMinutes += row.breakMinutes;
+    employeeCurrent.overtimeMinutes += row.overtimeMinutes;
+    employeeCurrent.adjustmentsMinutes += row.adjustmentsMinutes;
+    byEmployee.set(row.userId, employeeCurrent);
+
+    const dayCurrent = byDate.get(row.date) ?? {
+      date: row.date,
+      employees: 0,
+      workedMinutes: 0,
+      breakMinutes: 0,
+      overtimeMinutes: 0,
+      adjustmentsMinutes: 0
+    };
+    dayCurrent.employees += 1;
+    dayCurrent.workedMinutes += row.workedMinutes;
+    dayCurrent.breakMinutes += row.breakMinutes;
+    dayCurrent.overtimeMinutes += row.overtimeMinutes;
+    dayCurrent.adjustmentsMinutes += row.adjustmentsMinutes;
+    byDate.set(row.date, dayCurrent);
+  }
+
+  const employeeSheet = workbook.addWorksheet("Pivot empleado");
+  employeeSheet.columns = [
+    { header: "Empleado", key: "employee", width: 26 },
+    { header: "Email", key: "email", width: 30 },
+    { header: "Dias", key: "days", width: 10 },
+    { header: "Trabajo (min)", key: "workedMinutes", width: 15 },
+    { header: "Pausa (min)", key: "breakMinutes", width: 13 },
+    { header: "Extra (min)", key: "overtimeMinutes", width: 13 },
+    { header: "Ajustes (min)", key: "adjustmentsMinutes", width: 14 },
+    { header: "Trabajo (h)", key: "workedHours", width: 12 }
+  ];
+
+  const employeeRows = Array.from(byEmployee.values()).sort((a, b) => a.employee.localeCompare(b.employee));
+  for (const row of employeeRows) {
+    employeeSheet.addRow({
+      ...row,
+      workedHours: minutesToHourNumber(row.workedMinutes)
+    });
+  }
+
+  employeeSheet.getRow(1).font = { bold: true };
+  employeeSheet.getRow(1).alignment = { vertical: "middle", horizontal: "center" };
+  employeeSheet.views = [{ state: "frozen", ySplit: 1 }];
+  if (employeeRows.length > 0) {
+    employeeSheet.autoFilter = {
+      from: { row: 1, column: 1 },
+      to: { row: 1, column: 8 }
+    };
+  }
+
+  const dateSheet = workbook.addWorksheet("Pivot fecha");
+  dateSheet.columns = [
+    { header: "Fecha", key: "date", width: 14 },
+    { header: "Empleados", key: "employees", width: 12 },
+    { header: "Trabajo (min)", key: "workedMinutes", width: 15 },
+    { header: "Pausa (min)", key: "breakMinutes", width: 13 },
+    { header: "Extra (min)", key: "overtimeMinutes", width: 13 },
+    { header: "Ajustes (min)", key: "adjustmentsMinutes", width: 14 },
+    { header: "Trabajo (h)", key: "workedHours", width: 12 }
+  ];
+
+  const dateRows = Array.from(byDate.values()).sort((a, b) => a.date.localeCompare(b.date));
+  for (const row of dateRows) {
+    dateSheet.addRow({
+      ...row,
+      workedHours: minutesToHourNumber(row.workedMinutes)
+    });
+  }
+
+  dateSheet.getRow(1).font = { bold: true };
+  dateSheet.getRow(1).alignment = { vertical: "middle", horizontal: "center" };
+  dateSheet.views = [{ state: "frozen", ySplit: 1 }];
+  if (dateRows.length > 0) {
+    dateSheet.autoFilter = {
+      from: { row: 1, column: 1 },
+      to: { row: 1, column: 7 }
+    };
+  }
+
+  const infoSheet = workbook.addWorksheet("Guia");
+  infoSheet.columns = [{ header: "Indicaciones", key: "guide", width: 120 }];
+  infoSheet.getRow(1).font = { bold: true };
+  infoSheet.addRow({
+    guide:
+      "Usa 'Detalle diario' para filtrar y auditar. Usa 'Pivot empleado' y 'Pivot fecha' como resumen de tablas dinamicas para analisis operativo."
+  });
+
+  const buffer = await workbook.xlsx.writeBuffer();
+  return Buffer.from(buffer);
 };

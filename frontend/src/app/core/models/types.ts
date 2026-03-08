@@ -1,5 +1,12 @@
 export type Role = "ADMIN" | "EMPLOYEE";
 export type EditRequestStatus = "PENDING" | "APPROVED" | "REJECTED";
+export type NotificationType =
+  | "EDIT_REQUEST_CREATED"
+  | "EDIT_REQUEST_APPROVED"
+  | "EDIT_REQUEST_REJECTED"
+  | "EVENT_MODIFIED"
+  | "SYSTEM";
+export type PushPlatform = "WEB" | "ANDROID" | "IOS";
 
 export interface AuthUser {
   id: string;
@@ -114,5 +121,16 @@ export interface TeamUser {
   fullName: string;
   role: Role;
   isActive: boolean;
+  createdAt: string;
+}
+
+export interface UserNotification {
+  id: string;
+  type: NotificationType;
+  title: string;
+  body: string;
+  metadata: Record<string, unknown> | null;
+  isRead: boolean;
+  readAt: string | null;
   createdAt: string;
 }

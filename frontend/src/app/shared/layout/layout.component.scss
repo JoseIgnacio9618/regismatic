@@ -1,6 +1,7 @@
 .app-toolbar {
   --min-height: 70px;
-  padding: 0 8px;
+  --padding-start: 8px;
+  --padding-end: 8px;
 }
 
 ion-title {
@@ -17,7 +18,7 @@ ion-title {
   border-radius: 999px;
   margin-right: 10px;
   background: linear-gradient(140deg, var(--ion-color-primary) 0%, var(--ion-color-secondary) 100%);
-  box-shadow: 0 0 0 6px color-mix(in srgb, var(--ion-color-primary), transparent 86%);
+  box-shadow: 0 0 0 6px color-mix(in srgb, var(--ion-color-primary), transparent 85%);
   vertical-align: middle;
 }
 
@@ -53,19 +54,29 @@ ion-title {
 .mobile-actions ion-button {
   --padding-start: 10px;
   --padding-end: 10px;
-  --background: color-mix(in srgb, var(--app-surface-strong), transparent 4%);
+  --background: color-mix(in srgb, var(--app-surface-strong), transparent 2%);
   --border-radius: 999px;
   --color: var(--ion-text-color);
-  border: 1px solid color-mix(in srgb, var(--app-border), transparent 2%);
-}
-
-.mobile-actions ion-icon {
-  font-size: 1.26rem;
+  border: 1px solid color-mix(in srgb, var(--app-border), transparent 6%);
 }
 
 .menu-toggle-icon {
+  display: block;
+  width: 18px;
+  height: 18px;
   color: var(--ion-text-color);
-  font-size: 1.36rem;
+  font-size: 1.1rem;
+}
+
+.menu-caret-icon {
+  width: 14px;
+  height: 14px;
+  opacity: 0.9;
+}
+
+.menu-button-label {
+  font-weight: 600;
+  letter-spacing: 0.01em;
 }
 
 .active-nav {
@@ -81,27 +92,57 @@ ion-title {
 }
 
 .header-menu-list {
-  min-width: 260px;
-  max-width: min(92vw, 340px);
+  min-width: 272px;
+  max-width: min(92vw, 352px);
   padding: 8px;
-  background: transparent;
+  margin: 0;
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--app-border), transparent 10%);
+  background: color-mix(in srgb, var(--app-surface-strong), transparent 2%);
 }
 
 .header-menu-list ion-item {
-  margin-bottom: 6px;
+  --background: transparent;
+  --inner-border-width: 0;
+  border: 0;
+  border-radius: 12px;
+  margin-bottom: 4px;
 }
 
 .header-menu-list ion-item:last-child {
   margin-bottom: 0;
 }
 
-.header-menu-list .menu-language ion-select {
-  min-width: 110px;
-  max-width: 140px;
+.menu-language {
+  --padding-start: 12px;
+  --padding-end: 12px;
+  --inner-padding-end: 0;
+  --inner-padding-start: 0;
+  --min-height: 48px;
+}
+
+.menu-language ion-label {
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--app-ink-muted);
+}
+
+.menu-language-select {
+  min-width: 132px;
+  max-width: 174px;
+  --padding-start: 10px;
+  --padding-end: 8px;
+  --highlight-color-focused: var(--ion-color-primary);
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--app-border), transparent 6%);
+  background: color-mix(in srgb, var(--app-surface), transparent 8%);
+  color: var(--ion-text-color);
+  padding: 2px 8px;
 }
 
 .header-menu-list .menu-user {
-  opacity: 0.9;
+  --color: var(--app-ink-soft);
+  opacity: 0.95;
 }
 
 .header-menu-list .danger-item {
@@ -114,9 +155,28 @@ ion-title {
 }
 
 .more-button {
-  --background: color-mix(in srgb, var(--app-surface), transparent 10%);
+  --padding-start: 10px;
+  --padding-end: 10px;
+  --background: color-mix(in srgb, var(--app-surface), transparent 2%);
+  --color: var(--ion-text-color);
   --border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--app-border), transparent 8%);
+  border: 1px solid color-mix(in srgb, var(--app-border), transparent 6%);
+}
+
+.mobile-menu-button {
+  --padding-start: 10px;
+  --padding-end: 10px;
+  --background: color-mix(in srgb, var(--app-surface-strong), transparent 2%);
+  --border-radius: 999px;
+  --color: var(--ion-text-color);
+  border: 1px solid color-mix(in srgb, var(--app-border), transparent 6%);
+}
+
+.header-menu-popover {
+  --width: min(92vw, 352px);
+  --max-width: 352px;
+  --background: transparent;
+  --box-shadow: 0 18px 36px color-mix(in srgb, #000, transparent 64%);
 }
 
 .page-shell {
@@ -135,6 +195,14 @@ ion-title {
     --padding-end: 8px;
     font-size: 0.78rem;
   }
+
+  .menu-button-label {
+    display: none;
+  }
+
+  .menu-caret-icon {
+    display: none;
+  }
 }
 
 @media (max-width: 1080px) {
@@ -150,6 +218,10 @@ ion-title {
 @media (max-width: 767px) {
   ion-title {
     max-width: calc(100vw - 104px);
+  }
+
+  .header-menu-popover {
+    --width: min(94vw, 340px);
   }
 
   .page-shell {

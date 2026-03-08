@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import { z } from "zod";
 import { AppError } from "../middlewares/error.middleware";
-import { getSummaryReport, summaryToCsv } from "../services/report.service";
+import { getSummaryReport, summaryToCsv, summaryToExcelBuffer } from "../services/report.service";
 import { parseReportRange } from "../utils/report-range";
 
 const reportQuerySchema = z.object({
@@ -39,4 +39,13 @@ export const csvReportController = async (req: Request, res: Response) => {
   res.setHeader("Content-Type", "text/csv; charset=utf-8");
   res.setHeader("Content-Disposition", "attachment; filename=regismatic-report.csv");
   return res.send(csv);
+};
+
+export const excelReportController = async (req: Request, res: Response) => {
+  const rows = await getReportRows(req);
+  const workbook = await summaryToExcelBuffer(rows);
+
+  res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+  res.setHeader("Content-Disposition", "attachment; filename=regismatic-report.xlsx");
+  return res.send(workbook);
 };

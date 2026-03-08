@@ -26,6 +26,7 @@ JWT_SECRET=<secreto-largo-muy-aleatorio>
 JWT_EXPIRES_IN=12h
 AUTH_RATE_LIMIT_WINDOW_MS=900000
 AUTH_RATE_LIMIT_MAX=10
+FCM_SERVICE_ACCOUNT_PATH=/run/secrets/firebase-service-account.json
 RUN_SEED=false
 APP_DOMAIN=app.tudominio.com
 API_DOMAIN=api.tudominio.com

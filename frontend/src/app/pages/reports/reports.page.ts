@@ -1,4 +1,5 @@
 import { Component, OnInit } from "@angular/core";
+import { ActivatedRoute } from "@angular/router";
 import { ToastController } from "@ionic/angular";
 import { AttendanceEventRecord, SummaryRow, TeamUser, WorkEventEditRequestRecord } from "src/app/core/models/types";
 import { AttendanceService } from "src/app/core/services/attendance.service";
@@ -45,6 +46,7 @@ export class ReportsPage implements OnInit {
     private readonly reportService: ReportService,
     private readonly userService: UserService,
     private readonly attendanceService: AttendanceService,
+    private readonly route: ActivatedRoute,
     private readonly toastController: ToastController
   ) {}
 
@@ -54,6 +56,7 @@ export class ReportsPage implements OnInit {
     }
 
     await this.loadReport();
+    this.applyInitialFocus();
   }
 
   minutesToHuman(minutes: number): string {
@@ -110,19 +113,23 @@ export class ReportsPage implements OnInit {
     }
   }
 
-  async downloadCsv(): Promise<void> {
+  async downloadExcel(): Promise<void> {
     try {
-      const csv = await this.reportService.downloadCsv(this.from, this.to, this.selectedUserId || undefined);
-      const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
+      const workbook = await this.reportService.downloadExcel(this.from, this.to, this.selectedUserId || undefined);
+      const url = URL.createObjectURL(workbook);
       const anchor = document.createElement("a");
       anchor.href = url;
-      anchor.download = `regismatic-${this.from}-${this.to}.csv`;
+      anchor.download = `regismatic-${this.from}-${this.to}.xlsx`;
       anchor.click();
       URL.revokeObjectURL(url);
     } catch (error) {
       await this.showToast(error instanceof Error ? error.message : this.i18nService.t("reports.toast_csv_failed"), "danger");
     }
+  }
+
+  scrollToIncidents(): void {
+    const incidentsPanel = document.getElementById("incidents-panel");
+    incidentsPanel?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   startAdminEdit(event: AttendanceEventRecord): void {
@@ -253,6 +260,13 @@ export class ReportsPage implements OnInit {
     const diff = day === 0 ? 6 : day - 1;
     now.setDate(now.getDate() - diff);
     return now.toISOString().slice(0, 10);
+  }
+
+  private applyInitialFocus(): void {
+    const focus = this.route.snapshot.queryParamMap.get("focus");
+    if (focus === "incidents" && this.authService.isAdmin) {
+      setTimeout(() => this.scrollToIncidents(), 120);
+    }
   }
 
   private async showToast(message: string, color: "danger" | "success"): Promise<void> {

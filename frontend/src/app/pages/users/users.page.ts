@@ -1,6 +1,7 @@
 import { Component, OnInit } from "@angular/core";
-import { ToastController } from "@ionic/angular";
+import { AlertController, ToastController } from "@ionic/angular";
 import { Role, TeamUser } from "src/app/core/models/types";
+import { AuthService } from "src/app/core/services/auth.service";
 import { I18nService } from "src/app/core/services/i18n.service";
 import { UserService } from "src/app/core/services/user.service";
 
@@ -17,10 +18,13 @@ export class UsersPage implements OnInit {
   email = "";
   password = "Regismatic2026!";
   role: Role = "EMPLOYEE";
+  deletingUserId: string | null = null;
 
   constructor(
+    public readonly authService: AuthService,
     private readonly userService: UserService,
     public readonly i18nService: I18nService,
+    private readonly alertController: AlertController,
     private readonly toastController: ToastController
   ) {}
 
@@ -51,6 +55,49 @@ export class UsersPage implements OnInit {
 
   roleLabel(role: Role): string {
     return this.i18nService.t(`role.${role}`);
+  }
+
+  canDeleteUser(user: TeamUser): boolean {
+    return this.authService.user?.id !== user.id;
+  }
+
+  async confirmDeleteUser(user: TeamUser): Promise<void> {
+    if (!this.canDeleteUser(user) || this.deletingUserId) {
+      return;
+    }
+
+    const alert = await this.alertController.create({
+      header: this.i18nService.t("users.confirm_delete_title"),
+      message: this.i18nService.t("users.confirm_delete_message", { name: user.fullName }),
+      buttons: [
+        {
+          text: this.i18nService.t("common.cancel"),
+          role: "cancel"
+        },
+        {
+          text: this.i18nService.t("users.confirm_delete_accept"),
+          role: "destructive",
+          handler: () => {
+            void this.deleteUser(user.id);
+          }
+        }
+      ]
+    });
+
+    await alert.present();
+  }
+
+  private async deleteUser(userId: string): Promise<void> {
+    this.deletingUserId = userId;
+    try {
+      await this.userService.deleteUser(userId);
+      await this.loadUsers();
+      await this.showToast(this.i18nService.t("users.toast_user_deleted"), "success");
+    } catch (error) {
+      await this.showToast(error instanceof Error ? error.message : this.i18nService.t("users.toast_user_delete_failed"), "danger");
+    } finally {
+      this.deletingUserId = null;
+    }
   }
 
   private async loadUsers(): Promise<void> {

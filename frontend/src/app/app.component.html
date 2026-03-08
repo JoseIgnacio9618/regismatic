@@ -1,3 +1,9 @@
 <ion-app>
   <ion-router-outlet></ion-router-outlet>
+  <ion-loading
+    [isOpen]="(requestLoadingService.loading$ | async) ?? false"
+    [message]="loadingMessage"
+    spinner="crescent"
+    backdropDismiss="false"
+  ></ion-loading>
 </ion-app>

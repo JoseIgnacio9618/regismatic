@@ -8,6 +8,7 @@ import { env } from "./config/env";
 import { prisma } from "./config/prisma";
 import { authRouter } from "./routes/auth.routes";
 import { attendanceRouter } from "./routes/attendance.routes";
+import { notificationRouter } from "./routes/notification.routes";
 import { reportRouter } from "./routes/report.routes";
 import { userRouter } from "./routes/user.routes";
 import { AppError, errorMiddleware } from "./middlewares/error.middleware";
@@ -55,6 +56,7 @@ app.get("/health/ready", async (_req, res) => {
 app.use("/api/auth/login", authLimiter);
 app.use("/api/auth", authRouter);
 app.use("/api/attendance", attendanceRouter);
+app.use("/api/notifications", notificationRouter);
 app.use("/api/reports", reportRouter);
 app.use("/api/users", userRouter);
 

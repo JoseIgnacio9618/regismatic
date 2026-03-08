@@ -12,7 +12,9 @@ const envSchema = z.object({
   CORS_ORIGIN: z.string().default("*"),
   TRUST_PROXY: z.union([z.literal("true"), z.literal("false")]).default("false"),
   AUTH_RATE_LIMIT_WINDOW_MS: z.coerce.number().default(15 * 60 * 1000),
-  AUTH_RATE_LIMIT_MAX: z.coerce.number().default(10)
+  AUTH_RATE_LIMIT_MAX: z.coerce.number().default(10),
+  FCM_SERVICE_ACCOUNT_JSON: z.string().optional(),
+  FCM_SERVICE_ACCOUNT_PATH: z.string().optional()
 });
 
 const parsed = envSchema.safeParse(process.env);
