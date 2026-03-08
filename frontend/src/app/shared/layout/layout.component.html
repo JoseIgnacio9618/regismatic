@@ -10,9 +10,11 @@
       <ion-button fill="clear" *ngIf="authService.isAdmin" [class.active-nav]="isActive('/users')" (click)="go('/users')">{{ "nav.team" | t }}</ion-button>
       <ion-button fill="clear" [id]="desktopNotificationsTriggerId" class="notification-button" [attr.aria-label]="'nav.notifications' | t">
         <ion-icon slot="icon-only" name="notifications-outline" aria-hidden="true"></ion-icon>
-        <ion-badge color="danger" *ngIf="(notificationService.unreadCount$ | async) as unreadCount" [hidden]="unreadCount === 0">
-          {{ unreadCount > 99 ? "99+" : unreadCount }}
-        </ion-badge>
+        <ng-container *ngIf="(notificationService.unreadCount$ | async) as unreadCount">
+          <ion-badge class="notification-badge" color="danger" *ngIf="unreadCount > 0">
+            {{ unreadCount > 99 ? "99+" : unreadCount }}
+          </ion-badge>
+        </ng-container>
       </ion-button>
       <ion-button fill="clear" [id]="desktopTriggerId" class="more-button" [attr.aria-label]="'nav.more' | t">
         <ion-icon slot="start" class="menu-toggle-icon" name="menu-outline" aria-hidden="true"></ion-icon>
@@ -24,9 +26,11 @@
     <ion-buttons slot="end" class="toolbar-actions mobile-actions">
       <ion-button fill="clear" [id]="mobileNotificationsTriggerId" class="notification-button" [attr.aria-label]="'nav.notifications' | t">
         <ion-icon slot="icon-only" name="notifications-outline" aria-hidden="true"></ion-icon>
-        <ion-badge color="danger" *ngIf="(notificationService.unreadCount$ | async) as unreadCount" [hidden]="unreadCount === 0">
-          {{ unreadCount > 99 ? "99+" : unreadCount }}
-        </ion-badge>
+        <ng-container *ngIf="(notificationService.unreadCount$ | async) as unreadCount">
+          <ion-badge class="notification-badge" color="danger" *ngIf="unreadCount > 0">
+            {{ unreadCount > 99 ? "99+" : unreadCount }}
+          </ion-badge>
+        </ng-container>
       </ion-button>
       <ion-button fill="clear" [id]="mobileTriggerId" class="mobile-menu-button" [attr.aria-label]="'nav.menu' | t">
         <ion-icon slot="start" class="menu-toggle-icon" [name]="mobileMenuOpen ? 'close-outline' : 'menu-outline'" aria-hidden="true"></ion-icon>

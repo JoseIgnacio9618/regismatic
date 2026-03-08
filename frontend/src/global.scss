@@ -250,6 +250,37 @@ ion-badge {
   letter-spacing: 0.01em;
 }
 
+ion-button.notification-button {
+  position: relative;
+  --padding-start: 10px;
+  --padding-end: 10px;
+  min-width: 42px;
+}
+
+ion-button.notification-button ion-icon {
+  font-size: 1.22rem;
+  color: var(--ion-text-color);
+}
+
+ion-button.notification-button .notification-badge {
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  transform: translate(22%, -22%);
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.66rem;
+  line-height: 1;
+  border-radius: 999px;
+  border: 1.5px solid var(--app-surface-strong);
+  box-shadow: 0 4px 10px color-mix(in srgb, var(--ion-color-danger), transparent 58%);
+  pointer-events: none;
+}
+
 ion-chip {
   --background: color-mix(in srgb, var(--ion-color-primary), transparent 82%);
   border: 1px solid color-mix(in srgb, var(--ion-color-primary), transparent 52%);

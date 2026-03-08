@@ -173,16 +173,28 @@ export const createNotificationsForUsers = async (params: CreateNotificationsPar
     return;
   }
 
-  const pushResult = await sendPushToTokens(
-    deviceTokens.map((deviceToken) => deviceToken.token),
-    {
-      title: params.title,
-      body: params.body,
-      data: params.pushData ?? params.metadata
-    }
-  );
+  let pushResult:
+    | {
+        invalidTokens: string[];
+      }
+    | null = null;
 
-  if (pushResult.invalidTokens.length > 0) {
+  try {
+    pushResult = await sendPushToTokens(
+      deviceTokens.map((deviceToken) => deviceToken.token),
+      {
+        title: params.title,
+        body: params.body,
+        data: params.pushData ?? params.metadata
+      }
+    );
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error("Push dispatch failed. In-app notification persisted successfully.", error);
+    return;
+  }
+
+  if (pushResult && pushResult.invalidTokens.length > 0) {
     await prisma.pushDeviceToken.updateMany({
       where: {
         token: { in: pushResult.invalidTokens }
