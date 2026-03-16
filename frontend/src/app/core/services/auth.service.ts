@@ -24,7 +24,11 @@ export class AuthService {
   }
 
   get isAdmin(): boolean {
-    return this.user?.role === "ADMIN";
+    return this.user?.role === "ADMIN" || this.user?.role === "SUPERADMIN";
+  }
+
+  get isSuperadmin(): boolean {
+    return this.user?.role === "SUPERADMIN";
   }
 
   async bootstrap(): Promise<void> {
@@ -42,6 +46,15 @@ export class AuthService {
 
   async login(email: string, password: string): Promise<void> {
     const response = await this.apiService.post<LoginResponse>("/auth/login", { email, password });
+    await this.persistSession(response);
+  }
+
+  async registerAdmin(payload: { fullName: string; email: string; password: string }): Promise<void> {
+    const response = await this.apiService.post<LoginResponse>("/auth/register-admin", payload);
+    await this.persistSession(response);
+  }
+
+  private async persistSession(response: LoginResponse): Promise<void> {
     localStorage.setItem(AuthService.TOKEN_KEY, response.token);
     const me = await this.apiService.get<AuthUser>("/auth/me", true);
     this.userState.next(me);

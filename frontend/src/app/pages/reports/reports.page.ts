@@ -1,12 +1,18 @@
 import { Component, OnInit } from "@angular/core";
 import { ActivatedRoute } from "@angular/router";
 import { ToastController } from "@ionic/angular";
-import { AttendanceEventRecord, SummaryRow, TeamUser, WorkEventEditRequestRecord } from "src/app/core/models/types";
+import { AttendanceEventRecord, Role, SummaryRow, TeamUser, WorkEventEditRequestRecord } from "src/app/core/models/types";
 import { AttendanceService } from "src/app/core/services/attendance.service";
 import { AuthService } from "src/app/core/services/auth.service";
 import { I18nService } from "src/app/core/services/i18n.service";
 import { ReportService } from "src/app/core/services/report.service";
 import { UserService } from "src/app/core/services/user.service";
+
+type ReportScopeOption = {
+  id: string;
+  label: string;
+  role?: Role;
+};
 
 @Component({
   selector: "app-reports",
@@ -50,9 +56,107 @@ export class ReportsPage implements OnInit {
     private readonly toastController: ToastController
   ) {}
 
+  get scopedFilterUsers(): TeamUser[] {
+    if (this.authService.isSuperadmin) {
+      return this.users;
+    }
+
+    return this.users.filter((user) => user.role === "EMPLOYEE");
+  }
+
+  get reportScopeOptions(): ReportScopeOption[] {
+    if (!this.authService.isAdmin) {
+      return [];
+    }
+
+    if (this.authService.isSuperadmin) {
+      return [
+        { id: "", label: this.i18nService.t("reports.scope_all_platform") },
+        ...this.scopedFilterUsers.map((user) => ({
+          id: user.id,
+          label: `${user.fullName} - ${this.roleLabel(user.role)}`,
+          role: user.role
+        }))
+      ];
+    }
+
+    const currentUser = this.authService.user;
+    return [
+      { id: "", label: this.i18nService.t("reports.scope_all_team") },
+      ...(currentUser
+        ? [
+            {
+              id: currentUser.id,
+              label: this.i18nService.t("reports.scope_only_self")
+            }
+          ]
+        : []),
+      ...this.scopedFilterUsers.map((user) => ({
+        id: user.id,
+        label: `${user.fullName} - ${this.roleLabel(user.role)}`,
+        role: user.role
+      }))
+    ];
+  }
+
+  get scopeTitle(): string {
+    if (this.authService.isSuperadmin) {
+      return this.i18nService.t("reports.scope_superadmin_title");
+    }
+
+    if (this.authService.isAdmin) {
+      return this.i18nService.t("reports.scope_admin_title");
+    }
+
+    return this.i18nService.t("reports.scope_employee_title");
+  }
+
+  get scopeDescription(): string {
+    if (this.authService.isSuperadmin) {
+      return this.i18nService.t("reports.scope_superadmin_desc");
+    }
+
+    if (this.authService.isAdmin) {
+      return this.i18nService.t("reports.scope_admin_desc");
+    }
+
+    return this.i18nService.t("reports.scope_employee_desc");
+  }
+
+  get selectedScopeLabel(): string {
+    const option = this.reportScopeOptions.find((entry) => entry.id === this.selectedUserId);
+
+    if (option) {
+      return option.label;
+    }
+
+    if (this.authService.isSuperadmin) {
+      return this.i18nService.t("reports.scope_all_platform");
+    }
+
+    if (this.authService.isAdmin) {
+      return this.i18nService.t("reports.scope_all_team");
+    }
+
+    return this.i18nService.t("reports.scope_only_self");
+  }
+
+  get scopeBadgeColor(): "medium" | "primary" | "warning" {
+    if (this.authService.isSuperadmin) {
+      return "warning";
+    }
+
+    if (this.authService.isAdmin) {
+      return "primary";
+    }
+
+    return "medium";
+  }
+
   async ngOnInit(): Promise<void> {
     if (this.authService.isAdmin) {
-      this.users = await this.userService.listUsers();
+      const apiUsers = await this.userService.listUsers();
+      this.users = this.authService.isSuperadmin ? apiUsers : apiUsers.filter((user) => user.role === "EMPLOYEE");
     }
 
     await this.loadReport();
@@ -94,6 +198,10 @@ export class ReportsPage implements OnInit {
 
   requestStatusLabel(status: "PENDING" | "APPROVED" | "REJECTED"): string {
     return this.i18nService.t(`request_status.${status}`);
+  }
+
+  roleLabel(role: Role): string {
+    return this.i18nService.t(`role.${role}`);
   }
 
   async loadReport(): Promise<void> {
@@ -274,3 +382,4 @@ export class ReportsPage implements OnInit {
     await toast.present();
   }
 }
+

@@ -10,7 +10,8 @@ import {
 import { prisma } from "../config/prisma";
 import { AppError } from "../middlewares/error.middleware";
 import { diffMinutes, madridDateKey, madridDayRange, nowUtc } from "../utils/dates";
-import { createNotificationsForUsers, listAdminUsers } from "./notification.service";
+import { assertCanManageUser, assertCanViewUser, getScopedUserById, listVisibleUserIds } from "./access.service";
+import { createNotificationsForUsers, listApproverUsersForEmployee } from "./notification.service";
 
 export type AttendanceState = "OFF" | "WORKING" | "ON_BREAK";
 
@@ -351,6 +352,50 @@ const notifySafely = async (task: () => Promise<void>): Promise<void> => {
   }
 };
 
+const buildScopedEventUserWhere = async (requesterUserId: string, selectedUserId?: string) => {
+  const requester = await getScopedUserById(requesterUserId);
+
+  if (selectedUserId) {
+    await assertCanViewUser(requesterUserId, selectedUserId);
+    return {
+      userId: selectedUserId
+    };
+  }
+
+  if (requester.role === "SUPERADMIN") {
+    return {};
+  }
+
+  const visibleUserIds = await listVisibleUserIds(requesterUserId);
+  return {
+    userId: {
+      in: visibleUserIds
+    }
+  };
+};
+
+const buildScopedEditRequestWhere = async (requesterUserId: string, selectedUserId?: string) => {
+  const requester = await getScopedUserById(requesterUserId);
+
+  if (selectedUserId) {
+    await assertCanViewUser(requesterUserId, selectedUserId);
+    return {
+      requestedById: selectedUserId
+    };
+  }
+
+  if (requester.role === "SUPERADMIN") {
+    return {};
+  }
+
+  const visibleUserIds = await listVisibleUserIds(requesterUserId, { employeesOnly: true });
+  return {
+    requestedById: {
+      in: visibleUserIds
+    }
+  };
+};
+
 const getTodayEvents = async (userId: string) => {
   const { start, end } = madridDayRange(nowUtc());
 
@@ -493,6 +538,8 @@ export const addManualAdjustment = async (params: {
     throw new AppError("minutesDelta cannot be zero.", 400);
   }
 
+  await assertCanManageUser(params.adminId, params.userId);
+
   return prisma.workEvent.create({
     data: {
       userId: params.userId,
@@ -509,7 +556,7 @@ export const addManualAdjustment = async (params: {
 };
 
 export const listEvents = async (params: ListEventsParams): Promise<AttendanceEventRecord[]> => {
-  const effectiveUserId = params.requesterRole === "ADMIN" ? params.userId : params.requesterUserId;
+  const scopedUserWhere = await buildScopedEventUserWhere(params.requesterUserId, params.userId);
 
   const events = await prisma.workEvent.findMany({
     where: {
@@ -517,7 +564,7 @@ export const listEvents = async (params: ListEventsParams): Promise<AttendanceEv
         gte: params.fromUtc,
         lte: params.toUtc
       },
-      ...(effectiveUserId ? { userId: effectiveUserId } : {})
+      ...scopedUserWhere
     },
     include: eventInclude,
     orderBy: [{ eventAt: "desc" }, { createdAt: "desc" }]
@@ -528,6 +575,7 @@ export const listEvents = async (params: ListEventsParams): Promise<AttendanceEv
 
 export const updateEventAsAdmin = async (params: UpdateEventByAdminParams): Promise<AttendanceEventRecord> => {
   const event = await getEventForAdmin(params.eventId);
+  await assertCanManageUser(params.adminId, event.userId);
   const nextEventAtCandidate = params.eventAt ?? event.eventAt;
   const nextEventAt = normalizeEventAtChange(event.eventAt, nextEventAtCandidate);
   if (!isSameMinuteMoment(event.eventAt, nextEventAt)) {
@@ -641,9 +689,9 @@ export const createEditRequest = async (params: CreateEditRequestParams): Promis
     }
   });
 
-  const admins = await listAdminUsers();
+  const approvers = await listApproverUsersForEmployee(created.workEvent.user.id);
   await createNotificationsForUsers({
-    userIds: admins.map((admin) => admin.id),
+    userIds: approvers.map((user) => user.id),
     type: NotificationType.EDIT_REQUEST_CREATED,
     title: "Nueva solicitud de correccion",
     body: `${created.requestedBy.fullName} ha enviado una solicitud de correccion.`,
@@ -666,12 +714,10 @@ export const listEditRequests = async (params: ListEditRequestsParams): Promise<
     ...(params.status ? { status: params.status } : {})
   };
 
-  if (params.requesterRole === "ADMIN") {
-    if (params.userId) {
-      where.requestedById = params.userId;
-    }
-  } else {
+  if (params.requesterRole === "EMPLOYEE") {
     where.requestedById = params.requesterUserId;
+  } else {
+    Object.assign(where, await buildScopedEditRequestWhere(params.requesterUserId, params.userId));
   }
 
   const requests = await prisma.workEventEditRequest.findMany({
@@ -713,7 +759,25 @@ export const reviewEditRequest = async (params: ReviewEditRequestParams): Promis
   const request = await prisma.workEventEditRequest.findUnique({
     where: { id: params.requestId },
     include: {
-      workEvent: true
+      workEvent: {
+        select: {
+          id: true,
+          userId: true,
+          type: true,
+          source: true,
+          eventAt: true,
+          note: true,
+          latitude: true,
+          longitude: true,
+          ipAddress: true,
+          userAgent: true,
+          metadata: true,
+          modifiedAt: true,
+          modifiedById: true,
+          modificationReason: true,
+          createdAt: true
+        }
+      }
     }
   });
 
@@ -724,6 +788,8 @@ export const reviewEditRequest = async (params: ReviewEditRequestParams): Promis
   if (request.status !== EditRequestStatus.PENDING) {
     throw new AppError("La solicitud ya fue revisada.", 409);
   }
+
+  await assertCanManageUser(params.adminId, request.workEvent.userId);
 
   const reviewComment = normalizeOptionalText(params.reviewComment) ?? null;
 

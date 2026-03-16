@@ -206,10 +206,10 @@ export const createNotificationsForUsers = async (params: CreateNotificationsPar
   }
 };
 
-export const listAdminUsers = async (): Promise<UserSummary[]> => {
+export const listSuperadminUsers = async (): Promise<UserSummary[]> => {
   return prisma.user.findMany({
     where: {
-      role: "ADMIN",
+      role: "SUPERADMIN",
       isActive: true
     },
     select: {
@@ -218,4 +218,40 @@ export const listAdminUsers = async (): Promise<UserSummary[]> => {
       email: true
     }
   });
+};
+
+export const listApproverUsersForEmployee = async (employeeId: string): Promise<UserSummary[]> => {
+  const [employee, superadmins] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: employeeId },
+      select: {
+        manager: {
+          select: {
+            id: true,
+            fullName: true,
+            email: true,
+            role: true,
+            isActive: true
+          }
+        }
+      }
+    }),
+    listSuperadminUsers()
+  ]);
+
+  const approvers = new Map<string, UserSummary>();
+
+  if (employee?.manager && employee.manager.role === "ADMIN" && employee.manager.isActive) {
+    approvers.set(employee.manager.id, {
+      id: employee.manager.id,
+      fullName: employee.manager.fullName,
+      email: employee.manager.email
+    });
+  }
+
+  for (const superadmin of superadmins) {
+    approvers.set(superadmin.id, superadmin);
+  }
+
+  return Array.from(approvers.values());
 };

@@ -1,10 +1,11 @@
-import jwt, { type Secret, type SignOptions } from "jsonwebtoken";
+import jwt, { type SignOptions } from "jsonwebtoken";
+import type { Role } from "@prisma/client";
 import { env } from "../config/env";
 
 type TokenPayload = {
   sub: string;
   email: string;
-  role: "ADMIN" | "EMPLOYEE";
+  role: Role;
 };
 
 export const signToken = (payload: TokenPayload): string => {

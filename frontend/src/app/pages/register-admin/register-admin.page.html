@@ -1,5 +1,5 @@
 <ion-content class="login-screen" [fullscreen]="true">
-  <div class="login-wrap">
+  <div class="login-wrap register-wrap">
     <div class="login-top-actions">
       <ion-select
         class="lang-select"
@@ -20,8 +20,13 @@
 
     <ion-card class="glass-card">
       <ion-card-content>
-        <h1>{{ "app.name" | t }}</h1>
-        <p>{{ "login.tagline" | t }}</p>
+        <h1>{{ "register_admin.title" | t }}</h1>
+        <p>{{ "register_admin.tagline" | t }}</p>
+
+        <ion-item lines="full">
+          <ion-label position="stacked">{{ "users.full_name" | t }}</ion-label>
+          <ion-input [(ngModel)]="fullName"></ion-input>
+        </ion-item>
 
         <ion-item lines="full">
           <ion-label position="stacked">{{ "common.email" | t }}</ion-label>
@@ -33,15 +38,18 @@
           <ion-input [(ngModel)]="password" type="password"></ion-input>
         </ion-item>
 
+        <ion-item lines="full">
+          <ion-label position="stacked">{{ "register_admin.confirm_password" | t }}</ion-label>
+          <ion-input [(ngModel)]="confirmPassword" type="password"></ion-input>
+        </ion-item>
+
         <ion-button expand="block" class="mt-16" [disabled]="loading" (click)="submit()">
-          {{ loading ? ("login.submitting" | t) : ("login.submit" | t) }}
+          {{ loading ? ("register_admin.submitting" | t) : ("register_admin.submit" | t) }}
         </ion-button>
 
-        <ion-button expand="block" fill="clear" routerLink="/register-admin">
-          {{ "login.create_admin_account" | t }}
+        <ion-button expand="block" fill="clear" routerLink="/login">
+          {{ "register_admin.back_to_login" | t }}
         </ion-button>
-
-        <p class="hint">{{ "login.demo" | t }}</p>
       </ion-card-content>
     </ion-card>
   </div>

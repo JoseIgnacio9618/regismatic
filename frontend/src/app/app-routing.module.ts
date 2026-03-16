@@ -9,6 +9,10 @@ const routes: Routes = [
     loadChildren: () => import("./pages/login/login.module").then((m) => m.LoginPageModule)
   },
   {
+    path: "register-admin",
+    loadChildren: () => import("./pages/register-admin/register-admin.module").then((m) => m.RegisterAdminPageModule)
+  },
+  {
     path: "dashboard",
     canActivate: [AuthGuard],
     loadChildren: () => import("./pages/dashboard/dashboard.module").then((m) => m.DashboardPageModule)

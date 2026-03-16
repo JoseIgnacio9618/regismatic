@@ -8,6 +8,13 @@
             <p class="microcopy">{{ "dashboard.realtime_microcopy" | t }}</p>
           </ion-card-header>
           <ion-card-content>
+            <section class="role-hint" *ngIf="authService.isAdmin">
+              <ion-badge [color]="authService.isSuperadmin ? 'warning' : 'primary'">
+                {{ authService.isSuperadmin ? ("role.SUPERADMIN" | t) : ("role.ADMIN" | t) }}
+              </ion-badge>
+              <p>{{ "dashboard.admin_scope_hint" | t }}</p>
+            </section>
+
             <p class="muted">{{ "common.date" | t }}: {{ status?.date || '--' }}</p>
             <ion-badge [color]="loadError ? 'danger' : effectiveState === 'OFF' ? 'medium' : 'success'">{{ stateLabel }}</ion-badge>
 

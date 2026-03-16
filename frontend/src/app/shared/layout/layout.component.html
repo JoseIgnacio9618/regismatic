@@ -8,6 +8,7 @@
       <ion-button fill="clear" [class.active-nav]="isActive('/dashboard')" (click)="go('/dashboard')">{{ "nav.dashboard" | t }}</ion-button>
       <ion-button fill="clear" [class.active-nav]="isActive('/reports')" (click)="go('/reports')">{{ "nav.reports" | t }}</ion-button>
       <ion-button fill="clear" *ngIf="authService.isAdmin" [class.active-nav]="isActive('/users')" (click)="go('/users')">{{ "nav.team" | t }}</ion-button>
+      <ion-badge *ngIf="authService.user" class="toolbar-role-chip" [color]="currentRoleColor">{{ currentRoleLabel }}</ion-badge>
       <ion-button fill="clear" [id]="desktopNotificationsTriggerId" class="notification-button" [attr.aria-label]="'nav.notifications' | t">
         <ion-icon slot="icon-only" name="notifications-outline" aria-hidden="true"></ion-icon>
         <ng-container *ngIf="(notificationService.unreadCount$ | async) as unreadCount">
@@ -67,6 +68,10 @@
       </ion-item>
       <ion-item *ngIf="authService.user as user" class="menu-user">
         <ion-label>{{ user.fullName }}</ion-label>
+        <ion-badge [color]="currentRoleColor">{{ currentRoleLabel }}</ion-badge>
+      </ion-item>
+      <ion-item *ngIf="authService.user" class="menu-scope">
+        <ion-label>{{ currentScopeHint }}</ion-label>
       </ion-item>
       <ion-item button detail="false" class="danger-item" (click)="logout()">
         <ion-label>{{ "nav.logout" | t }}</ion-label>
@@ -192,6 +197,10 @@
       </ion-item>
       <ion-item *ngIf="authService.user as user" class="menu-user">
         <ion-label>{{ user.fullName }}</ion-label>
+        <ion-badge [color]="currentRoleColor">{{ currentRoleLabel }}</ion-badge>
+      </ion-item>
+      <ion-item *ngIf="authService.user" class="menu-scope">
+        <ion-label>{{ currentScopeHint }}</ion-label>
       </ion-item>
       <ion-item button detail="false" class="danger-item" (click)="logout()">
         <ion-label>{{ "nav.logout" | t }}</ion-label>

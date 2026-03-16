@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import { z } from "zod";
 import { AppError } from "../middlewares/error.middleware";
-import { createUser, deleteUser, listUsers } from "../services/user.service";
+import { assignEmployeeManager, createUser, deleteUser, listUsers } from "../services/user.service";
 
 const createUserSchema = z.object({
   email: z.string().email(),
@@ -13,17 +13,33 @@ const createUserSchema = z.object({
     .regex(/[0-9]/, "Password must include at least one number.")
     .regex(/[^a-zA-Z0-9]/, "Password must include at least one special character."),
   fullName: z.string().min(3),
-  role: z.enum(["ADMIN", "EMPLOYEE"]).default("EMPLOYEE")
+  role: z.enum(["SUPERADMIN", "ADMIN", "EMPLOYEE"]).default("EMPLOYEE"),
+  managerId: z.string().min(1).optional()
+});
+
+const assignManagerSchema = z.object({
+  managerId: z.string().min(1)
 });
 
 export const createUserController = async (req: Request, res: Response) => {
+  if (!req.user) {
+    throw new AppError("Not authenticated.", 401);
+  }
+
   const payload = createUserSchema.parse(req.body);
-  const user = await createUser(payload);
+  const user = await createUser({
+    ...payload,
+    creatorId: req.user.id
+  });
   return res.status(201).json(user);
 };
 
-export const listUsersController = async (_req: Request, res: Response) => {
-  const users = await listUsers();
+export const listUsersController = async (req: Request, res: Response) => {
+  if (!req.user) {
+    throw new AppError("Not authenticated.", 401);
+  }
+
+  const users = await listUsers(req.user.id);
   return res.json(users);
 };
 
@@ -35,8 +51,24 @@ export const deleteUserController = async (req: Request, res: Response) => {
   const userId = z.string().min(1).parse(req.params.userId);
   const deletedUser = await deleteUser({
     userId,
-    adminId: req.user.id
+    requesterId: req.user.id
   });
 
   return res.json(deletedUser);
+};
+
+export const assignEmployeeManagerController = async (req: Request, res: Response) => {
+  if (!req.user) {
+    throw new AppError("Not authenticated.", 401);
+  }
+
+  const payload = assignManagerSchema.parse(req.body);
+  const userId = z.string().min(1).parse(req.params.userId);
+  const user = await assignEmployeeManager({
+    userId,
+    managerId: payload.managerId,
+    requesterId: req.user.id
+  });
+
+  return res.json(user);
 };

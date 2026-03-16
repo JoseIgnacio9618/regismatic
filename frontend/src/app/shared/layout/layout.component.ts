@@ -38,6 +38,34 @@ export class LayoutComponent {
     private readonly router: Router
   ) {}
 
+  get currentRoleLabel(): string {
+    return this.i18nService.t(`role.${this.authService.user?.role ?? "EMPLOYEE"}`);
+  }
+
+  get currentScopeHint(): string {
+    if (this.authService.isSuperadmin) {
+      return this.i18nService.t("layout.scope_superadmin");
+    }
+
+    if (this.authService.isAdmin) {
+      return this.i18nService.t("layout.scope_admin");
+    }
+
+    return this.i18nService.t("layout.scope_employee");
+  }
+
+  get currentRoleColor(): "medium" | "primary" | "warning" {
+    if (this.authService.isSuperadmin) {
+      return "warning";
+    }
+
+    if (this.authService.isAdmin) {
+      return "primary";
+    }
+
+    return "medium";
+  }
+
   go(path: string): void {
     void this.closeMenus();
     void this.router.navigateByUrl(path);

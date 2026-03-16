@@ -2,6 +2,29 @@
   <ion-grid fixed class="reports-grid">
     <ion-row>
       <ion-col size="12">
+        <ion-card class="glass-card panel scope-panel">
+          <ion-card-content>
+            <div class="reports-scope-shell">
+              <div>
+                <ion-badge [color]="scopeBadgeColor">
+                  {{ authService.isSuperadmin ? ("role.SUPERADMIN" | t) : authService.isAdmin ? ("role.ADMIN" | t) : ("role.EMPLOYEE" | t) }}
+                </ion-badge>
+                <h2>{{ scopeTitle }}</h2>
+                <p>{{ scopeDescription }}</p>
+              </div>
+
+              <div class="scope-selection-card" *ngIf="authService.isAdmin">
+                <strong>{{ "reports.scope_current_label" | t }}</strong>
+                <span>{{ selectedScopeLabel }}</span>
+              </div>
+            </div>
+          </ion-card-content>
+        </ion-card>
+      </ion-col>
+    </ion-row>
+
+    <ion-row>
+      <ion-col size="12">
         <ion-card class="glass-card panel filter-panel">
           <ion-card-header>
             <ion-card-title>{{ "reports.filters_title" | t }}</ion-card-title>
@@ -28,10 +51,10 @@
                   <ion-item>
                     <ion-label position="stacked">{{ "reports.employee_optional" | t }}</ion-label>
                     <ion-select [(ngModel)]="selectedUserId" interface="popover">
-                      <ion-select-option value="">{{ "common.all" | t }}</ion-select-option>
-                      <ion-select-option *ngFor="let user of users" [value]="user.id">{{ user.fullName }}</ion-select-option>
+                      <ion-select-option *ngFor="let option of reportScopeOptions" [value]="option.id">{{ option.label }}</ion-select-option>
                     </ion-select>
                   </ion-item>
+                  <p class="inline-help">{{ "reports.filter_scope_hint" | t }}</p>
                 </ion-col>
 
                 <ion-col size="12" size-md="2" class="actions-col">

@@ -10,8 +10,12 @@ export class UserService {
     return this.apiService.get<TeamUser[]>("/users", true);
   }
 
-  createUser(payload: { email: string; fullName: string; password: string; role: Role }): Promise<TeamUser> {
+  createUser(payload: { email: string; fullName: string; password: string; role: Role; managerId?: string }): Promise<TeamUser> {
     return this.apiService.post<TeamUser>("/users", payload, true);
+  }
+
+  assignManager(userId: string, managerId: string): Promise<TeamUser> {
+    return this.apiService.patch<TeamUser>(`/users/${userId}/manager`, { managerId }, true);
   }
 
   deleteUser(userId: string): Promise<TeamUser> {

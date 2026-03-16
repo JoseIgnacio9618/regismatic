@@ -7,19 +7,40 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
 async function main() {
+  const superadminEmail = "superadmin@regismatic.local";
   const adminEmail = "admin@regismatic.local";
   const employeeEmail = "empleado@regismatic.local";
   const commonPassword = "Regismatic2026!";
 
+  const superadminHash = await bcrypt.hash(commonPassword, 12);
   const adminHash = await bcrypt.hash(commonPassword, 12);
   const employeeHash = await bcrypt.hash(commonPassword, 12);
 
   await prisma.user.upsert({
+    where: { email: superadminEmail },
+    update: {
+      fullName: "Superadmin Regismatic",
+      role: "SUPERADMIN",
+      passwordHash: superadminHash,
+      managerId: null,
+      isActive: true
+    },
+    create: {
+      email: superadminEmail,
+      fullName: "Superadmin Regismatic",
+      role: "SUPERADMIN",
+      passwordHash: superadminHash,
+      isActive: true
+    }
+  });
+
+  const admin = await prisma.user.upsert({
     where: { email: adminEmail },
     update: {
       fullName: "Admin Regismatic",
       role: "ADMIN",
       passwordHash: adminHash,
+      managerId: null,
       isActive: true
     },
     create: {
@@ -37,6 +58,7 @@ async function main() {
       fullName: "Empleado Demo",
       role: "EMPLOYEE",
       passwordHash: employeeHash,
+      managerId: admin.id,
       isActive: true
     },
     create: {
@@ -44,6 +66,7 @@ async function main() {
       fullName: "Empleado Demo",
       role: "EMPLOYEE",
       passwordHash: employeeHash,
+      managerId: admin.id,
       isActive: true
     }
   });

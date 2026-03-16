@@ -2,6 +2,7 @@
   row-gap: 16px;
 }
 
+.scope-panel,
 .filter-panel,
 .result-panel,
 .detail-panel,
@@ -9,6 +10,7 @@
   position: relative;
 }
 
+.scope-panel::before,
 .filter-panel::before,
 .result-panel::before,
 .detail-panel::before,
@@ -17,6 +19,12 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
+}
+
+.scope-panel::before {
+  background:
+    radial-gradient(circle at 14% 18%, color-mix(in srgb, var(--ion-color-primary), transparent 82%) 0%, transparent 40%),
+    radial-gradient(circle at 88% 20%, color-mix(in srgb, var(--ion-color-warning), transparent 86%) 0%, transparent 42%);
 }
 
 .filter-panel::before {
@@ -39,6 +47,51 @@
   display: flex;
   gap: 8px;
   align-items: end;
+}
+
+.reports-scope-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(240px, 0.9fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.reports-scope-shell h2 {
+  margin: 10px 0 8px;
+  font-size: clamp(1.35rem, 3vw, 1.9rem);
+}
+
+.reports-scope-shell p {
+  margin: 0;
+  color: var(--app-ink-muted);
+}
+
+.scope-selection-card {
+  padding: 16px 18px;
+  border-radius: 18px;
+  border: 1px solid color-mix(in srgb, var(--app-border), transparent 10%);
+  background: color-mix(in srgb, var(--app-surface-strong), transparent 5%);
+}
+
+.scope-selection-card strong {
+  display: block;
+  font-size: 0.84rem;
+  color: var(--app-ink-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.scope-selection-card span {
+  display: block;
+  margin-top: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.inline-help {
+  margin: 8px 0 0;
+  color: var(--app-ink-muted);
+  font-size: 0.88rem;
 }
 
 .event-user {
@@ -71,6 +124,10 @@
 }
 
 @media (max-width: 767px) {
+  .reports-scope-shell {
+    grid-template-columns: 1fr;
+  }
+
   .actions-col {
     flex-direction: column;
     align-items: stretch;

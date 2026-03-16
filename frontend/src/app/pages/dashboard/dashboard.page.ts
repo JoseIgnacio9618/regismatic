@@ -2,6 +2,7 @@ import { Component, OnInit } from "@angular/core";
 import { ToastController } from "@ionic/angular";
 import { AttendanceService } from "src/app/core/services/attendance.service";
 import { TodayStatus } from "src/app/core/models/types";
+import { AuthService } from "src/app/core/services/auth.service";
 import { I18nService } from "src/app/core/services/i18n.service";
 
 @Component({
@@ -18,6 +19,7 @@ export class DashboardPage implements OnInit {
 
   constructor(
     private readonly attendanceService: AttendanceService,
+    public readonly authService: AuthService,
     public readonly i18nService: I18nService,
     private readonly toastController: ToastController
   ) {}

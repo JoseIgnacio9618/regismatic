@@ -1,6 +1,51 @@
 <app-main-layout [title]="'users.layout_title' | t">
   <ion-grid fixed class="users-grid">
     <ion-row>
+      <ion-col size="12">
+        <ion-card class="glass-card panel scope-panel">
+          <ion-card-content>
+            <div class="scope-hero">
+              <div class="scope-copy">
+                <ion-badge [color]="isSuperadmin ? 'warning' : 'primary'">
+                  {{ isSuperadmin ? ("role.SUPERADMIN" | t) : ("role.ADMIN" | t) }}
+                </ion-badge>
+                <h2>{{ scopeTitle }}</h2>
+                <p>{{ scopeDescription }}</p>
+              </div>
+
+              <div class="scope-metrics">
+                <article class="scope-metric">
+                  <strong>{{ users.length }}</strong>
+                  <span>{{ "users.metric_visible" | t }}</span>
+                </article>
+                <article class="scope-metric" *ngIf="isSuperadmin">
+                  <strong>{{ visibleSuperadminsCount }}</strong>
+                  <span>{{ "users.metric_superadmins" | t }}</span>
+                </article>
+                <article class="scope-metric" *ngIf="isSuperadmin">
+                  <strong>{{ visibleAdminsCount }}</strong>
+                  <span>{{ "users.metric_admins" | t }}</span>
+                </article>
+                <article class="scope-metric">
+                  <strong>{{ visibleEmployeesCount }}</strong>
+                  <span>{{ "users.metric_employees" | t }}</span>
+                </article>
+                <article class="scope-metric" *ngIf="!isSuperadmin">
+                  <strong>1</strong>
+                  <span>{{ "users.metric_self" | t }}</span>
+                </article>
+              </div>
+            </div>
+
+            <div class="scope-points">
+              <div class="scope-point" *ngFor="let point of scopeHighlights">{{ point }}</div>
+            </div>
+          </ion-card-content>
+        </ion-card>
+      </ion-col>
+    </ion-row>
+
+    <ion-row>
       <ion-col size="12" size-md="5">
         <ion-card class="glass-card panel form-panel">
           <ion-card-header>
@@ -23,15 +68,51 @@
               <ion-input type="text" [(ngModel)]="password"></ion-input>
             </ion-item>
 
-            <ion-item>
-              <ion-label position="stacked">{{ "common.role" | t }}</ion-label>
-              <ion-select [(ngModel)]="role">
-                <ion-select-option value="EMPLOYEE">{{ "role.EMPLOYEE" | t }}</ion-select-option>
-                <ion-select-option value="ADMIN">{{ "role.ADMIN" | t }}</ion-select-option>
+            <div class="role-picker" *ngIf="isSuperadmin">
+              <div class="role-picker-head">
+                <span>{{ "common.role" | t }}</span>
+                <ion-note>{{ "users.role_picker_hint" | t }}</ion-note>
+              </div>
+              <button
+                type="button"
+                class="role-card"
+                *ngFor="let option of createRoleOptions"
+                [class.active-role]="selectedRoleOption.role === option.role"
+                (click)="selectRole(option.role)"
+              >
+                <div class="role-card-top">
+                  <strong>{{ option.titleKey | t }}</strong>
+                  <ion-badge [color]="roleColor(option.role)">{{ ("role." + option.role) | t }}</ion-badge>
+                </div>
+                <span>{{ option.descriptionKey | t }}</span>
+              </button>
+            </div>
+
+            <section class="fixed-role-summary" *ngIf="!isSuperadmin">
+              <div class="fixed-role-top">
+                <strong>{{ "users.fixed_role_title" | t }}</strong>
+                <ion-badge color="primary">{{ "role.EMPLOYEE" | t }}</ion-badge>
+              </div>
+              <p>{{ "users.fixed_role_desc" | t }}</p>
+            </section>
+
+            <ion-item *ngIf="needsManagerSelection">
+              <ion-label position="stacked">{{ "users.assigned_admin_label" | t }}</ion-label>
+              <ion-select [(ngModel)]="managerId">
+                <ion-select-option *ngFor="let manager of availableManagerUsers" [value]="manager.id">
+                  {{ manager.fullName }}
+                </ion-select-option>
               </ion-select>
             </ion-item>
 
-            <ion-button expand="block" class="mt-16" (click)="createUser()">{{ "users.save_user" | t }}</ion-button>
+            <p class="microcopy" *ngIf="!isSuperadmin">{{ "users.admin_scope_hint" | t }}</p>
+            <p class="microcopy" *ngIf="needsManagerSelection && availableManagerUsers.length === 0">
+              {{ "users.no_admins_available" | t }}
+            </p>
+
+            <ion-button expand="block" class="mt-16" [disabled]="needsManagerSelection && availableManagerUsers.length === 0" (click)="createUser()">
+              {{ "users.save_user" | t }}
+            </ion-button>
           </ion-card-content>
         </ion-card>
       </ion-col>
@@ -40,28 +121,72 @@
         <ion-card class="glass-card panel team-panel">
           <ion-card-header>
             <ion-card-title>{{ "users.team_title" | t }}</ion-card-title>
+            <p class="microcopy">{{ "users.team_microcopy" | t }}</p>
           </ion-card-header>
           <ion-card-content>
-            <ion-list lines="none" class="data-list" *ngIf="users.length > 0">
-              <ion-item class="data-item" *ngFor="let user of users">
-                <ion-label>
-                  <h3 class="item-title">{{ user.fullName }}</h3>
-                  <ion-note class="item-meta">{{ user.email }} | {{ roleLabel(user.role) }}</ion-note>
-                </ion-label>
-                <ion-button
-                  slot="end"
-                  size="small"
-                  fill="outline"
-                  color="danger"
-                  *ngIf="canDeleteUser(user)"
-                  [disabled]="deletingUserId === user.id"
-                  (click)="confirmDeleteUser(user)"
-                >
-                  <ion-icon slot="start" name="trash-outline"></ion-icon>
-                  {{ "users.action_delete" | t }}
-                </ion-button>
-              </ion-item>
-            </ion-list>
+            <ng-container *ngIf="users.length > 0">
+              <section class="team-section" *ngFor="let section of groupedUserSections; trackBy: trackSection">
+                <div class="team-section-head">
+                  <div>
+                    <h3>{{ section.title }}</h3>
+                    <p>{{ section.description }}</p>
+                  </div>
+                  <ion-badge color="light">{{ section.users.length }}</ion-badge>
+                </div>
+
+                <ion-list lines="none" class="data-list">
+                  <ng-container *ngFor="let user of section.users; trackBy: trackUser">
+                    <ion-item class="data-item">
+                      <ion-label>
+                        <div class="user-row-top">
+                          <h3 class="item-title">{{ user.fullName }}</h3>
+                          <ion-badge [color]="roleColor(user.role)">{{ roleLabel(user.role) }}</ion-badge>
+                        </div>
+                        <ion-note class="item-meta">{{ roleMeta(user) }}</ion-note>
+                        <ion-note class="item-meta" *ngIf="secondaryMeta(user) as meta">{{ meta }}</ion-note>
+                      </ion-label>
+                      <ion-button
+                        slot="end"
+                        size="small"
+                        fill="outline"
+                        color="danger"
+                        *ngIf="canDeleteUser(user)"
+                        [disabled]="deletingUserId === user.id"
+                        (click)="confirmDeleteUser(user)"
+                      >
+                        <ion-icon slot="start" name="trash-outline"></ion-icon>
+                        {{ "users.action_delete" | t }}
+                      </ion-button>
+                    </ion-item>
+
+                    <section class="user-assignment" *ngIf="isSuperadmin && user.role === 'EMPLOYEE'">
+                      <div class="assignment-head">
+                        <strong>{{ "users.assigned_admin_label" | t }}</strong>
+                        <ion-note>{{ "users.assignment_hint" | t }}</ion-note>
+                      </div>
+
+                      <ion-item>
+                        <ion-select [value]="managerValueFor(user)" (ionChange)="setManagerDraft(user.id, $event.detail.value)">
+                          <ion-select-option *ngFor="let manager of availableManagerUsers" [value]="manager.id">
+                            {{ manager.fullName }}
+                          </ion-select-option>
+                        </ion-select>
+                      </ion-item>
+
+                      <div class="assignment-actions">
+                        <ion-button
+                          size="small"
+                          [disabled]="availableManagerUsers.length === 0 || savingManagerUserId === user.id"
+                          (click)="saveManagerAssignment(user)"
+                        >
+                          {{ "users.save_assignment" | t }}
+                        </ion-button>
+                      </div>
+                    </section>
+                  </ng-container>
+                </ion-list>
+              </section>
+            </ng-container>
 
             <section class="empty-state" *ngIf="users.length === 0">
               <ion-icon name="people-outline" aria-hidden="true"></ion-icon>

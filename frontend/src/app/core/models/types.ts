@@ -1,4 +1,4 @@
-export type Role = "ADMIN" | "EMPLOYEE";
+export type Role = "SUPERADMIN" | "ADMIN" | "EMPLOYEE";
 export type EditRequestStatus = "PENDING" | "APPROVED" | "REJECTED";
 export type NotificationType =
   | "EDIT_REQUEST_CREATED"
@@ -13,6 +13,7 @@ export interface AuthUser {
   email: string;
   fullName: string;
   role: Role;
+  managerId?: string | null;
   isActive: boolean;
   createdAt: string;
 }
@@ -122,6 +123,8 @@ export interface TeamUser {
   role: Role;
   isActive: boolean;
   createdAt: string;
+  manager: UserSummary | null;
+  managedEmployeesCount: number;
 }
 
 export interface UserNotification {

@@ -24,13 +24,13 @@ attendanceRouter.post("/clock-in", asyncHandler(clockInController));
 attendanceRouter.post("/break-start", asyncHandler(breakStartController));
 attendanceRouter.post("/break-end", asyncHandler(breakEndController));
 attendanceRouter.post("/clock-out", asyncHandler(clockOutController));
-attendanceRouter.post("/manual-adjustment", requireRole(["ADMIN"]), asyncHandler(manualAdjustmentController));
+attendanceRouter.post("/manual-adjustment", requireRole(["ADMIN", "SUPERADMIN"]), asyncHandler(manualAdjustmentController));
 attendanceRouter.get("/events", asyncHandler(listEventsController));
-attendanceRouter.patch("/events/:eventId", requireRole(["ADMIN"]), asyncHandler(updateEventController));
+attendanceRouter.patch("/events/:eventId", requireRole(["ADMIN", "SUPERADMIN"]), asyncHandler(updateEventController));
 attendanceRouter.post("/events/:eventId/edit-requests", asyncHandler(createEditRequestController));
 attendanceRouter.get("/edit-requests", asyncHandler(listEditRequestsController));
 attendanceRouter.patch(
   "/edit-requests/:requestId/review",
-  requireRole(["ADMIN"]),
+  requireRole(["ADMIN", "SUPERADMIN"]),
   asyncHandler(reviewEditRequestController)
 );

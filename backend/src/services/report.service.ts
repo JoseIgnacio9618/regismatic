@@ -1,13 +1,14 @@
-import { WorkEventType, type WorkEvent } from "@prisma/client";
+import { Prisma, WorkEventType, type Role, type WorkEvent } from "@prisma/client";
 import { Parser } from "json2csv";
 import ExcelJS from "exceljs";
 import { prisma } from "../config/prisma";
 import { diffMinutes, madridDateKey } from "../utils/dates";
+import { assertCanViewUser, getScopedUserById, listVisibleUserIds } from "./access.service";
 
 type ReportParams = {
   fromUtc: Date;
   toUtc: Date;
-  requesterRole: "ADMIN" | "EMPLOYEE";
+  requesterRole: Role;
   requesterUserId: string;
   userId?: string;
 };
@@ -104,7 +105,23 @@ const buildDailySummary = (events: WorkEvent[]) => {
 };
 
 export const getSummaryReport = async (params: ReportParams): Promise<SummaryRow[]> => {
-  const userFilter = params.requesterRole === "ADMIN" ? params.userId : params.requesterUserId;
+  let userWhere: Prisma.WorkEventWhereInput = {};
+
+  if (params.userId) {
+    await assertCanViewUser(params.requesterUserId, params.userId);
+    userWhere = {
+      userId: params.userId
+    };
+  } else {
+    const requester = await getScopedUserById(params.requesterUserId);
+    if (requester.role !== "SUPERADMIN") {
+      userWhere = {
+        userId: {
+          in: await listVisibleUserIds(params.requesterUserId)
+        }
+      };
+    }
+  }
 
   const events = await prisma.workEvent.findMany({
     where: {
@@ -112,7 +129,7 @@ export const getSummaryReport = async (params: ReportParams): Promise<SummaryRow
         gte: params.fromUtc,
         lte: params.toUtc
       },
-      ...(userFilter ? { userId: userFilter } : {})
+      ...userWhere
     },
     include: {
       user: {

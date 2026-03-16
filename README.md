@@ -15,7 +15,10 @@ La base de datos es **PostgreSQL (SQL)**, no SQLite.
 - [scripts](scripts): backup/restore de base de datos
 
 ## Funcionalidades
-- Login JWT con roles `ADMIN` y `EMPLOYEE`
+- Login JWT con roles `SUPERADMIN`, `ADMIN` y `EMPLOYEE`
+- Alta publica de administradores desde la propia app (`/register-admin`)
+- El primer alta publica de administrador se promociona automaticamente a `SUPERADMIN`
+- Multiadministrador: cada admin gestiona solo su propia plantilla
 - Fichaje: entrada, pausa inicio/fin, salida
 - Trazabilidad de eventos con auditoria de modificaciones (quien y cuando)
 - Geolocalizacion opcional por evento
@@ -25,7 +28,9 @@ La base de datos es **PostgreSQL (SQL)**, no SQLite.
 - Revision de solicitudes y edicion directa de registros por administradores
 - Centro de incidencias priorizado para admin (arriba en reportes)
 - Notificaciones internas en app + push para Android/iOS (FCM)
-- Gestion de usuarios (admin)
+- Gestion de usuarios por alcance:
+  - `ADMIN`: solo crea y gestiona empleados propios
+  - `SUPERADMIN`: ve todo, puede crear admins, superadmins y empleados asignados, y reasignar empleados entre administradores
 - Hardening basico de API: CORS configurable, rate limit de login, health checks
 
 ## Requisitos
@@ -52,8 +57,12 @@ docker compose up --build
 - API ready: `http://localhost:4000/health/ready`
 
 Credenciales demo (si `RUN_SEED=true`):
+- `superadmin@regismatic.local` / `Regismatic2026!`
 - `admin@regismatic.local` / `Regismatic2026!`
 - `empleado@regismatic.local` / `Regismatic2026!`
+
+Tambien puedes crear nuevos administradores desde la pantalla publica:
+- `http://localhost:8100/register-admin`
 
 ## 2) Desarrollo local sin Docker
 Instala dependencias en raiz:
