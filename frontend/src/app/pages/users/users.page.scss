@@ -63,6 +63,15 @@
   border: 1px solid color-mix(in srgb, var(--app-border), transparent 10%);
   background: color-mix(in srgb, var(--app-surface-strong), transparent 6%);
   box-shadow: inset 0 1px 0 color-mix(in srgb, #fff, transparent 82%);
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.scope-metric:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--ion-color-primary), var(--app-border) 54%);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #fff, transparent 82%),
+    0 16px 30px color-mix(in srgb, #000, transparent 92%);
 }
 
 .scope-metric strong {
@@ -92,6 +101,7 @@
   background: color-mix(in srgb, var(--ion-color-primary), transparent 92%);
   color: var(--ion-text-color);
   font-size: 0.92rem;
+  line-height: 1.4;
 }
 
 .role-picker {
@@ -141,6 +151,7 @@
   display: block;
   font-size: 0.9rem;
   color: var(--app-ink-muted);
+  line-height: 1.42;
 }
 
 .role-card.active-role {
@@ -201,6 +212,7 @@
   justify-content: flex-end;
   gap: 8px;
   margin-top: 12px;
+  flex-wrap: wrap;
 }
 
 .team-section + .team-section {
@@ -243,6 +255,13 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  border-radius: 999px;
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.avatar-preview-trigger:hover {
+  transform: scale(1.04);
+  box-shadow: 0 0 0 8px color-mix(in srgb, var(--ion-color-primary), transparent 92%);
 }
 
 .avatar-preview-disabled {
@@ -260,6 +279,7 @@
   justify-content: flex-end;
   gap: 8px;
   padding: 8px 4px 2px;
+  flex-wrap: wrap;
 }
 
 .user-assignment {

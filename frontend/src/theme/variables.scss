@@ -26,26 +26,26 @@
 body.light-theme,
 body:not(.dark-theme) {
   color-scheme: light;
-  --ion-background-color: #f4f7ff;
-  --ion-background-color-rgb: 244, 247, 255;
-  --ion-text-color: #14213d;
-  --ion-text-color-rgb: 20, 33, 61;
+  --ion-background-color: #e8e4df;
+  --ion-background-color-rgb: 232, 228, 223;
+  --ion-text-color: #1f2937;
+  --ion-text-color-rgb: 31, 41, 55;
 
-  --app-surface: rgba(255, 255, 255, 0.72);
-  --app-surface-strong: rgba(255, 255, 255, 0.9);
-  --app-border: rgba(15, 35, 74, 0.12);
-  --app-shadow: 0 20px 40px rgba(23, 30, 55, 0.12);
+  --app-surface: rgba(244, 240, 235, 0.9);
+  --app-surface-strong: rgba(238, 234, 228, 0.97);
+  --app-border: rgba(93, 99, 112, 0.16);
+  --app-shadow: 0 16px 32px rgba(42, 44, 53, 0.08);
 
-  --app-ink-soft: rgba(20, 33, 61, 0.76);
-  --app-ink-muted: rgba(20, 33, 61, 0.58);
+  --app-ink-soft: rgba(31, 41, 55, 0.78);
+  --app-ink-muted: rgba(55, 65, 81, 0.58);
 
-  --app-bg-a: rgba(111, 200, 255, 0.34);
-  --app-bg-b: rgba(255, 114, 201, 0.24);
-  --app-bg-c: rgba(156, 123, 255, 0.2);
+  --app-bg-a: rgba(189, 198, 210, 0.2);
+  --app-bg-b: rgba(219, 198, 188, 0.16);
+  --app-bg-c: rgba(202, 193, 206, 0.16);
 
-  --app-hero-a: rgba(0, 113, 227, 0.16);
-  --app-hero-b: rgba(255, 77, 141, 0.16);
-  --app-hero-c: rgba(127, 90, 240, 0.12);
+  --app-hero-a: rgba(146, 160, 178, 0.16);
+  --app-hero-b: rgba(191, 171, 166, 0.14);
+  --app-hero-c: rgba(164, 158, 178, 0.14);
 }
 
 body.dark-theme {

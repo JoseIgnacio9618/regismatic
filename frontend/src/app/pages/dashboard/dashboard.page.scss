@@ -44,6 +44,20 @@
   background: color-mix(in srgb, var(--ion-color-primary), transparent 92%);
 }
 
+.status-panel,
+.summary-panel,
+.events-panel {
+  min-height: 100%;
+}
+
+.metrics-grid {
+  margin-top: 2px;
+}
+
+.metrics-grid .metric-tile {
+  min-height: 100%;
+}
+
 .role-hint p {
   margin: 8px 0 0;
   color: var(--app-ink-muted);
@@ -56,4 +70,11 @@ ion-button + ion-button {
 
 .status-error {
   margin-bottom: 12px;
+}
+
+@media (min-width: 768px) {
+  ion-button[expand="block"] {
+    --padding-top: 14px;
+    --padding-bottom: 14px;
+  }
 }

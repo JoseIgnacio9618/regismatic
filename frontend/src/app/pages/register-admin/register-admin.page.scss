@@ -70,10 +70,21 @@ ion-card {
   width: min(560px, 100%);
   position: relative;
   z-index: 1;
+  overflow: hidden;
 }
 
 ion-card-content {
   padding: 30px;
+}
+
+ion-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 88% 14%, color-mix(in srgb, var(--ion-color-tertiary), transparent 84%) 0%, transparent 40%),
+    linear-gradient(180deg, color-mix(in srgb, #fff, transparent 88%) 0%, transparent 24%);
 }
 
 h1 {

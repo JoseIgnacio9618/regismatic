@@ -26,11 +26,25 @@ body {
   margin: 0;
   color: var(--ion-text-color);
   background:
-    radial-gradient(circle at 8% 14%, var(--app-bg-a) 0%, transparent 38%),
-    radial-gradient(circle at 92% 2%, var(--app-bg-b) 0%, transparent 34%),
-    radial-gradient(circle at 58% 98%, var(--app-bg-c) 0%, transparent 40%),
+    radial-gradient(circle at 8% 14%, var(--app-bg-a) 0%, transparent 34%),
+    radial-gradient(circle at 92% 2%, var(--app-bg-b) 0%, transparent 30%),
+    radial-gradient(circle at 58% 98%, var(--app-bg-c) 0%, transparent 34%),
     linear-gradient(180deg, var(--ion-background-color) 0%, color-mix(in srgb, var(--ion-background-color), #000 4%) 100%);
   transition: background 0.45s ease, color 0.3s ease;
+}
+
+body,
+button,
+input,
+textarea,
+select {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--ion-color-primary), transparent 72%);
+  color: var(--ion-text-color);
 }
 
 body::before {
@@ -38,10 +52,10 @@ body::before {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  background-image: radial-gradient(circle at center, rgba(255, 255, 255, 0.08) 0.5px, transparent 0.5px);
-  background-size: 20px 20px;
-  opacity: 0.24;
-  mix-blend-mode: overlay;
+  background-image: radial-gradient(circle at center, rgba(255, 255, 255, 0.045) 0.5px, transparent 0.5px);
+  background-size: 24px 24px;
+  opacity: 0.12;
+  mix-blend-mode: soft-light;
   z-index: -1;
 }
 
@@ -87,7 +101,7 @@ ion-modal.photo-cropper-modal {
 }
 
 ion-header ion-toolbar {
-  --background: color-mix(in srgb, var(--app-surface-strong), transparent 4%);
+  --background: color-mix(in srgb, var(--app-surface-strong), transparent 2%);
   --color: var(--ion-text-color);
   border-bottom: 1px solid var(--app-border);
   backdrop-filter: saturate(165%) blur(18px);
@@ -117,6 +131,17 @@ ion-card {
   animation: panel-enter 0.35s ease;
 }
 
+.glass-card::after,
+.panel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, color-mix(in srgb, #fff, transparent 88%) 0%, transparent 22%, transparent 100%);
+  opacity: 0.5;
+  z-index: 0;
+}
+
 .panel > * {
   position: relative;
   z-index: 1;
@@ -132,17 +157,28 @@ ion-card {
 }
 
 .panel ion-card-content {
-  padding-top: 8px;
+  padding-top: 10px;
 }
 
 ion-item {
-  --background: color-mix(in srgb, var(--app-surface), transparent 10%);
+  --background: color-mix(in srgb, var(--app-surface), transparent 4%);
   --color: var(--ion-text-color);
   --border-color: color-mix(in srgb, var(--app-border), transparent 12%);
   --highlight-color-focused: var(--ion-color-primary);
+  --padding-start: 14px;
+  --padding-end: 14px;
+  --inner-padding-top: 10px;
+  --inner-padding-bottom: 10px;
   border: 1px solid color-mix(in srgb, var(--app-border), transparent 22%);
   border-radius: var(--app-radius-md);
   margin-bottom: 12px;
+  transition: border-color 180ms ease, background 180ms ease, transform 180ms ease, box-shadow 180ms ease;
+}
+
+ion-item:hover {
+  border-color: color-mix(in srgb, var(--ion-text-color), var(--app-border) 76%);
+  background: color-mix(in srgb, var(--app-surface-strong), transparent 3%);
+  box-shadow: 0 10px 20px color-mix(in srgb, #000, transparent 94%);
 }
 
 ion-item h3,
@@ -172,7 +208,7 @@ ion-list {
 }
 
 .data-item {
-  --background: color-mix(in srgb, var(--app-surface), transparent 8%);
+  --background: color-mix(in srgb, var(--app-surface), transparent 2%);
   --inner-padding-top: 10px;
   --inner-padding-bottom: 10px;
   --inner-padding-end: 12px;
@@ -181,6 +217,13 @@ ion-list {
   border-radius: var(--app-radius-md);
   border: 1px solid color-mix(in srgb, var(--app-border), transparent 20%);
   overflow: hidden;
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.data-item:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--ion-text-color), var(--app-border) 76%);
+  box-shadow: 0 14px 26px color-mix(in srgb, #000, transparent 92%);
 }
 
 .data-item::part(native) {
@@ -243,15 +286,17 @@ ion-list {
 ion-button {
   --border-radius: 12px;
   --box-shadow: 0 10px 20px color-mix(in srgb, var(--ion-color-primary), transparent 76%);
+  --padding-top: 12px;
+  --padding-bottom: 12px;
   font-weight: 700;
   letter-spacing: 0.01em;
 }
 
 ion-button[fill="outline"] {
   --border-width: 1px;
-  --border-color: color-mix(in srgb, var(--ion-color-primary), transparent 40%);
-  --color: var(--ion-color-primary);
-  --background: color-mix(in srgb, var(--ion-color-primary), transparent 88%);
+  --border-color: color-mix(in srgb, var(--ion-color-primary), transparent 54%);
+  --color: color-mix(in srgb, var(--ion-color-primary), var(--ion-text-color) 42%);
+  --background: color-mix(in srgb, var(--app-surface-strong), var(--ion-color-primary) 10%);
 }
 
 ion-badge {
@@ -259,6 +304,14 @@ ion-badge {
   padding: 8px 12px;
   font-weight: 700;
   letter-spacing: 0.01em;
+}
+
+button:focus-visible,
+ion-button:focus-visible,
+.role-card:focus-visible,
+.avatar-preview-trigger:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--ion-color-primary), transparent 18%);
+  outline-offset: 2px;
 }
 
 ion-button.notification-button {
@@ -293,8 +346,8 @@ ion-button.notification-button .notification-badge {
 }
 
 ion-chip {
-  --background: color-mix(in srgb, var(--ion-color-primary), transparent 82%);
-  border: 1px solid color-mix(in srgb, var(--ion-color-primary), transparent 52%);
+  --background: color-mix(in srgb, var(--app-surface-strong), var(--ion-color-primary) 12%);
+  border: 1px solid color-mix(in srgb, var(--app-border), var(--ion-color-primary) 28%);
 }
 
 ion-select {
@@ -425,8 +478,11 @@ body.dark-theme ion-select {
   position: relative;
   border: 1px solid color-mix(in srgb, var(--app-border), transparent 24%);
   border-radius: var(--app-radius-md);
-  background: color-mix(in srgb, var(--app-surface), transparent 8%);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, #fff, transparent 92%) 0%, transparent 100%),
+    color-mix(in srgb, var(--app-surface), transparent 8%);
   padding: 14px 12px;
+  overflow: hidden;
 }
 
 .metric-tile strong {

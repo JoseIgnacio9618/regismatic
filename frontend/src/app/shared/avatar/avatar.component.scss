@@ -11,6 +11,7 @@
   box-shadow:
     inset 0 1px 0 color-mix(in srgb, #fff, transparent 76%),
     0 12px 24px color-mix(in srgb, #000, transparent 90%);
+  background: color-mix(in srgb, var(--app-surface-strong), transparent 4%);
 }
 
 .avatar-shell img,
@@ -24,6 +25,7 @@
 
 .avatar-shell img {
   object-fit: cover;
+  transform: translateZ(0);
 }
 
 .avatar-fallback {

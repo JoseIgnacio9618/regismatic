@@ -2,6 +2,11 @@
   --min-height: 70px;
   --padding-start: 8px;
   --padding-end: 8px;
+  --background:
+    linear-gradient(180deg, color-mix(in srgb, var(--app-surface-strong), transparent 1%) 0%, color-mix(in srgb, var(--app-surface), transparent 4%) 100%);
+  border-bottom: 1px solid color-mix(in srgb, var(--app-border), transparent 8%);
+  box-shadow: 0 10px 24px color-mix(in srgb, #000, transparent 95%);
+  backdrop-filter: blur(18px) saturate(160%);
 }
 
 ion-title {
@@ -36,6 +41,11 @@ ion-title {
   --background: transparent;
   font-size: 0.9rem;
   min-width: 42px;
+  transition: transform 160ms ease, opacity 160ms ease;
+}
+
+.toolbar-actions ion-button:hover {
+  transform: translateY(-1px);
 }
 
 .desktop-actions {
@@ -108,6 +118,9 @@ ion-title {
   border-radius: 16px;
   border: 1px solid color-mix(in srgb, var(--app-border), transparent 10%);
   background: color-mix(in srgb, var(--app-surface-strong), transparent 2%);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #fff, transparent 82%),
+    0 20px 40px color-mix(in srgb, #000, transparent 88%);
 }
 
 .header-menu-list ion-item {
@@ -157,6 +170,7 @@ ion-title {
 
 .header-menu-list .menu-user ion-label {
   font-weight: 600;
+  white-space: normal;
 }
 
 .header-menu-list .menu-scope {
@@ -229,6 +243,15 @@ ion-title {
   padding: 92px 16px 28px;
   max-width: 1220px;
   margin: 0 auto;
+}
+
+.notifications-list .notification-item {
+  transition: background 160ms ease, transform 160ms ease;
+}
+
+.notifications-list .notification-item:hover {
+  transform: translateY(-1px);
+  --background: color-mix(in srgb, var(--ion-color-primary), transparent 92%);
 }
 
 @media (max-width: 900px) {
