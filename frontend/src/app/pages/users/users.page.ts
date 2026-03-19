@@ -19,6 +19,9 @@ type UserSection = {
   users: TeamUser[];
 };
 
+type UserWorkspace = "directory" | "create";
+type TeamRoleFilter = Role | "ALL";
+
 @Component({
   selector: "app-users",
   templateUrl: "./users.page.html",
@@ -47,6 +50,9 @@ export class UsersPage implements OnInit, OnDestroy {
   ];
 
   users: TeamUser[] = [];
+  activeWorkspace: UserWorkspace = "directory";
+  teamSearchTerm = "";
+  teamRoleFilter: TeamRoleFilter = "ALL";
 
   fullName = "";
   email = "";
@@ -113,7 +119,7 @@ export class UsersPage implements OnInit, OnDestroy {
   }
 
   get groupedUserSections(): UserSection[] {
-    const scopedUsers = this.usersByCurrentRole;
+    const scopedUsers = this.filteredUsersByCurrentRole;
 
     if (!this.isSuperadmin) {
       return [
@@ -156,26 +162,30 @@ export class UsersPage implements OnInit, OnDestroy {
     return this.users.filter((user) => user.role === "EMPLOYEE");
   }
 
+  get filteredUsersByCurrentRole(): TeamUser[] {
+    return this.usersByCurrentRole.filter((user) => {
+      if (this.teamRoleFilter !== "ALL" && user.role !== this.teamRoleFilter) {
+        return false;
+      }
+
+      return this.matchesTeamSearch(user);
+    });
+  }
+
+  get teamRoleFilterOptions(): TeamRoleFilter[] {
+    return this.isSuperadmin ? ["ALL", "SUPERADMIN", "ADMIN", "EMPLOYEE"] : ["ALL", "EMPLOYEE"];
+  }
+
+  get totalFilteredUsers(): number {
+    return this.filteredUsersByCurrentRole.length;
+  }
+
   get scopeTitle(): string {
     return this.i18nService.t(this.isSuperadmin ? "users.scope_superadmin_title" : "users.scope_admin_title");
   }
 
   get scopeDescription(): string {
     return this.i18nService.t(this.isSuperadmin ? "users.scope_superadmin_desc" : "users.scope_admin_desc");
-  }
-
-  get scopeHighlights(): string[] {
-    return this.isSuperadmin
-      ? [
-          this.i18nService.t("users.scope_superadmin_point_one"),
-          this.i18nService.t("users.scope_superadmin_point_two"),
-          this.i18nService.t("users.scope_superadmin_point_three")
-        ]
-      : [
-          this.i18nService.t("users.scope_admin_point_one"),
-          this.i18nService.t("users.scope_admin_point_two"),
-          this.i18nService.t("users.scope_admin_point_three")
-        ];
   }
 
   get selectedRoleOption(): RoleOption {
@@ -198,6 +208,10 @@ export class UsersPage implements OnInit, OnDestroy {
   selectRole(role: Role): void {
     this.role = role;
     this.onRoleChange();
+  }
+
+  selectWorkspace(workspace: UserWorkspace): void {
+    this.activeWorkspace = workspace;
   }
 
   async createUser(): Promise<void> {
@@ -255,6 +269,10 @@ export class UsersPage implements OnInit, OnDestroy {
     return this.i18nService.t(`role.${role}`);
   }
 
+  roleFilterLabel(filter: TeamRoleFilter): string {
+    return filter === "ALL" ? this.i18nService.t("users.filter_role_all") : this.roleLabel(filter);
+  }
+
   canDeleteUser(user: TeamUser): boolean {
     return this.authService.user?.id !== user.id;
   }
@@ -277,6 +295,14 @@ export class UsersPage implements OnInit, OnDestroy {
 
   roleMeta(user: TeamUser): string {
     return `${user.email} | ${this.roleLabel(user.role)}`;
+  }
+
+  formatCreatedAt(iso: string): string {
+    return new Date(iso).toLocaleDateString(this.i18nService.locale, {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric"
+    });
   }
 
   roleColor(role: Role): "medium" | "primary" | "warning" {
@@ -412,6 +438,17 @@ export class UsersPage implements OnInit, OnDestroy {
   closePhotoViewer(): void {
     this.photoViewerOpen = false;
     this.photoViewerUser = null;
+  }
+
+  private matchesTeamSearch(user: TeamUser): boolean {
+    const term = this.teamSearchTerm.trim().toLowerCase();
+    if (!term) {
+      return true;
+    }
+
+    const managerName = user.manager?.fullName?.toLowerCase() ?? "";
+    const haystack = [user.fullName, user.email, this.roleLabel(user.role), managerName].join(" ").toLowerCase();
+    return haystack.includes(term);
   }
 
   private async deleteUser(userId: string): Promise<void> {

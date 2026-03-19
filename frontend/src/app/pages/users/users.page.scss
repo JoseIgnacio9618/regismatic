@@ -4,7 +4,8 @@
 
 .scope-panel::before,
 .form-panel::before,
-.team-panel::before {
+.team-panel::before,
+.workspace-panel::before {
   content: "";
   position: absolute;
   inset: 0;
@@ -29,8 +30,45 @@
   background: radial-gradient(circle at 92% 6%, color-mix(in srgb, var(--ion-color-secondary), transparent 84%) 0%, transparent 48%);
 }
 
+.workspace-panel::before {
+  background:
+    radial-gradient(circle at 10% 20%, color-mix(in srgb, var(--ion-color-primary), transparent 88%) 0%, transparent 38%),
+    radial-gradient(circle at 92% 18%, color-mix(in srgb, var(--ion-color-tertiary), transparent 88%) 0%, transparent 40%);
+}
+
 .mt-16 {
   margin-top: 16px;
+}
+
+.workspace-switch {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.workspace-card {
+  appearance: none;
+  width: 100%;
+  padding: 16px 18px;
+  border: 1px solid color-mix(in srgb, var(--app-border), transparent 6%);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--app-surface), transparent 3%);
+  color: var(--ion-text-color);
+  text-align: left;
+  cursor: pointer;
+  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
+}
+
+.workspace-card strong {
+  display: block;
+  font-size: 1rem;
+}
+
+.workspace-card.active-workspace {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--ion-color-primary), transparent 28%);
+  background: color-mix(in srgb, var(--app-surface-strong), var(--ion-color-primary) 8%);
+  box-shadow: 0 18px 34px color-mix(in srgb, #000, transparent 92%);
 }
 
 .scope-hero {
@@ -85,23 +123,6 @@
   margin-top: 6px;
   font-size: 0.88rem;
   color: var(--app-ink-muted);
-}
-
-.scope-points {
-  margin-top: 18px;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.scope-point {
-  padding: 12px 14px;
-  border-radius: 16px;
-  border: 1px solid color-mix(in srgb, var(--app-border), transparent 10%);
-  background: color-mix(in srgb, var(--ion-color-primary), transparent 92%);
-  color: var(--ion-text-color);
-  font-size: 0.92rem;
-  line-height: 1.4;
 }
 
 .role-picker {
@@ -215,8 +236,48 @@
   flex-wrap: wrap;
 }
 
+.create-side-panel {
+  min-height: 100%;
+}
+
+.compact-metrics {
+  margin-top: 4px;
+}
+
 .team-section + .team-section {
   margin-top: 18px;
+}
+
+.team-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(220px, 0.6fr);
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.team-search-item,
+.team-filter-item {
+  margin-bottom: 0;
+}
+
+.team-results-summary {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 14px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--app-border), transparent 12%);
+  background: color-mix(in srgb, var(--app-surface-strong), transparent 6%);
+}
+
+.team-results-summary strong {
+  font-size: 1.05rem;
+}
+
+.team-results-summary span {
+  color: var(--app-ink-muted);
+  font-size: 0.88rem;
 }
 
 .team-section-head {
@@ -236,6 +297,95 @@
   margin: 4px 0 0;
   color: var(--app-ink-muted);
   font-size: 0.9rem;
+}
+
+.team-table-shell {
+  overflow-x: auto;
+  border: 1px solid color-mix(in srgb, var(--app-border), transparent 12%);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--app-surface-strong), transparent 6%);
+}
+
+.team-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 860px;
+}
+
+.team-table thead th {
+  padding: 14px 16px;
+  text-align: left;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--app-ink-muted);
+  border-bottom: 1px solid color-mix(in srgb, var(--app-border), transparent 8%);
+  background: color-mix(in srgb, var(--app-surface), transparent 2%);
+}
+
+.team-table tbody td {
+  padding: 14px 16px;
+  vertical-align: top;
+  border-bottom: 1px solid color-mix(in srgb, var(--app-border), transparent 14%);
+}
+
+.team-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.team-table tbody tr {
+  transition: background 160ms ease;
+}
+
+.team-table tbody tr:hover {
+  background: color-mix(in srgb, var(--app-surface), var(--ion-color-primary) 4%);
+}
+
+.team-user-cell {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 240px;
+}
+
+.team-user-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.team-user-copy strong {
+  font-size: 0.96rem;
+}
+
+.team-user-copy span {
+  color: var(--app-ink-muted);
+  font-size: 0.86rem;
+  line-height: 1.35;
+}
+
+.manager-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 180px;
+}
+
+.manager-inline-edit {
+  display: flex;
+  align-items: end;
+  gap: 8px;
+}
+
+.manager-inline-edit ion-select {
+  flex: 1;
+}
+
+.table-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 210px;
 }
 
 .user-row-top {
@@ -361,9 +511,17 @@
   .scope-points {
     grid-template-columns: 1fr;
   }
+
+  .team-toolbar {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 767px) {
+  .workspace-switch {
+    grid-template-columns: 1fr;
+  }
+
   .scope-metrics {
     grid-template-columns: 1fr 1fr;
   }
@@ -403,5 +561,67 @@
     width: min(100%, 320px);
     max-height: 58vh;
     border-radius: 24px;
+  }
+
+  .team-table-shell {
+    border: 0;
+    background: transparent;
+    overflow: visible;
+  }
+
+  .team-table,
+  .team-table thead,
+  .team-table tbody,
+  .team-table th,
+  .team-table td,
+  .team-table tr {
+    display: block;
+  }
+
+  .team-table {
+    min-width: 0;
+  }
+
+  .team-table thead {
+    display: none;
+  }
+
+  .team-table tbody tr {
+    padding: 14px;
+    margin-bottom: 12px;
+    border: 1px solid color-mix(in srgb, var(--app-border), transparent 10%);
+    border-radius: 18px;
+    background: color-mix(in srgb, var(--app-surface-strong), transparent 5%);
+  }
+
+  .team-table tbody td {
+    padding: 0;
+    border-bottom: 0;
+  }
+
+  .team-table tbody td + td {
+    margin-top: 12px;
+  }
+
+  .team-table tbody td::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 6px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--app-ink-muted);
+  }
+
+  .team-user-cell {
+    min-width: 0;
+  }
+
+  .manager-inline-edit,
+  .table-actions {
+    flex-direction: column;
+    align-items: stretch;
+    min-width: 0;
   }
 }
