@@ -12,6 +12,7 @@ export interface AuthUser {
   id: string;
   email: string;
   fullName: string;
+  profilePhotoUrl?: string | null;
   role: Role;
   managerId?: string | null;
   isActive: boolean;
@@ -24,6 +25,7 @@ export interface LoginResponse {
     id: string;
     email: string;
     fullName: string;
+    profilePhotoUrl?: string | null;
     role: Role;
   };
 }
@@ -34,6 +36,7 @@ export interface UserSummary {
   id: string;
   fullName: string;
   email: string;
+  profilePhotoUrl?: string | null;
 }
 
 export interface WorkEvent {
@@ -120,6 +123,7 @@ export interface TeamUser {
   id: string;
   email: string;
   fullName: string;
+  profilePhotoUrl?: string | null;
   role: Role;
   isActive: boolean;
   createdAt: string;

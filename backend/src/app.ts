@@ -3,6 +3,7 @@ import express from "express";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import morgan from "morgan";
+import path from "node:path";
 import { ZodError } from "zod";
 import { env } from "./config/env";
 import { prisma } from "./config/prisma";
@@ -31,7 +32,13 @@ const allowedOrigins = env.CORS_ORIGIN.split(",")
   .map((origin) => origin.trim())
   .filter(Boolean);
 
-app.use(helmet());
+app.use(
+  helmet({
+    crossOriginResourcePolicy: {
+      policy: "cross-origin"
+    }
+  })
+);
 app.use(
   cors({
     origin: allowedOrigins.includes("*") ? true : allowedOrigins
@@ -39,6 +46,7 @@ app.use(
 );
 app.use(morgan(env.NODE_ENV === "production" ? "combined" : "dev"));
 app.use(express.json());
+app.use("/uploads", express.static(path.resolve(process.cwd(), "uploads")));
 
 app.get("/health", (_req, res) => {
   res.json({ status: "ok" });

@@ -1,4 +1,12 @@
 <ion-content class="login-screen" [fullscreen]="true">
+  <input #registerPhotoInput type="file" accept="image/png,image/jpeg,image/webp,image/gif" class="hidden-file-input" (change)="onProfilePhotoSelected($event)" />
+  <app-photo-cropper
+    [isOpen]="photoCropperOpen"
+    [sourceUrl]="photoCropSourceUrl"
+    [fullName]="fullName || email || 'Admin'"
+    (cancel)="cancelPhotoCrop()"
+    (confirmCrop)="applyPhotoCrop($event)"
+  ></app-photo-cropper>
   <div class="login-wrap register-wrap">
     <div class="login-top-actions">
       <ion-select
@@ -42,6 +50,26 @@
           <ion-label position="stacked">{{ "register_admin.confirm_password" | t }}</ion-label>
           <ion-input [(ngModel)]="confirmPassword" type="password"></ion-input>
         </ion-item>
+
+        <section class="register-photo-panel">
+          <div class="register-photo-head">
+            <div>
+              <strong>{{ "profile.photo_title" | t }}</strong>
+              <p>{{ "register_admin.photo_hint" | t }}</p>
+            </div>
+            <app-avatar [fullName]="fullName || email || 'Admin'" [photoUrl]="profilePhotoPreviewUrl" size="lg"></app-avatar>
+          </div>
+
+          <div class="register-photo-actions">
+            <ion-button size="small" fill="outline" (click)="openProfilePhotoPicker()">
+              <ion-icon slot="start" name="camera-outline"></ion-icon>
+              {{ profilePhotoFile ? ("profile.photo_change" | t) : ("profile.photo_add" | t) }}
+            </ion-button>
+            <ion-button size="small" fill="clear" color="medium" *ngIf="profilePhotoFile" (click)="clearProfilePhoto()">
+              {{ "profile.photo_remove" | t }}
+            </ion-button>
+          </div>
+        </section>
 
         <ion-button expand="block" class="mt-16" [disabled]="loading" (click)="submit()">
           {{ loading ? ("register_admin.submitting" | t) : ("register_admin.submit" | t) }}

@@ -34,6 +34,8 @@ services:
       RUN_SEED: ${RUN_SEED:-true}
     ports:
       - "4000:4000"
+    volumes:
+      - regismatic-uploads:/usr/src/app/uploads
     depends_on:
       db:
         condition: service_healthy
@@ -52,3 +54,4 @@ services:
 
 volumes:
   regismatic-db:
+  regismatic-uploads:

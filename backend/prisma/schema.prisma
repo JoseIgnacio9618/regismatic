@@ -53,6 +53,7 @@ model User {
   email               String                 @unique
   passwordHash        String
   fullName            String
+  profilePhotoPath    String?
   role                Role                   @default(EMPLOYEE)
   managerId           String?
   manager             User?                  @relation("ManagerEmployees", fields: [managerId], references: [id], onDelete: SetNull)

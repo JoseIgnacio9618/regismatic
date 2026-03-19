@@ -30,6 +30,8 @@ services:
       AUTH_RATE_LIMIT_WINDOW_MS: ${AUTH_RATE_LIMIT_WINDOW_MS:-900000}
       AUTH_RATE_LIMIT_MAX: ${AUTH_RATE_LIMIT_MAX:-10}
       RUN_SEED: ${RUN_SEED:-false}
+    volumes:
+      - regismatic-uploads:/usr/src/app/uploads
     depends_on:
       db:
         condition: service_healthy
@@ -63,5 +65,6 @@ services:
 
 volumes:
   regismatic-db:
+  regismatic-uploads:
   caddy_data:
   caddy_config:

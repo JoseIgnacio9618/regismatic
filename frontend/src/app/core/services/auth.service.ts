@@ -37,8 +37,7 @@ export class AuthService {
     }
 
     try {
-      const me = await this.apiService.get<AuthUser>("/auth/me", true);
-      this.userState.next(me);
+      await this.refreshCurrentUser();
     } catch {
       this.logout(false);
     }
@@ -54,10 +53,18 @@ export class AuthService {
     await this.persistSession(response);
   }
 
-  private async persistSession(response: LoginResponse): Promise<void> {
-    localStorage.setItem(AuthService.TOKEN_KEY, response.token);
+  async refreshCurrentUser(): Promise<void> {
+    if (!this.hasToken) {
+      return;
+    }
+
     const me = await this.apiService.get<AuthUser>("/auth/me", true);
     this.userState.next(me);
+  }
+
+  private async persistSession(response: LoginResponse): Promise<void> {
+    localStorage.setItem(AuthService.TOKEN_KEY, response.token);
+    await this.refreshCurrentUser();
   }
 
   logout(navigate = true): void {

@@ -84,6 +84,39 @@ p {
   margin-top: 8px;
 }
 
+.register-photo-panel {
+  margin-top: 18px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px solid color-mix(in srgb, var(--app-border), transparent 10%);
+  background: color-mix(in srgb, var(--app-surface-strong), transparent 6%);
+}
+
+.register-photo-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.register-photo-head strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.register-photo-head p {
+  margin: 0;
+  color: var(--app-ink-muted);
+  font-size: 0.9rem;
+}
+
+.register-photo-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+}
+
 .mt-16 {
   margin-top: 18px;
 }
@@ -101,5 +134,14 @@ p {
 
   ion-card-content {
     padding: 22px;
+  }
+
+  .register-photo-head,
+  .register-photo-actions {
+    display: block;
+  }
+
+  .register-photo-actions ion-button:first-child {
+    margin-bottom: 8px;
   }
 }

@@ -1,4 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
+import multer from "multer";
 
 export class AppError extends Error {
   statusCode: number;
@@ -12,6 +13,14 @@ export class AppError extends Error {
 export const errorMiddleware = (err: unknown, _req: Request, res: Response, _next: NextFunction) => {
   if (err instanceof AppError) {
     return res.status(err.statusCode).json({ message: err.message });
+  }
+
+  if (err instanceof multer.MulterError) {
+    if (err.code === "LIMIT_FILE_SIZE") {
+      return res.status(400).json({ message: "Profile photo exceeds the maximum allowed size." });
+    }
+
+    return res.status(400).json({ message: err.message });
   }
 
   if (err instanceof Error) {

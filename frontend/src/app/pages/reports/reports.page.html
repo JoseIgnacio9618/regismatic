@@ -82,6 +82,7 @@
             <ion-list lines="none" class="data-list" *ngIf="pendingRequests.length > 0">
               <ng-container *ngFor="let request of pendingRequests">
                 <ion-item class="data-item">
+                  <app-avatar slot="start" [fullName]="request.workEvent.user.fullName" [photoUrl]="request.workEvent.user.profilePhotoUrl" size="md"></app-avatar>
                   <ion-label>
                     <h3 class="item-title">{{ request.workEvent.user.fullName }} | {{ eventTypeLabel(request.workEvent.type) }}</h3>
                     <ion-note class="item-meta">{{ "common.current" | t }}: {{ formatDateTime(request.workEvent.eventAt) }}</ion-note>
@@ -162,6 +163,7 @@
             <ion-list lines="none" class="data-list" *ngIf="events.length > 0">
               <ng-container *ngFor="let event of events">
                 <ion-item class="data-item event-item">
+                  <app-avatar *ngIf="authService.isAdmin" slot="start" [fullName]="event.user.fullName" [photoUrl]="event.user.profilePhotoUrl" size="md"></app-avatar>
                   <ion-label>
                     <h3 class="item-title">
                       {{ eventTypeLabel(event.type) }}

@@ -43,7 +43,10 @@ export class ApiService {
     "La solicitud ya fue revisada.": "errors.request_already_reviewed",
     "You cannot delete your own account.": "errors.cannot_delete_own_user",
     "Notification not found.": "errors.notification_not_found",
-    "Invalid push token.": "errors.invalid_push_token"
+    "Invalid push token.": "errors.invalid_push_token",
+    "Invalid profile photo format.": "errors.invalid_profile_photo_format",
+    "Profile photo exceeds the maximum allowed size.": "errors.profile_photo_too_large",
+    "Missing profile photo file.": "errors.missing_profile_photo_file"
   };
 
   constructor(
@@ -104,6 +107,30 @@ export class ApiService {
         })
       );
     });
+  }
+
+  async postFormData<T>(path: string, body: FormData, auth = false): Promise<T> {
+    return this.runWithLoading(async () => {
+      return firstValueFrom(
+        this.http.post<T>(`${this.baseUrl}${path}`, body, {
+          headers: this.buildHeaders(auth)
+        })
+      );
+    });
+  }
+
+  buildAssetUrl(path: string | null | undefined): string | null {
+    if (!path) {
+      return null;
+    }
+
+    if (/^https?:\/\//i.test(path)) {
+      return path;
+    }
+
+    const apiOrigin = this.baseUrl.replace(/\/api\/?$/, "");
+    const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+    return `${apiOrigin}${normalizedPath}`;
   }
 
   private buildHeaders(auth: boolean): HttpHeaders {

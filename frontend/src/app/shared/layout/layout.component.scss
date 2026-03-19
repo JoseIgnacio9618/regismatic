@@ -164,6 +164,33 @@ ion-title {
   font-size: 0.84rem;
 }
 
+.header-menu-list .menu-profile-card {
+  --align-items: center;
+  --padding-top: 6px;
+  --padding-bottom: 6px;
+}
+
+.menu-profile-card ion-label h3 {
+  margin: 0 0 4px;
+  font-size: 0.94rem;
+}
+
+.menu-profile-card ion-label ion-note {
+  display: block;
+  color: var(--app-ink-muted);
+  white-space: normal;
+}
+
+.menu-profile-actions {
+  display: flex;
+  gap: 8px;
+  padding: 6px 10px 10px;
+}
+
+.menu-profile-actions ion-button {
+  flex: 1;
+}
+
 .header-menu-list .danger-item {
   --color: var(--ion-color-danger);
 }

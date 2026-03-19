@@ -44,6 +44,7 @@ export const meController = async (req: Request, res: Response) => {
       id: true,
       email: true,
       fullName: true,
+      profilePhotoPath: true,
       role: true,
       managerId: true,
       isActive: true,
@@ -55,5 +56,9 @@ export const meController = async (req: Request, res: Response) => {
     throw new AppError("User not found.", 404);
   }
 
-  return res.json(user);
+  const { profilePhotoPath, ...rest } = user;
+  return res.json({
+    ...rest,
+    profilePhotoUrl: profilePhotoPath ?? null
+  });
 };

@@ -8,6 +8,7 @@ const buildAuthResponse = (user: {
   id: string;
   email: string;
   fullName: string;
+  profilePhotoPath?: string | null;
   role: Role;
 }) => {
   const token = signToken({
@@ -22,6 +23,7 @@ const buildAuthResponse = (user: {
       id: user.id,
       email: user.email,
       fullName: user.fullName,
+      profilePhotoUrl: user.profilePhotoPath ?? null,
       role: user.role
     }
   };

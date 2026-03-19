@@ -53,6 +53,7 @@ curl https://api.tudominio.com/health/ready
 - `web` (Nginx): sirve frontend Ionic
 - `api` (Node): API Express
 - `db` (PostgreSQL): persistencia SQL
+- `regismatic-uploads` (volumen Docker): fotos de perfil y otros ficheros persistentes del backend
 
 PostgreSQL no se expone publicamente en produccion.
 

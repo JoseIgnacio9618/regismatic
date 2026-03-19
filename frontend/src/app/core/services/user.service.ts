@@ -18,6 +18,26 @@ export class UserService {
     return this.apiService.patch<TeamUser>(`/users/${userId}/manager`, { managerId }, true);
   }
 
+  uploadOwnProfilePhoto(file: File): Promise<TeamUser> {
+    const formData = new FormData();
+    formData.append("photo", file);
+    return this.apiService.postFormData<TeamUser>("/users/me/photo", formData, true);
+  }
+
+  removeOwnProfilePhoto(): Promise<TeamUser> {
+    return this.apiService.delete<TeamUser>("/users/me/photo", true);
+  }
+
+  uploadUserProfilePhoto(userId: string, file: File): Promise<TeamUser> {
+    const formData = new FormData();
+    formData.append("photo", file);
+    return this.apiService.postFormData<TeamUser>(`/users/${userId}/photo`, formData, true);
+  }
+
+  removeUserProfilePhoto(userId: string): Promise<TeamUser> {
+    return this.apiService.delete<TeamUser>(`/users/${userId}/photo`, true);
+  }
+
   deleteUser(userId: string): Promise<TeamUser> {
     return this.apiService.delete<TeamUser>(`/users/${userId}`, true);
   }

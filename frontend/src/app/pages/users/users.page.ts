@@ -1,6 +1,7 @@
-import { Component, OnInit } from "@angular/core";
+import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from "@angular/core";
 import { AlertController, ToastController } from "@ionic/angular";
 import { Role, TeamUser } from "src/app/core/models/types";
+import { ApiService } from "src/app/core/services/api.service";
 import { AuthService } from "src/app/core/services/auth.service";
 import { I18nService } from "src/app/core/services/i18n.service";
 import { UserService } from "src/app/core/services/user.service";
@@ -24,7 +25,9 @@ type UserSection = {
   styleUrls: ["./users.page.scss"],
   standalone: false
 })
-export class UsersPage implements OnInit {
+export class UsersPage implements OnInit, OnDestroy {
+  @ViewChild("createPhotoInput") createPhotoInput?: ElementRef<HTMLInputElement>;
+  @ViewChild("userPhotoInput") userPhotoInput?: ElementRef<HTMLInputElement>;
   private readonly roleOptions: RoleOption[] = [
     {
       role: "EMPLOYEE",
@@ -53,9 +56,19 @@ export class UsersPage implements OnInit {
   managerDraftByUserId: Record<string, string> = {};
   deletingUserId: string | null = null;
   savingManagerUserId: string | null = null;
+  photoTargetUserId: string | null = null;
+  photoLoadingUserId: string | null = null;
+  photoCropperOpen = false;
+  photoCropSourceUrl: string | null = null;
+  photoCropMode: "create" | "user" | null = null;
+  createPhotoFile: File | null = null;
+  createPhotoPreviewUrl: string | null = null;
+  photoViewerOpen = false;
+  photoViewerUser: TeamUser | null = null;
 
   constructor(
     public readonly authService: AuthService,
+    private readonly apiService: ApiService,
     private readonly userService: UserService,
     public readonly i18nService: I18nService,
     private readonly alertController: AlertController,
@@ -64,6 +77,11 @@ export class UsersPage implements OnInit {
 
   async ngOnInit(): Promise<void> {
     await this.loadUsers();
+  }
+
+  ngOnDestroy(): void {
+    this.clearCreatePhotoPreview();
+    this.clearPhotoCropSource();
   }
 
   get isSuperadmin(): boolean {
@@ -189,7 +207,7 @@ export class UsersPage implements OnInit {
     }
 
     try {
-      await this.userService.createUser({
+      const createdUser = await this.userService.createUser({
         email: this.email,
         fullName: this.fullName,
         password: this.password,
@@ -197,11 +215,16 @@ export class UsersPage implements OnInit {
         managerId: this.needsManagerSelection ? this.managerId : undefined
       });
 
+      if (this.createPhotoFile) {
+        await this.userService.uploadUserProfilePhoto(createdUser.id, this.createPhotoFile);
+      }
+
       this.fullName = "";
       this.email = "";
       this.password = "Regismatic2026!";
       this.role = "EMPLOYEE";
       this.managerId = "";
+      this.clearCreatePhoto();
 
       await this.loadUsers();
       await this.showToast(this.i18nService.t("users.toast_user_created"), "success");
@@ -210,12 +233,46 @@ export class UsersPage implements OnInit {
     }
   }
 
+  openCreatePhotoPicker(): void {
+    this.createPhotoInput?.nativeElement.click();
+  }
+
+  onCreatePhotoSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
+    if (file) {
+      this.openPhotoCropper(file, "create");
+    }
+    input.value = "";
+  }
+
+  clearCreatePhoto(): void {
+    this.createPhotoFile = null;
+    this.clearCreatePhotoPreview();
+  }
+
   roleLabel(role: Role): string {
     return this.i18nService.t(`role.${role}`);
   }
 
   canDeleteUser(user: TeamUser): boolean {
     return this.authService.user?.id !== user.id;
+  }
+
+  canManagePhoto(user: TeamUser): boolean {
+    if (this.isSuperadmin) {
+      return true;
+    }
+
+    return user.role === "EMPLOYEE";
+  }
+
+  canPreviewPhoto(user: TeamUser): boolean {
+    return Boolean(user.profilePhotoUrl);
+  }
+
+  get selectedPhotoViewerUrl(): string | null {
+    return this.apiService.buildAssetUrl(this.photoViewerUser?.profilePhotoUrl);
   }
 
   roleMeta(user: TeamUser): string {
@@ -307,6 +364,56 @@ export class UsersPage implements OnInit {
     await alert.present();
   }
 
+  openPhotoPicker(user: TeamUser): void {
+    if (!this.canManagePhoto(user)) {
+      return;
+    }
+
+    this.photoTargetUserId = user.id;
+    this.userPhotoInput?.nativeElement.click();
+  }
+
+  onUserPhotoSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+
+    if (!file || !this.photoTargetUserId) {
+      input.value = "";
+      return;
+    }
+
+    this.openPhotoCropper(file, "user");
+    input.value = "";
+  }
+
+  async removeUserPhoto(user: TeamUser): Promise<void> {
+    this.photoLoadingUserId = user.id;
+    try {
+      await this.userService.removeUserProfilePhoto(user.id);
+      await this.loadUsers();
+      await this.authService.refreshCurrentUser();
+      await this.showToast(this.i18nService.t("profile.photo_removed"), "success");
+    } catch (error) {
+      await this.showToast(error instanceof Error ? error.message : this.i18nService.t("profile.photo_remove_failed"), "danger");
+    } finally {
+      this.photoLoadingUserId = null;
+    }
+  }
+
+  openPhotoViewer(user: TeamUser): void {
+    if (!this.canPreviewPhoto(user)) {
+      return;
+    }
+
+    this.photoViewerUser = user;
+    this.photoViewerOpen = true;
+  }
+
+  closePhotoViewer(): void {
+    this.photoViewerOpen = false;
+    this.photoViewerUser = null;
+  }
+
   private async deleteUser(userId: string): Promise<void> {
     this.deletingUserId = userId;
     try {
@@ -317,6 +424,73 @@ export class UsersPage implements OnInit {
       await this.showToast(error instanceof Error ? error.message : this.i18nService.t("users.toast_user_delete_failed"), "danger");
     } finally {
       this.deletingUserId = null;
+    }
+  }
+
+  private clearCreatePhotoPreview(): void {
+    if (this.createPhotoPreviewUrl) {
+      URL.revokeObjectURL(this.createPhotoPreviewUrl);
+      this.createPhotoPreviewUrl = null;
+    }
+  }
+
+  cancelPhotoCrop(): void {
+    const wasUserMode = this.photoCropMode === "user";
+    this.photoCropperOpen = false;
+    this.photoCropMode = null;
+    if (wasUserMode) {
+      this.photoTargetUserId = null;
+    }
+    this.clearPhotoCropSource();
+  }
+
+  async applyPhotoCrop(result: { file: File; previewUrl: string }): Promise<void> {
+    if (this.photoCropMode === "create") {
+      this.clearCreatePhotoPreview();
+      this.createPhotoFile = result.file;
+      this.createPhotoPreviewUrl = result.previewUrl;
+      this.photoCropperOpen = false;
+      this.photoCropMode = null;
+      this.clearPhotoCropSource();
+      return;
+    }
+
+    const userId = this.photoTargetUserId;
+    URL.revokeObjectURL(result.previewUrl);
+    this.photoCropperOpen = false;
+    this.photoCropMode = null;
+
+    if (!userId) {
+      this.clearPhotoCropSource();
+      return;
+    }
+
+    this.photoLoadingUserId = userId;
+    try {
+      await this.userService.uploadUserProfilePhoto(userId, result.file);
+      await this.loadUsers();
+      await this.authService.refreshCurrentUser();
+      await this.showToast(this.i18nService.t("profile.photo_updated"), "success");
+    } catch (error) {
+      await this.showToast(error instanceof Error ? error.message : this.i18nService.t("profile.photo_update_failed"), "danger");
+    } finally {
+      this.photoLoadingUserId = null;
+      this.photoTargetUserId = null;
+      this.clearPhotoCropSource();
+    }
+  }
+
+  private openPhotoCropper(file: File, mode: "create" | "user"): void {
+    this.clearPhotoCropSource();
+    this.photoCropMode = mode;
+    this.photoCropSourceUrl = URL.createObjectURL(file);
+    this.photoCropperOpen = true;
+  }
+
+  private clearPhotoCropSource(): void {
+    if (this.photoCropSourceUrl) {
+      URL.revokeObjectURL(this.photoCropSourceUrl);
+      this.photoCropSourceUrl = null;
     }
   }
 

@@ -28,6 +28,7 @@ La base de datos es **PostgreSQL (SQL)**, no SQLite.
 - Revision de solicitudes y edicion directa de registros por administradores
 - Centro de incidencias priorizado para admin (arriba en reportes)
 - Notificaciones internas en app + push para Android/iOS (FCM)
+- Foto de perfil por usuario con avatar por defecto cuando no hay imagen
 - Gestion de usuarios por alcance:
   - `ADMIN`: solo crea y gestiona empleados propios
   - `SUPERADMIN`: ve todo, puede crear admins, superadmins y empleados asignados, y reasignar empleados entre administradores
@@ -55,6 +56,7 @@ docker compose up --build
 - Frontend: `http://localhost:8100`
 - API health: `http://localhost:4000/health`
 - API ready: `http://localhost:4000/health/ready`
+- Fotos de perfil: se guardan en un volumen Docker independiente del backend
 
 Credenciales demo (si `RUN_SEED=true`):
 - `superadmin@regismatic.local` / `Regismatic2026!`
@@ -145,6 +147,15 @@ Para push nativo Android/iOS (opcional pero recomendado):
 cd frontend
 npm run cap:sync
 ```
+
+## 6) Fotos de perfil
+- Cada usuario puede subir o quitar su propia foto desde el menu de cuenta.
+- `ADMIN` y `SUPERADMIN` tambien pueden gestionar la foto de los usuarios visibles en `Equipo`.
+- Si no existe imagen, la app muestra un avatar por iniciales.
+- Formatos admitidos: `JPG`, `PNG`, `WEBP`, `GIF`
+- Tamano maximo en API: `512 KB`
+- La app recorta y comprime la foto antes de subirla para dejarla ligera
+- En Docker las imagenes quedan persistidas en el volumen `regismatic-uploads`.
 
 ## Documentacion adicional
 - [Legal + benchmark](docs/legal-and-product-research.md)

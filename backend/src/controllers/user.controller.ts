@@ -1,7 +1,14 @@
 import type { Request, Response } from "express";
 import { z } from "zod";
 import { AppError } from "../middlewares/error.middleware";
-import { assignEmployeeManager, createUser, deleteUser, listUsers } from "../services/user.service";
+import {
+  assignEmployeeManager,
+  createUser,
+  deleteUser,
+  listUsers,
+  removeUserProfilePhoto,
+  updateUserProfilePhoto
+} from "../services/user.service";
 
 const createUserSchema = z.object({
   email: z.string().email(),
@@ -68,6 +75,70 @@ export const assignEmployeeManagerController = async (req: Request, res: Respons
     userId,
     managerId: payload.managerId,
     requesterId: req.user.id
+  });
+
+  return res.json(user);
+};
+
+export const updateOwnProfilePhotoController = async (req: Request, res: Response) => {
+  if (!req.user) {
+    throw new AppError("Not authenticated.", 401);
+  }
+
+  if (!req.file) {
+    throw new AppError("Missing profile photo file.", 400);
+  }
+
+  const user = await updateUserProfilePhoto({
+    requesterId: req.user.id,
+    targetUserId: req.user.id,
+    file: req.file
+  });
+
+  return res.json(user);
+};
+
+export const removeOwnProfilePhotoController = async (req: Request, res: Response) => {
+  if (!req.user) {
+    throw new AppError("Not authenticated.", 401);
+  }
+
+  const user = await removeUserProfilePhoto({
+    requesterId: req.user.id,
+    targetUserId: req.user.id
+  });
+
+  return res.json(user);
+};
+
+export const updateUserProfilePhotoController = async (req: Request, res: Response) => {
+  if (!req.user) {
+    throw new AppError("Not authenticated.", 401);
+  }
+
+  if (!req.file) {
+    throw new AppError("Missing profile photo file.", 400);
+  }
+
+  const userId = z.string().min(1).parse(req.params.userId);
+  const user = await updateUserProfilePhoto({
+    requesterId: req.user.id,
+    targetUserId: userId,
+    file: req.file
+  });
+
+  return res.json(user);
+};
+
+export const removeUserProfilePhotoController = async (req: Request, res: Response) => {
+  if (!req.user) {
+    throw new AppError("Not authenticated.", 401);
+  }
+
+  const userId = z.string().min(1).parse(req.params.userId);
+  const user = await removeUserProfilePhoto({
+    requesterId: req.user.id,
+    targetUserId: userId
   });
 
   return res.json(user);

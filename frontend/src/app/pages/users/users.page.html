@@ -1,4 +1,35 @@
 <app-main-layout [title]="'users.layout_title' | t">
+  <input #createPhotoInput type="file" accept="image/png,image/jpeg,image/webp,image/gif" class="hidden-file-input" (change)="onCreatePhotoSelected($event)" />
+  <input #userPhotoInput type="file" accept="image/png,image/jpeg,image/webp,image/gif" class="hidden-file-input" (change)="onUserPhotoSelected($event)" />
+  <app-photo-cropper
+    [isOpen]="photoCropperOpen"
+    [sourceUrl]="photoCropSourceUrl"
+    [fullName]="photoCropMode === 'create' ? (fullName || email || 'Nuevo usuario') : 'Usuario'"
+    (cancel)="cancelPhotoCrop()"
+    (confirmCrop)="applyPhotoCrop($event)"
+  ></app-photo-cropper>
+  <ion-modal [isOpen]="photoViewerOpen" (didDismiss)="closePhotoViewer()" class="profile-photo-viewer-modal">
+    <ng-template>
+      <ion-header translucent="true">
+        <ion-toolbar>
+          <ion-title>{{ photoViewerUser?.fullName }}</ion-title>
+          <ion-buttons slot="end">
+            <ion-button fill="clear" (click)="closePhotoViewer()">{{ "common.close" | t }}</ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+
+      <ion-content class="profile-photo-viewer-content">
+        <div class="profile-photo-viewer-shell" *ngIf="photoViewerUser">
+          <img *ngIf="selectedPhotoViewerUrl" [src]="selectedPhotoViewerUrl" [alt]="photoViewerUser.fullName" />
+          <div class="profile-photo-viewer-meta">
+            <strong>{{ photoViewerUser.fullName }}</strong>
+            <span>{{ roleMeta(photoViewerUser) }}</span>
+          </div>
+        </div>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
   <ion-grid fixed class="users-grid">
     <ion-row>
       <ion-col size="12">
@@ -67,6 +98,26 @@
               <ion-label position="stacked">{{ "common.password" | t }}</ion-label>
               <ion-input type="text" [(ngModel)]="password"></ion-input>
             </ion-item>
+
+            <section class="create-photo-panel">
+              <div class="create-photo-head">
+                <div>
+                  <strong>{{ "profile.photo_title" | t }}</strong>
+                  <p>{{ "users.create_photo_hint" | t }}</p>
+                </div>
+                <app-avatar [fullName]="fullName || email || 'Nuevo usuario'" [photoUrl]="createPhotoPreviewUrl" size="lg"></app-avatar>
+              </div>
+
+              <div class="create-photo-actions">
+                <ion-button size="small" fill="outline" (click)="openCreatePhotoPicker()">
+                  <ion-icon slot="start" name="camera-outline"></ion-icon>
+                  {{ createPhotoFile ? ("profile.photo_change" | t) : ("profile.photo_add" | t) }}
+                </ion-button>
+                <ion-button size="small" fill="clear" color="medium" *ngIf="createPhotoFile" (click)="clearCreatePhoto()">
+                  {{ "profile.photo_remove" | t }}
+                </ion-button>
+              </div>
+            </section>
 
             <div class="role-picker" *ngIf="isSuperadmin">
               <div class="role-picker-head">
@@ -137,6 +188,16 @@
                 <ion-list lines="none" class="data-list">
                   <ng-container *ngFor="let user of section.users; trackBy: trackUser">
                     <ion-item class="data-item">
+                      <button
+                        type="button"
+                        slot="start"
+                        class="avatar-preview-trigger"
+                        [class.avatar-preview-disabled]="!canPreviewPhoto(user)"
+                        [disabled]="!canPreviewPhoto(user)"
+                        (click)="openPhotoViewer(user)"
+                      >
+                        <app-avatar [fullName]="user.fullName" [photoUrl]="user.profilePhotoUrl" size="md"></app-avatar>
+                      </button>
                       <ion-label>
                         <div class="user-row-top">
                           <h3 class="item-title">{{ user.fullName }}</h3>
@@ -158,6 +219,28 @@
                         {{ "users.action_delete" | t }}
                       </ion-button>
                     </ion-item>
+
+                    <section class="user-photo-actions" *ngIf="canManagePhoto(user)">
+                      <ion-button
+                        size="small"
+                        fill="outline"
+                        [disabled]="photoLoadingUserId === user.id"
+                        (click)="openPhotoPicker(user)"
+                      >
+                        <ion-icon slot="start" name="camera-outline"></ion-icon>
+                        {{ user.profilePhotoUrl ? ("profile.photo_change" | t) : ("profile.photo_add" | t) }}
+                      </ion-button>
+                      <ion-button
+                        size="small"
+                        fill="clear"
+                        color="medium"
+                        *ngIf="user.profilePhotoUrl"
+                        [disabled]="photoLoadingUserId === user.id"
+                        (click)="removeUserPhoto(user)"
+                      >
+                        {{ "profile.photo_remove" | t }}
+                      </ion-button>
+                    </section>
 
                     <section class="user-assignment" *ngIf="isSuperadmin && user.role === 'EMPLOYEE'">
                       <div class="assignment-head">

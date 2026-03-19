@@ -69,7 +69,24 @@ type UserSummary = {
   id: string;
   fullName: string;
   email: string;
+  profilePhotoUrl: string | null;
 };
+
+const userSummarySelect = {
+  id: true,
+  fullName: true,
+  email: true,
+  profilePhotoPath: true
+} satisfies Prisma.UserSelect;
+
+type UserSummaryRecord = Prisma.UserGetPayload<{ select: typeof userSummarySelect }>;
+
+const mapUserSummary = (user: UserSummaryRecord): UserSummary => ({
+  id: user.id,
+  fullName: user.fullName,
+  email: user.email,
+  profilePhotoUrl: user.profilePhotoPath ?? null
+});
 
 export type WorkEventEditRequestRecord = {
   id: string;
@@ -120,34 +137,18 @@ export type AttendanceEventRecord = {
 
 const eventInclude = {
   user: {
-    select: {
-      id: true,
-      fullName: true,
-      email: true
-    }
+    select: userSummarySelect
   },
   modifiedBy: {
-    select: {
-      id: true,
-      fullName: true,
-      email: true
-    }
+    select: userSummarySelect
   },
   editRequests: {
     include: {
       requestedBy: {
-        select: {
-          id: true,
-          fullName: true,
-          email: true
-        }
+        select: userSummarySelect
       },
       reviewedBy: {
-        select: {
-          id: true,
-          fullName: true,
-          email: true
-        }
+        select: userSummarySelect
       }
     },
     orderBy: {
@@ -159,11 +160,11 @@ const eventInclude = {
 type WorkEventWithRelations = Prisma.WorkEventGetPayload<{ include: typeof eventInclude }>;
 type EditRequestWithRelations = Prisma.WorkEventEditRequestGetPayload<{
   include: {
-    requestedBy: { select: { id: true; fullName: true; email: true } };
-    reviewedBy: { select: { id: true; fullName: true; email: true } };
+    requestedBy: { select: typeof userSummarySelect };
+    reviewedBy: { select: typeof userSummarySelect };
     workEvent: {
       include: {
-        user: { select: { id: true; fullName: true; email: true } };
+        user: { select: typeof userSummarySelect };
       };
     };
   };
@@ -305,8 +306,8 @@ const mapAttendanceEvent = (event: WorkEventWithRelations): AttendanceEventRecor
     createdAt: event.createdAt,
     modifiedAt: event.modifiedAt ?? null,
     modificationReason: event.modificationReason ?? null,
-    user: event.user,
-    modifiedBy: event.modifiedBy ?? null,
+    user: mapUserSummary(event.user),
+    modifiedBy: event.modifiedBy ? mapUserSummary(event.modifiedBy) : null,
     editRequests: event.editRequests.map((request) => ({
       id: request.id,
       status: request.status,
@@ -316,8 +317,8 @@ const mapAttendanceEvent = (event: WorkEventWithRelations): AttendanceEventRecor
       reviewComment: request.reviewComment ?? null,
       reviewedAt: request.reviewedAt ?? null,
       createdAt: request.createdAt,
-      requestedBy: request.requestedBy,
-      reviewedBy: request.reviewedBy ?? null
+      requestedBy: mapUserSummary(request.requestedBy),
+      reviewedBy: request.reviewedBy ? mapUserSummary(request.reviewedBy) : null
     }))
   };
 };
@@ -332,13 +333,13 @@ const mapEditRequest = (request: EditRequestWithRelations): WorkEventEditRequest
     reviewComment: request.reviewComment ?? null,
     reviewedAt: request.reviewedAt ?? null,
     createdAt: request.createdAt,
-    requestedBy: request.requestedBy,
-    reviewedBy: request.reviewedBy ?? null,
+    requestedBy: mapUserSummary(request.requestedBy),
+    reviewedBy: request.reviewedBy ? mapUserSummary(request.reviewedBy) : null,
     workEvent: {
       id: request.workEvent.id,
       type: request.workEvent.type,
       eventAt: request.workEvent.eventAt,
-      user: request.workEvent.user
+      user: mapUserSummary(request.workEvent.user)
     }
   };
 };
@@ -409,11 +410,7 @@ const getTodayEvents = async (userId: string) => {
     },
     include: {
       modifiedBy: {
-        select: {
-          id: true,
-          fullName: true,
-          email: true
-        }
+        select: userSummarySelect
       }
     },
     orderBy: [{ eventAt: "asc" }, { createdAt: "asc" }]
@@ -662,27 +659,15 @@ export const createEditRequest = async (params: CreateEditRequestParams): Promis
     },
     include: {
       requestedBy: {
-        select: {
-          id: true,
-          fullName: true,
-          email: true
-        }
+        select: userSummarySelect
       },
       reviewedBy: {
-        select: {
-          id: true,
-          fullName: true,
-          email: true
-        }
+        select: userSummarySelect
       },
       workEvent: {
         include: {
           user: {
-            select: {
-              id: true,
-              fullName: true,
-              email: true
-            }
+            select: userSummarySelect
           }
         }
       }
@@ -724,27 +709,15 @@ export const listEditRequests = async (params: ListEditRequestsParams): Promise<
     where,
     include: {
       requestedBy: {
-        select: {
-          id: true,
-          fullName: true,
-          email: true
-        }
+        select: userSummarySelect
       },
       reviewedBy: {
-        select: {
-          id: true,
-          fullName: true,
-          email: true
-        }
+        select: userSummarySelect
       },
       workEvent: {
         include: {
           user: {
-            select: {
-              id: true,
-              fullName: true,
-              email: true
-            }
+            select: userSummarySelect
           }
         }
       }
@@ -804,27 +777,15 @@ export const reviewEditRequest = async (params: ReviewEditRequestParams): Promis
       },
       include: {
         requestedBy: {
-          select: {
-            id: true,
-            fullName: true,
-            email: true
-          }
+          select: userSummarySelect
         },
         reviewedBy: {
-          select: {
-            id: true,
-            fullName: true,
-            email: true
-          }
+          select: userSummarySelect
         },
         workEvent: {
           include: {
             user: {
-              select: {
-                id: true,
-                fullName: true,
-                email: true
-              }
+              select: userSummarySelect
             }
           }
         }
@@ -876,27 +837,15 @@ export const reviewEditRequest = async (params: ReviewEditRequestParams): Promis
       },
       include: {
         requestedBy: {
-          select: {
-            id: true,
-            fullName: true,
-            email: true
-          }
+          select: userSummarySelect
         },
         reviewedBy: {
-          select: {
-            id: true,
-            fullName: true,
-            email: true
-          }
+          select: userSummarySelect
         },
         workEvent: {
           include: {
             user: {
-              select: {
-                id: true,
-                fullName: true,
-                email: true
-              }
+              select: userSummarySelect
             }
           }
         }

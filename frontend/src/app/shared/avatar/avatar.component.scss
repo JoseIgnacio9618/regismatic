@@ -1,0 +1,58 @@
+:host {
+  display: inline-flex;
+}
+
+.avatar-shell {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--app-border), transparent 12%);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #fff, transparent 76%),
+    0 12px 24px color-mix(in srgb, #000, transparent 90%);
+}
+
+.avatar-shell img,
+.avatar-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatar-shell img {
+  object-fit: cover;
+}
+
+.avatar-fallback {
+  background:
+    radial-gradient(circle at 22% 20%, color-mix(in srgb, var(--ion-color-secondary), transparent 16%) 0%, transparent 34%),
+    linear-gradient(145deg, color-mix(in srgb, var(--ion-color-primary), #ffffff 14%) 0%, color-mix(in srgb, var(--ion-color-secondary), #13233b 18%) 100%);
+  color: #fff;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.avatar-fallback span {
+  line-height: 1;
+}
+
+.avatar-sm {
+  width: 36px;
+  height: 36px;
+}
+
+.avatar-sm .avatar-fallback span {
+  font-size: 0.82rem;
+}
+
+.avatar-lg {
+  width: 64px;
+  height: 64px;
+}
+
+.avatar-lg .avatar-fallback span {
+  font-size: 1.2rem;
+}

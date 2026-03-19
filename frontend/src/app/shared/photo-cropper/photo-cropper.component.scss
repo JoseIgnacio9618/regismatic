@@ -1,0 +1,143 @@
+:host {
+  display: contents;
+}
+
+.cropper-content {
+  --background: linear-gradient(180deg, color-mix(in srgb, var(--app-surface-strong), transparent 2%) 0%, color-mix(in srgb, var(--app-surface), transparent 4%) 100%);
+  --padding-bottom: 0;
+}
+
+.cropper-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(220px, 0.8fr);
+  gap: 20px;
+  padding: 20px;
+  min-height: 100%;
+  align-content: start;
+}
+
+.cropper-stage-panel,
+.cropper-preview-panel {
+  padding: 18px;
+  border-radius: 24px;
+  border: 1px solid color-mix(in srgb, var(--app-border), transparent 8%);
+  background: color-mix(in srgb, var(--app-surface-strong), transparent 4%);
+}
+
+.cropper-hint,
+.cropper-preview-panel p,
+.zoom-label {
+  margin: 0;
+  color: var(--app-ink-muted);
+}
+
+.crop-stage {
+  position: relative;
+  width: min(100%, 360px);
+  max-width: 100%;
+  aspect-ratio: 3 / 4;
+  margin: 16px auto 0;
+  overflow: hidden;
+  border-radius: 28px;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--ion-color-primary), transparent 92%) 0%, transparent 100%),
+    color-mix(in srgb, var(--app-surface), transparent 1%);
+  touch-action: none;
+  user-select: none;
+  cursor: grab;
+}
+
+.crop-stage:active {
+  cursor: grabbing;
+}
+
+.crop-stage img {
+  position: absolute;
+  will-change: width, height, left, top;
+  max-width: none;
+  max-height: none;
+}
+
+.crop-frame {
+  position: absolute;
+  inset: 0;
+  border-radius: 28px;
+  box-shadow:
+    0 0 0 999px color-mix(in srgb, #09111f, transparent 54%) inset,
+    inset 0 0 0 2px color-mix(in srgb, #fff, transparent 18%),
+    inset 0 0 0 14px color-mix(in srgb, #fff, transparent 92%);
+  pointer-events: none;
+}
+
+.zoom-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.cropper-preview-panel h3 {
+  margin: 0 0 14px;
+  font-size: 1rem;
+}
+
+.preview-canvas {
+  width: 150px;
+  height: 200px;
+  display: block;
+  border-radius: 22px;
+  border: 1px solid color-mix(in srgb, var(--app-border), transparent 8%);
+  background: color-mix(in srgb, var(--app-surface), transparent 2%);
+  box-shadow: 0 18px 36px color-mix(in srgb, #000, transparent 90%);
+}
+
+.cropper-preview-panel p {
+  margin-top: 12px;
+}
+
+.cropper-actions-inline {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  padding: 0 20px 20px;
+  flex-wrap: wrap;
+  position: sticky;
+  bottom: 0;
+  z-index: 3;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--app-surface), transparent 100%) 0%, color-mix(in srgb, var(--app-surface-strong), transparent 2%) 22%);
+}
+
+.cropper-actions-inline ion-button {
+  min-width: 140px;
+}
+
+@media (max-width: 840px) {
+  .cropper-layout {
+    grid-template-columns: 1fr;
+    padding: 14px;
+    gap: 14px;
+  }
+
+  .cropper-preview-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .crop-stage {
+    width: min(88vw, 320px);
+  }
+
+  .cropper-actions-inline {
+    flex-direction: column;
+    padding: 0 14px 14px;
+  }
+
+  .cropper-actions-inline ion-button {
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+  }
+}

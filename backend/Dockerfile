@@ -21,6 +21,7 @@ COPY prisma ./prisma
 COPY --from=build /usr/src/app/node_modules/.prisma /usr/src/app/node_modules/.prisma
 COPY --from=build /usr/src/app/dist ./dist
 COPY docker-entrypoint.sh ./docker-entrypoint.sh
+RUN mkdir -p /usr/src/app/uploads/profile-photos
 RUN chmod +x ./docker-entrypoint.sh
 
 EXPOSE 4000

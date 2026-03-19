@@ -170,6 +170,39 @@
   color: var(--app-ink-muted);
 }
 
+.create-photo-panel {
+  margin-top: 16px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px solid color-mix(in srgb, var(--app-border), transparent 10%);
+  background: color-mix(in srgb, var(--app-surface-strong), transparent 6%);
+}
+
+.create-photo-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.create-photo-head strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.create-photo-head p {
+  margin: 0;
+  color: var(--app-ink-muted);
+  font-size: 0.9rem;
+}
+
+.create-photo-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+}
+
 .team-section + .team-section {
   margin-top: 18px;
 }
@@ -200,10 +233,33 @@
   flex-wrap: wrap;
 }
 
+.avatar-preview-trigger {
+  appearance: none;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: transparent;
+  cursor: zoom-in;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatar-preview-disabled {
+  cursor: default;
+}
+
 .data-item ion-button[color="danger"] {
   --background: color-mix(in srgb, var(--ion-color-danger), transparent 88%);
   --border-color: color-mix(in srgb, var(--ion-color-danger), transparent 44%);
   --color: var(--ion-color-danger);
+}
+
+.user-photo-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 8px 4px 2px;
 }
 
 .user-assignment {
@@ -232,6 +288,51 @@
   padding: 10px 4px 0;
 }
 
+.profile-photo-viewer-content {
+  --background:
+    radial-gradient(circle at top, color-mix(in srgb, var(--ion-color-primary), transparent 86%) 0%, transparent 38%),
+    linear-gradient(180deg, color-mix(in srgb, var(--app-surface-strong), transparent 1%) 0%, var(--app-surface) 100%);
+  --padding-bottom: 0;
+}
+
+.profile-photo-viewer-shell {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding: 24px;
+}
+
+.profile-photo-viewer-shell img {
+  width: min(100%, 380px);
+  max-height: min(70vh, 540px);
+  object-fit: cover;
+  border-radius: 32px;
+  border: 1px solid color-mix(in srgb, var(--app-border), transparent 4%);
+  box-shadow:
+    0 28px 56px color-mix(in srgb, #000, transparent 80%),
+    inset 0 1px 0 color-mix(in srgb, #fff, transparent 72%);
+}
+
+.profile-photo-viewer-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+}
+
+.profile-photo-viewer-meta strong {
+  font-size: 1.05rem;
+}
+
+.profile-photo-viewer-meta span {
+  color: var(--app-ink-muted);
+  font-size: 0.92rem;
+}
+
 @media (max-width: 900px) {
   .scope-hero {
     grid-template-columns: 1fr;
@@ -253,10 +354,34 @@
     display: block;
   }
 
+  .create-photo-head,
+  .create-photo-actions {
+    display: block;
+  }
+
+  .create-photo-actions ion-button:first-child {
+    margin-bottom: 8px;
+  }
+
+  .user-photo-actions {
+    justify-content: stretch;
+    flex-direction: column;
+  }
+
   .role-picker-head ion-note,
   .assignment-head ion-note {
     display: block;
     margin-top: 4px;
     text-align: left;
+  }
+
+  .profile-photo-viewer-shell {
+    padding: 18px 14px 24px;
+  }
+
+  .profile-photo-viewer-shell img {
+    width: min(100%, 320px);
+    max-height: 58vh;
+    border-radius: 24px;
   }
 }

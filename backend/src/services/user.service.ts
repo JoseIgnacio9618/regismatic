@@ -3,11 +3,13 @@ import { Prisma, type Role } from "@prisma/client";
 import { prisma } from "../config/prisma";
 import { AppError } from "../middlewares/error.middleware";
 import { assertCanManageUser, getScopedUserById, isElevatedRole } from "./access.service";
+import { deleteStoredProfilePhoto, saveProfilePhotoFile } from "./profile-photo.service";
 
 const teamUserSelect = {
   id: true,
   email: true,
   fullName: true,
+  profilePhotoPath: true,
   role: true,
   isActive: true,
   createdAt: true,
@@ -37,6 +39,7 @@ const mapTeamUser = (user: TeamUserRecord) => ({
   id: user.id,
   email: user.email,
   fullName: user.fullName,
+  profilePhotoUrl: user.profilePhotoPath ?? null,
   role: user.role,
   isActive: user.isActive,
   createdAt: user.createdAt,
@@ -213,6 +216,8 @@ export const deleteUser = async (params: { userId: string; requesterId: string }
     });
   });
 
+  await deleteStoredProfilePhoto(existing.profilePhotoPath);
+
   return mapTeamUser(existing);
 };
 
@@ -251,6 +256,71 @@ export const assignEmployeeManager = async (params: {
     },
     select: teamUserSelect
   });
+
+  return mapTeamUser(updated);
+};
+
+export const updateUserProfilePhoto = async (params: {
+  requesterId: string;
+  targetUserId: string;
+  file: Express.Multer.File;
+}) => {
+  if (params.requesterId !== params.targetUserId) {
+    await assertCanManageUser(params.requesterId, params.targetUserId);
+  }
+
+  const target = await prisma.user.findUnique({
+    where: { id: params.targetUserId },
+    select: teamUserSelect
+  });
+
+  if (!target) {
+    throw new AppError("User not found.", 404);
+  }
+
+  const newPhotoPath = await saveProfilePhotoFile(params.file);
+
+  try {
+    const updated = await prisma.user.update({
+      where: { id: params.targetUserId },
+      data: {
+        profilePhotoPath: newPhotoPath
+      },
+      select: teamUserSelect
+    });
+
+    await deleteStoredProfilePhoto(target.profilePhotoPath);
+
+    return mapTeamUser(updated);
+  } catch (error) {
+    await deleteStoredProfilePhoto(newPhotoPath);
+    throw error;
+  }
+};
+
+export const removeUserProfilePhoto = async (params: { requesterId: string; targetUserId: string }) => {
+  if (params.requesterId !== params.targetUserId) {
+    await assertCanManageUser(params.requesterId, params.targetUserId);
+  }
+
+  const target = await prisma.user.findUnique({
+    where: { id: params.targetUserId },
+    select: teamUserSelect
+  });
+
+  if (!target) {
+    throw new AppError("User not found.", 404);
+  }
+
+  const updated = await prisma.user.update({
+    where: { id: params.targetUserId },
+    data: {
+      profilePhotoPath: null
+    },
+    select: teamUserSelect
+  });
+
+  await deleteStoredProfilePhoto(target.profilePhotoPath);
 
   return mapTeamUser(updated);
 };
