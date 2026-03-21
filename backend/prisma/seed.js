@@ -22,7 +22,7 @@ async function main() {
       fullName: "Superadmin Regismatic",
       role: "SUPERADMIN",
       passwordHash: superadminHash,
-      adminInviteCode: "RGM-SUPER001",
+      adminInviteCode: null,
       managerId: null,
       isActive: true
     },
@@ -31,7 +31,7 @@ async function main() {
       fullName: "Superadmin Regismatic",
       role: "SUPERADMIN",
       passwordHash: superadminHash,
-      adminInviteCode: "RGM-SUPER001",
+      adminInviteCode: null,
       isActive: true
     }
   });
