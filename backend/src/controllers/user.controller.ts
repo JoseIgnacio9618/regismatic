@@ -9,6 +9,11 @@ import {
   removeUserProfilePhoto,
   updateUserProfilePhoto
 } from "../services/user.service";
+import {
+  createTeamJoinRequestForEmployee,
+  listTeamJoinRequests,
+  reviewTeamJoinRequest
+} from "../services/team-join-request.service";
 
 const createUserSchema = z.object({
   email: z.string().email(),
@@ -26,6 +31,16 @@ const createUserSchema = z.object({
 
 const assignManagerSchema = z.object({
   managerId: z.string().min(1)
+});
+
+const createTeamJoinRequestSchema = z.object({
+  inviteCode: z.string().trim().min(3),
+  message: z.string().trim().max(300).optional()
+});
+
+const reviewTeamJoinRequestSchema = z.object({
+  action: z.enum(["APPROVE", "REJECT"]),
+  reviewComment: z.string().trim().max(300).optional()
 });
 
 export const createUserController = async (req: Request, res: Response) => {
@@ -48,6 +63,47 @@ export const listUsersController = async (req: Request, res: Response) => {
 
   const users = await listUsers(req.user.id);
   return res.json(users);
+};
+
+export const createTeamJoinRequestController = async (req: Request, res: Response) => {
+  if (!req.user) {
+    throw new AppError("Not authenticated.", 401);
+  }
+
+  const payload = createTeamJoinRequestSchema.parse(req.body);
+  const request = await createTeamJoinRequestForEmployee({
+    employeeId: req.user.id,
+    inviteCode: payload.inviteCode,
+    message: payload.message
+  });
+
+  return res.status(201).json(request);
+};
+
+export const listTeamJoinRequestsController = async (req: Request, res: Response) => {
+  if (!req.user) {
+    throw new AppError("Not authenticated.", 401);
+  }
+
+  const requests = await listTeamJoinRequests(req.user.id);
+  return res.json(requests);
+};
+
+export const reviewTeamJoinRequestController = async (req: Request, res: Response) => {
+  if (!req.user) {
+    throw new AppError("Not authenticated.", 401);
+  }
+
+  const payload = reviewTeamJoinRequestSchema.parse(req.body);
+  const requestId = z.string().min(1).parse(req.params.requestId);
+  const request = await reviewTeamJoinRequest({
+    requestId,
+    requesterId: req.user.id,
+    action: payload.action,
+    reviewComment: payload.reviewComment
+  });
+
+  return res.json(request);
 };
 
 export const deleteUserController = async (req: Request, res: Response) => {

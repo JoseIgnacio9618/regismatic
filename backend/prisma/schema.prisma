@@ -39,6 +39,9 @@ enum NotificationType {
   EDIT_REQUEST_APPROVED
   EDIT_REQUEST_REJECTED
   EVENT_MODIFIED
+  TEAM_JOIN_REQUEST_CREATED
+  TEAM_JOIN_REQUEST_APPROVED
+  TEAM_JOIN_REQUEST_REJECTED
   SYSTEM
 }
 
@@ -48,6 +51,12 @@ enum PushPlatform {
   IOS
 }
 
+enum TeamJoinRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model User {
   id                  String                 @id @default(cuid())
   email               String                 @unique
@@ -55,6 +64,7 @@ model User {
   fullName            String
   profilePhotoPath    String?
   role                Role                   @default(EMPLOYEE)
+  adminInviteCode     String?                @unique
   managerId           String?
   manager             User?                  @relation("ManagerEmployees", fields: [managerId], references: [id], onDelete: SetNull)
   managedUsers        User[]                 @relation("ManagerEmployees")
@@ -67,6 +77,9 @@ model User {
   reviewedEditEvents  WorkEventEditRequest[] @relation("WorkEventEditReviewer")
   notifications       Notification[]
   pushTokens          PushDeviceToken[]
+  teamJoinRequests    TeamJoinRequest[]      @relation("TeamJoinRequestEmployee")
+  teamJoinReviews     TeamJoinRequest[]      @relation("TeamJoinRequestReviewer")
+  incomingJoinRequests TeamJoinRequest[]     @relation("TeamJoinRequestManager")
 
   @@index([managerId])
   @@index([role, managerId])
@@ -147,4 +160,26 @@ model PushDeviceToken {
   updatedAt  DateTime     @updatedAt
 
   @@index([userId, isActive])
+}
+
+model TeamJoinRequest {
+  id              String                @id @default(cuid())
+  employeeId      String
+  employee        User                  @relation("TeamJoinRequestEmployee", fields: [employeeId], references: [id], onDelete: Cascade)
+  targetManagerId String
+  targetManager   User                  @relation("TeamJoinRequestManager", fields: [targetManagerId], references: [id], onDelete: Cascade)
+  inviteCodeUsed  String
+  status          TeamJoinRequestStatus @default(PENDING)
+  message         String?
+  reviewComment   String?
+  reviewedById    String?
+  reviewedBy      User?                 @relation("TeamJoinRequestReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  reviewedAt      DateTime?
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+
+  @@index([employeeId, createdAt])
+  @@index([targetManagerId, status, createdAt])
+  @@index([status, createdAt])
+  @@index([reviewedById])
 }

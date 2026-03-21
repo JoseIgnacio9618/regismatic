@@ -1,6 +1,8 @@
 import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from "@angular/core";
+import { ActivatedRoute } from "@angular/router";
 import { AlertController, ToastController } from "@ionic/angular";
-import { Role, TeamUser } from "src/app/core/models/types";
+import { Subscription } from "rxjs";
+import { Role, TeamJoinRequest, TeamUser } from "src/app/core/models/types";
 import { ApiService } from "src/app/core/services/api.service";
 import { AuthService } from "src/app/core/services/auth.service";
 import { I18nService } from "src/app/core/services/i18n.service";
@@ -31,6 +33,7 @@ type TeamRoleFilter = Role | "ALL";
 export class UsersPage implements OnInit, OnDestroy {
   @ViewChild("createPhotoInput") createPhotoInput?: ElementRef<HTMLInputElement>;
   @ViewChild("userPhotoInput") userPhotoInput?: ElementRef<HTMLInputElement>;
+  private routeSubscription?: Subscription;
   private readonly roleOptions: RoleOption[] = [
     {
       role: "EMPLOYEE",
@@ -50,6 +53,7 @@ export class UsersPage implements OnInit, OnDestroy {
   ];
 
   users: TeamUser[] = [];
+  joinRequests: TeamJoinRequest[] = [];
   activeWorkspace: UserWorkspace = "directory";
   teamSearchTerm = "";
   teamRoleFilter: TeamRoleFilter = "ALL";
@@ -64,6 +68,7 @@ export class UsersPage implements OnInit, OnDestroy {
   savingManagerUserId: string | null = null;
   photoTargetUserId: string | null = null;
   photoLoadingUserId: string | null = null;
+  reviewingJoinRequestId: string | null = null;
   photoCropperOpen = false;
   photoCropSourceUrl: string | null = null;
   photoCropMode: "create" | "user" | null = null;
@@ -73,6 +78,7 @@ export class UsersPage implements OnInit, OnDestroy {
   photoViewerUser: TeamUser | null = null;
 
   constructor(
+    private readonly route: ActivatedRoute,
     public readonly authService: AuthService,
     private readonly apiService: ApiService,
     private readonly userService: UserService,
@@ -82,10 +88,18 @@ export class UsersPage implements OnInit, OnDestroy {
   ) {}
 
   async ngOnInit(): Promise<void> {
+    this.routeSubscription = this.route.queryParamMap.subscribe((params) => {
+      const workspace = params.get("workspace");
+      if (workspace === "create" || workspace === "directory") {
+        this.activeWorkspace = workspace;
+      }
+    });
+
     await this.loadUsers();
   }
 
   ngOnDestroy(): void {
+    this.routeSubscription?.unsubscribe();
     this.clearCreatePhotoPreview();
     this.clearPhotoCropSource();
   }
@@ -190,6 +204,14 @@ export class UsersPage implements OnInit, OnDestroy {
 
   get scopeDescription(): string {
     return this.i18nService.t(this.isSuperadmin ? "users.scope_superadmin_desc" : "users.scope_admin_desc");
+  }
+
+  get adminInviteCode(): string | null {
+    return this.authService.user?.adminInviteCode ?? null;
+  }
+
+  get pendingJoinRequests(): TeamJoinRequest[] {
+    return this.joinRequests.filter((request) => request.status === "PENDING");
   }
 
   get selectedRoleOption(): RoleOption {
@@ -327,6 +349,10 @@ export class UsersPage implements OnInit, OnDestroy {
 
   trackUser(_index: number, user: TeamUser): string {
     return user.id;
+  }
+
+  trackJoinRequest(_index: number, request: TeamJoinRequest): string {
+    return request.id;
   }
 
   secondaryMeta(user: TeamUser): string | null {
@@ -550,8 +576,9 @@ export class UsersPage implements OnInit, OnDestroy {
   }
 
   private async loadUsers(): Promise<void> {
-    const apiUsers = await this.userService.listUsers();
+    const [apiUsers, joinRequests] = await Promise.all([this.userService.listUsers(), this.userService.listTeamJoinRequests()]);
     this.users = this.isSuperadmin ? apiUsers : apiUsers.filter((user) => user.role === "EMPLOYEE");
+    this.joinRequests = joinRequests;
 
     this.managerDraftByUserId = this.users
       .filter((user) => user.role === "EMPLOYEE")
@@ -568,6 +595,22 @@ export class UsersPage implements OnInit, OnDestroy {
 
     if (this.role === "EMPLOYEE" && !this.managerId) {
       this.managerId = this.availableManagerUsers[0]?.id ?? "";
+    }
+  }
+
+  async reviewJoinRequest(request: TeamJoinRequest, action: "APPROVE" | "REJECT"): Promise<void> {
+    this.reviewingJoinRequestId = request.id;
+    try {
+      await this.userService.reviewTeamJoinRequest(request.id, { action });
+      await this.loadUsers();
+      await this.showToast(
+        this.i18nService.t(action === "APPROVE" ? "users.join_request_approved" : "users.join_request_rejected"),
+        "success"
+      );
+    } catch (error) {
+      await this.showToast(error instanceof Error ? error.message : this.i18nService.t("users.join_request_review_failed"), "danger");
+    } finally {
+      this.reviewingJoinRequestId = null;
     }
   }
 

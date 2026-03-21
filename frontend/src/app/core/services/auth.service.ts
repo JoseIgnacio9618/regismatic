@@ -53,6 +53,17 @@ export class AuthService {
     await this.persistSession(response);
   }
 
+  async registerEmployee(payload: {
+    fullName: string;
+    email: string;
+    password: string;
+    inviteCode?: string;
+    requestMessage?: string;
+  }): Promise<void> {
+    const response = await this.apiService.post<LoginResponse>("/auth/register-employee", payload);
+    await this.persistSession(response);
+  }
+
   async refreshCurrentUser(): Promise<void> {
     if (!this.hasToken) {
       return;

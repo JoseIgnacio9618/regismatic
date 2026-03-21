@@ -1,6 +1,6 @@
 import { Injectable } from "@angular/core";
 import { ApiService } from "./api.service";
-import { Role, TeamUser } from "../models/types";
+import { Role, TeamJoinRequest, TeamUser } from "../models/types";
 
 @Injectable({ providedIn: "root" })
 export class UserService {
@@ -40,5 +40,17 @@ export class UserService {
 
   deleteUser(userId: string): Promise<TeamUser> {
     return this.apiService.delete<TeamUser>(`/users/${userId}`, true);
+  }
+
+  listTeamJoinRequests(): Promise<TeamJoinRequest[]> {
+    return this.apiService.get<TeamJoinRequest[]>("/users/team-join-requests", true);
+  }
+
+  createTeamJoinRequest(payload: { inviteCode: string; message?: string }): Promise<TeamJoinRequest> {
+    return this.apiService.post<TeamJoinRequest>("/users/team-join-requests", payload, true);
+  }
+
+  reviewTeamJoinRequest(requestId: string, payload: { action: "APPROVE" | "REJECT"; reviewComment?: string }): Promise<TeamJoinRequest> {
+    return this.apiService.post<TeamJoinRequest>(`/users/team-join-requests/${requestId}/review`, payload, true);
   }
 }

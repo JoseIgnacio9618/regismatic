@@ -1,11 +1,14 @@
 import { Router } from "express";
 import {
   assignEmployeeManagerController,
+  createTeamJoinRequestController,
   createUserController,
   deleteUserController,
+  listTeamJoinRequestsController,
   listUsersController,
   removeOwnProfilePhotoController,
   removeUserProfilePhotoController,
+  reviewTeamJoinRequestController,
   updateOwnProfilePhotoController,
   updateUserProfilePhotoController
 } from "../controllers/user.controller";
@@ -19,6 +22,9 @@ export const userRouter = Router();
 userRouter.use(authMiddleware);
 userRouter.post("/me/photo", profilePhotoUpload.single("photo"), asyncHandler(updateOwnProfilePhotoController));
 userRouter.delete("/me/photo", asyncHandler(removeOwnProfilePhotoController));
+userRouter.get("/team-join-requests", asyncHandler(listTeamJoinRequestsController));
+userRouter.post("/team-join-requests", asyncHandler(createTeamJoinRequestController));
+userRouter.post("/team-join-requests/:requestId/review", asyncHandler(reviewTeamJoinRequestController));
 
 userRouter.use(requireRole(["ADMIN", "SUPERADMIN"]));
 userRouter.get("/", asyncHandler(listUsersController));

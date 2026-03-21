@@ -3,6 +3,7 @@ import { Prisma, type Role } from "@prisma/client";
 import { prisma } from "../config/prisma";
 import { AppError } from "../middlewares/error.middleware";
 import { assertCanManageUser, getScopedUserById, isElevatedRole } from "./access.service";
+import { generateUniqueAdminInviteCode } from "./admin-invite.service";
 import { deleteStoredProfilePhoto, saveProfilePhotoFile } from "./profile-photo.service";
 
 const teamUserSelect = {
@@ -97,6 +98,7 @@ export const createUser = async (params: {
         ? creator.id
         : await validateEmployeeManager(params.managerId)
       : null;
+  const adminInviteCode = params.role === "ADMIN" || params.role === "SUPERADMIN" ? await generateUniqueAdminInviteCode() : null;
 
   const user = await prisma.user.create({
     data: {
@@ -104,7 +106,8 @@ export const createUser = async (params: {
       passwordHash,
       fullName: params.fullName,
       role: params.role,
-      managerId
+      managerId,
+      adminInviteCode
     },
     select: teamUserSelect
   });

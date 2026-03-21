@@ -1,0 +1,88 @@
+<ion-content class="login-screen" [fullscreen]="true">
+  <input #registerPhotoInput type="file" accept="image/png,image/jpeg,image/webp,image/gif" class="hidden-file-input" (change)="onProfilePhotoSelected($event)" />
+  <app-photo-cropper
+    [isOpen]="photoCropperOpen"
+    [sourceUrl]="photoCropSourceUrl"
+    [fullName]="fullName || email || 'Empleado'"
+    (cancel)="cancelPhotoCrop()"
+    (confirmCrop)="applyPhotoCrop($event)"
+  ></app-photo-cropper>
+  <div class="login-wrap register-wrap">
+    <div class="login-top-actions">
+      <ion-select class="lang-select" interface="popover" [value]="i18nService.language" (ionChange)="setLanguage($event.detail.value)">
+        <ion-select-option value="es">{{ "lang.es" | t }}</ion-select-option>
+        <ion-select-option value="en">{{ "lang.en" | t }}</ion-select-option>
+        <ion-select-option value="fr">{{ "lang.fr" | t }}</ion-select-option>
+      </ion-select>
+
+      <ion-button fill="clear" class="theme-toggle" (click)="toggleTheme()">
+        <ion-icon slot="start" [name]="themeService.isDark ? 'sunny-outline' : 'moon-outline'"></ion-icon>
+        {{ themeService.isDark ? ("theme.to_light" | t) : ("theme.to_dark" | t) }}
+      </ion-button>
+    </div>
+
+    <ion-card class="glass-card">
+      <ion-card-content>
+        <h1>{{ "register_employee.title" | t }}</h1>
+        <p>{{ "register_employee.tagline" | t }}</p>
+
+        <ion-item lines="full">
+          <ion-label position="stacked">{{ "users.full_name" | t }}</ion-label>
+          <ion-input [(ngModel)]="fullName"></ion-input>
+        </ion-item>
+
+        <ion-item lines="full">
+          <ion-label position="stacked">{{ "common.email" | t }}</ion-label>
+          <ion-input [(ngModel)]="email" type="email"></ion-input>
+        </ion-item>
+
+        <ion-item lines="full">
+          <ion-label position="stacked">{{ "common.password" | t }}</ion-label>
+          <ion-input [(ngModel)]="password" type="password"></ion-input>
+        </ion-item>
+
+        <ion-item lines="full">
+          <ion-label position="stacked">{{ "register_employee.confirm_password" | t }}</ion-label>
+          <ion-input [(ngModel)]="confirmPassword" type="password"></ion-input>
+        </ion-item>
+
+        <ion-item lines="full">
+          <ion-label position="stacked">{{ "register_employee.invite_code" | t }}</ion-label>
+          <ion-input [(ngModel)]="inviteCode"></ion-input>
+        </ion-item>
+
+        <ion-item lines="full">
+          <ion-label position="stacked">{{ "register_employee.request_message" | t }}</ion-label>
+          <ion-textarea [(ngModel)]="requestMessage" autoGrow="true"></ion-textarea>
+        </ion-item>
+
+        <section class="register-photo-panel">
+          <div class="register-photo-head">
+            <div>
+              <strong>{{ "profile.photo_title" | t }}</strong>
+              <p>{{ "register_employee.photo_hint" | t }}</p>
+            </div>
+            <app-avatar [fullName]="fullName || email || 'Empleado'" [photoUrl]="profilePhotoPreviewUrl" size="lg"></app-avatar>
+          </div>
+
+          <div class="register-photo-actions">
+            <ion-button size="small" fill="outline" (click)="openProfilePhotoPicker()">
+              {{ profilePhotoFile ? ("profile.photo_change" | t) : ("profile.photo_add" | t) }}
+            </ion-button>
+            <ion-button size="small" fill="clear" color="medium" *ngIf="profilePhotoFile" (click)="clearProfilePhoto()">
+              {{ "profile.photo_remove" | t }}
+            </ion-button>
+          </div>
+        </section>
+
+        <ion-button expand="block" class="mt-16" [disabled]="loading" (click)="submit()">
+          {{ loading ? ("register_employee.submitting" | t) : ("register_employee.submit" | t) }}
+        </ion-button>
+
+        <ion-button expand="block" fill="clear" routerLink="/login">
+          {{ "register_employee.back_to_login" | t }}
+        </ion-button>
+      </ion-card-content>
+    </ion-card>
+  </div>
+</ion-content>

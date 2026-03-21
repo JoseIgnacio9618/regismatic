@@ -131,8 +131,10 @@ export class LayoutComponent implements OnDestroy {
   }
 
   async openNotification(notification: UserNotification): Promise<void> {
-    await this.notificationService.goToNotification(notification);
+    const route = this.notificationService.getNotificationRoute(notification);
     await this.closeMenus();
+    await this.router.navigateByUrl(route);
+    await this.notificationService.markAsRead(notification.id);
   }
 
   async markAllNotificationsAsRead(): Promise<void> {
@@ -195,10 +197,12 @@ export class LayoutComponent implements OnDestroy {
   private async closeMenus(): Promise<void> {
     this.desktopMenuOpen = false;
     this.mobileMenuOpen = false;
-    await this.popoverController.dismiss(undefined, undefined, this.desktopPopoverId);
-    await this.popoverController.dismiss(undefined, undefined, this.mobilePopoverId);
-    await this.popoverController.dismiss(undefined, undefined, this.desktopNotificationsPopoverId);
-    await this.popoverController.dismiss(undefined, undefined, this.mobileNotificationsPopoverId);
+    await Promise.all([
+      this.popoverController.dismiss(undefined, undefined, this.desktopPopoverId).catch(() => undefined),
+      this.popoverController.dismiss(undefined, undefined, this.mobilePopoverId).catch(() => undefined),
+      this.popoverController.dismiss(undefined, undefined, this.desktopNotificationsPopoverId).catch(() => undefined),
+      this.popoverController.dismiss(undefined, undefined, this.mobileNotificationsPopoverId).catch(() => undefined)
+    ]);
   }
 
   private async showToast(message: string, color: "danger" | "success"): Promise<void> {

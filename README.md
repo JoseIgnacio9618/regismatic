@@ -17,8 +17,14 @@ La base de datos es **PostgreSQL (SQL)**, no SQLite.
 ## Funcionalidades
 - Login JWT con roles `SUPERADMIN`, `ADMIN` y `EMPLOYEE`
 - Alta publica de administradores desde la propia app (`/register-admin`)
+- Alta publica de empleados desde la propia app (`/register-employee`)
 - El primer alta publica de administrador se promociona automaticamente a `SUPERADMIN`
 - Multiadministrador: cada admin gestiona solo su propia plantilla
+- Flujo de incorporacion a equipo por codigo:
+  - cada `ADMIN` y `SUPERADMIN` dispone de su propio codigo de acceso
+  - un empleado puede crear su perfil, introducir el codigo y generar una solicitud de union al equipo
+  - el `ADMIN` objetivo puede aprobar o rechazar la solicitud
+  - el `SUPERADMIN` puede revisarlo todo y actuar sin depender de validaciones de terceros
 - Fichaje: entrada, pausa inicio/fin, salida
 - Trazabilidad de eventos con auditoria de modificaciones (quien y cuando)
 - Geolocalizacion opcional por evento
@@ -66,6 +72,9 @@ Credenciales demo (si `RUN_SEED=true`):
 Tambien puedes crear nuevos administradores desde la pantalla publica:
 - `http://localhost:8100/register-admin`
 
+Y tambien nuevos empleados desde:
+- `http://localhost:8100/register-employee`
+
 ## 2) Desarrollo local sin Docker
 Instala dependencias en raiz:
 
@@ -89,6 +98,13 @@ En otra terminal:
 cp frontend/.env.example frontend/.env
 npm run dev:web
 ```
+
+Flujo recomendado para probar el alta libre de empleados:
+1. Entra como `admin@regismatic.local` o `superadmin@regismatic.local`
+2. Ve a `Equipo` y copia el codigo de acceso del equipo
+3. Cierra sesion y entra en `http://localhost:8100/register-employee`
+4. Crea el perfil del empleado introduciendo ese codigo
+5. Vuelve a entrar como admin para aprobar o rechazar la solicitud pendiente
 
 ## 3) Produccion con TLS (Caddy)
 1. Copia plantilla de produccion:

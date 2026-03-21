@@ -1,10 +1,14 @@
 export type Role = "SUPERADMIN" | "ADMIN" | "EMPLOYEE";
 export type EditRequestStatus = "PENDING" | "APPROVED" | "REJECTED";
+export type TeamJoinRequestStatus = "PENDING" | "APPROVED" | "REJECTED";
 export type NotificationType =
   | "EDIT_REQUEST_CREATED"
   | "EDIT_REQUEST_APPROVED"
   | "EDIT_REQUEST_REJECTED"
   | "EVENT_MODIFIED"
+  | "TEAM_JOIN_REQUEST_CREATED"
+  | "TEAM_JOIN_REQUEST_APPROVED"
+  | "TEAM_JOIN_REQUEST_REJECTED"
   | "SYSTEM";
 export type PushPlatform = "WEB" | "ANDROID" | "IOS";
 
@@ -14,6 +18,7 @@ export interface AuthUser {
   fullName: string;
   profilePhotoUrl?: string | null;
   role: Role;
+  adminInviteCode?: string | null;
   managerId?: string | null;
   isActive: boolean;
   createdAt: string;
@@ -27,6 +32,7 @@ export interface LoginResponse {
     fullName: string;
     profilePhotoUrl?: string | null;
     role: Role;
+    adminInviteCode?: string | null;
   };
 }
 
@@ -129,6 +135,21 @@ export interface TeamUser {
   createdAt: string;
   manager: UserSummary | null;
   managedEmployeesCount: number;
+}
+
+export interface TeamJoinRequest {
+  id: string;
+  inviteCodeUsed: string;
+  status: TeamJoinRequestStatus;
+  message: string | null;
+  reviewComment: string | null;
+  reviewedAt: string | null;
+  createdAt: string;
+  employee: UserSummary & {
+    managerId?: string | null;
+  };
+  targetManager: UserSummary;
+  reviewedBy: UserSummary | null;
 }
 
 export interface UserNotification {

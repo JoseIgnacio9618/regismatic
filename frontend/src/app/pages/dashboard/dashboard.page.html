@@ -42,6 +42,37 @@
       </ion-col>
 
       <ion-col size="12" size-md="8">
+        <ion-card class="glass-card panel join-team-panel" *ngIf="showJoinTeamCard">
+          <ion-card-header>
+            <ion-card-title>{{ "dashboard.join_team_title" | t }}</ion-card-title>
+            <p class="microcopy">{{ "dashboard.join_team_desc" | t }}</p>
+          </ion-card-header>
+          <ion-card-content>
+            <ion-item>
+              <ion-label position="stacked">{{ "register_employee.invite_code" | t }}</ion-label>
+              <ion-input [(ngModel)]="inviteCode"></ion-input>
+            </ion-item>
+
+            <ion-item>
+              <ion-label position="stacked">{{ "register_employee.request_message" | t }}</ion-label>
+              <ion-textarea [(ngModel)]="requestMessage" autoGrow="true"></ion-textarea>
+            </ion-item>
+
+            <ion-button expand="block" [disabled]="joinBusy" (click)="submitJoinRequest()">
+              {{ "dashboard.join_team_submit" | t }}
+            </ion-button>
+
+            <section class="pending-join-list" *ngIf="pendingJoinRequests.length > 0">
+              <strong>{{ "dashboard.join_team_pending" | t }}</strong>
+              <article class="pending-join-card" *ngFor="let request of pendingJoinRequests">
+                <span>{{ request.targetManager.fullName }}</span>
+                <span>{{ request.employee.email }}</span>
+                <span>{{ request.message || ("dashboard.join_team_pending_desc" | t) }}</span>
+              </article>
+            </section>
+          </ion-card-content>
+        </ion-card>
+
         <ion-card class="glass-card panel summary-panel">
           <ion-card-header>
             <ion-card-title>{{ "dashboard.summary_title" | t }}</ion-card-title>

@@ -4,7 +4,7 @@
 -Si se rechaza una peticion de cambio el empleado no lo ve el motivo solo que esta rechazada
 -Cuando se pincha una notificacion antigua te lleva a la pantalla reportes pero no a esa cancelacion en concreto
 
--Que los usuarios puedan crearse su perfil y el admin tenga un codigo para que lo pongan y hagan una solicitud para añadirse al equipo de ese admin
+
 
 
 

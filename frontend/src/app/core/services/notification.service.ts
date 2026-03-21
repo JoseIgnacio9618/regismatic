@@ -2,7 +2,7 @@ import { Injectable, OnDestroy } from "@angular/core";
 import { Router } from "@angular/router";
 import { ToastController } from "@ionic/angular";
 import { BehaviorSubject, Subscription } from "rxjs";
-import { PushPlatform, UserNotification } from "../models/types";
+import { NotificationType, PushPlatform, UserNotification } from "../models/types";
 import { ApiService } from "./api.service";
 import { AuthService } from "./auth.service";
 import { I18nService } from "./i18n.service";
@@ -83,12 +83,8 @@ export class NotificationService implements OnDestroy {
   }
 
   async goToNotification(notification: UserNotification): Promise<void> {
-    const route = typeof notification.metadata?.["route"] === "string" ? notification.metadata["route"] : null;
-    if (route) {
-      await this.router.navigateByUrl(route);
-    } else {
-      await this.router.navigateByUrl("/reports");
-    }
+    const route = this.getNotificationRoute(notification);
+    await this.router.navigateByUrl(route);
     await this.markAsRead(notification.id);
   }
 
@@ -152,7 +148,10 @@ export class NotificationService implements OnDestroy {
       });
 
       await PushNotifications.addListener("pushNotificationActionPerformed", ({ notification }) => {
-        const route = typeof notification.data?.["route"] === "string" ? notification.data["route"] : null;
+        const route =
+          typeof notification.data?.["route"] === "string"
+            ? notification.data["route"]
+            : this.resolveNotificationRouteFromType(notification.data?.["type"]);
         if (route) {
           void this.router.navigateByUrl(route);
         }
@@ -190,6 +189,35 @@ export class NotificationService implements OnDestroy {
       return "ANDROID";
     }
     return "WEB";
+  }
+
+  getNotificationRoute(notification: UserNotification): string {
+    const explicitRoute = typeof notification.metadata?.["route"] === "string" ? notification.metadata["route"] : null;
+    if (explicitRoute) {
+      return explicitRoute;
+    }
+
+    return this.resolveNotificationRouteFromType(notification.type) ?? "/dashboard";
+  }
+
+  private resolveNotificationRouteFromType(type: unknown): string | null {
+    const notificationType = typeof type === "string" ? (type as NotificationType) : null;
+    switch (notificationType) {
+      case "TEAM_JOIN_REQUEST_CREATED":
+        return "/users?workspace=directory&focus=join-requests";
+      case "TEAM_JOIN_REQUEST_APPROVED":
+      case "TEAM_JOIN_REQUEST_REJECTED":
+        return "/dashboard";
+      case "EDIT_REQUEST_CREATED":
+        return "/reports?focus=incidents";
+      case "EDIT_REQUEST_APPROVED":
+      case "EDIT_REQUEST_REJECTED":
+      case "EVENT_MODIFIED":
+        return "/reports";
+      case "SYSTEM":
+      default:
+        return null;
+    }
   }
 
   private async presentToast(notification: Pick<UserNotification, "title" | "body">): Promise<void> {

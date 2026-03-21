@@ -22,6 +22,7 @@ async function main() {
       fullName: "Superadmin Regismatic",
       role: "SUPERADMIN",
       passwordHash: superadminHash,
+      adminInviteCode: "RGM-SUPER001",
       managerId: null,
       isActive: true
     },
@@ -30,6 +31,7 @@ async function main() {
       fullName: "Superadmin Regismatic",
       role: "SUPERADMIN",
       passwordHash: superadminHash,
+      adminInviteCode: "RGM-SUPER001",
       isActive: true
     }
   });
@@ -40,6 +42,7 @@ async function main() {
       fullName: "Admin Regismatic",
       role: "ADMIN",
       passwordHash: adminHash,
+      adminInviteCode: "RGM-ADMIN01",
       managerId: null,
       isActive: true
     },
@@ -48,6 +51,7 @@ async function main() {
       fullName: "Admin Regismatic",
       role: "ADMIN",
       passwordHash: adminHash,
+      adminInviteCode: "RGM-ADMIN01",
       isActive: true
     }
   });

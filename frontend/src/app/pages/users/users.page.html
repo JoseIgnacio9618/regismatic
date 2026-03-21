@@ -197,6 +197,12 @@
             <p class="microcopy">{{ "users.team_microcopy" | t }}</p>
           </ion-card-header>
           <ion-card-content>
+            <section class="invite-code-panel" *ngIf="adminInviteCode">
+              <strong>{{ "users.invite_code_title" | t }}</strong>
+              <p>{{ "users.invite_code_desc" | t }}</p>
+              <div class="invite-code-chip">{{ adminInviteCode }}</div>
+            </section>
+
             <div class="scope-metrics compact-metrics">
               <article class="scope-metric">
                 <strong>{{ users.length }}</strong>
@@ -231,6 +237,46 @@
             <p class="microcopy">{{ "users.team_microcopy" | t }}</p>
           </ion-card-header>
           <ion-card-content>
+            <section class="join-requests-panel" *ngIf="pendingJoinRequests.length > 0">
+              <div class="team-section-head">
+                <div>
+                  <h3>{{ "users.join_requests_title" | t }}</h3>
+                  <p>{{ "users.join_requests_desc" | t }}</p>
+                </div>
+                <ion-badge color="warning">{{ pendingJoinRequests.length }}</ion-badge>
+              </div>
+
+              <div class="join-request-list">
+                <article class="join-request-card" *ngFor="let request of pendingJoinRequests; trackBy: trackJoinRequest">
+                  <div class="join-request-copy">
+                    <strong>{{ request.employee.fullName }}</strong>
+                    <span>{{ request.employee.email }}</span>
+                    <span>{{ "users.join_request_code" | t }}: {{ request.inviteCodeUsed }}</span>
+                    <span *ngIf="request.message">{{ request.message }}</span>
+                  </div>
+                  <div class="join-request-actions">
+                    <ion-button
+                      size="small"
+                      color="success"
+                      [disabled]="reviewingJoinRequestId === request.id"
+                      (click)="reviewJoinRequest(request, 'APPROVE')"
+                    >
+                      {{ "reports.action_approve" | t }}
+                    </ion-button>
+                    <ion-button
+                      size="small"
+                      fill="outline"
+                      color="danger"
+                      [disabled]="reviewingJoinRequestId === request.id"
+                      (click)="reviewJoinRequest(request, 'REJECT')"
+                    >
+                      {{ "reports.action_reject" | t }}
+                    </ion-button>
+                  </div>
+                </article>
+              </div>
+            </section>
+
             <div class="team-toolbar">
               <ion-item class="team-search-item">
                 <ion-label position="stacked">{{ "users.search_placeholder" | t }}</ion-label>

@@ -63,6 +63,7 @@ app.get("/health/ready", async (_req, res) => {
 
 app.use("/api/auth/login", authLimiter);
 app.use("/api/auth/register-admin", authLimiter);
+app.use("/api/auth/register-employee", authLimiter);
 app.use("/api/auth", authRouter);
 app.use("/api/attendance", attendanceRouter);
 app.use("/api/notifications", notificationRouter);

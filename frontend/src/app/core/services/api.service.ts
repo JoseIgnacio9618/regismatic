@@ -46,7 +46,18 @@ export class ApiService {
     "Invalid push token.": "errors.invalid_push_token",
     "Invalid profile photo format.": "errors.invalid_profile_photo_format",
     "Profile photo exceeds the maximum allowed size.": "errors.profile_photo_too_large",
-    "Missing profile photo file.": "errors.missing_profile_photo_file"
+    "Missing profile photo file.": "errors.missing_profile_photo_file",
+    "Invalid administrator invite code.": "errors.invalid_admin_invite_code",
+    "This employee is already assigned to an administrator.": "errors.employee_already_assigned",
+    "You already have a pending team request.": "errors.pending_team_request_exists",
+    "Team join request not found.": "errors.team_join_request_not_found",
+    "The team join request was already reviewed.": "errors.team_join_request_already_reviewed"
+  };
+  private readonly validationDetailMap: Record<string, string> = {
+    "Password must include lowercase letters.": "errors.password_requires_lowercase",
+    "Password must include uppercase letters.": "errors.password_requires_uppercase",
+    "Password must include at least one number.": "errors.password_requires_number",
+    "Password must include at least one special character.": "errors.password_requires_special_char"
   };
 
   constructor(
@@ -146,9 +157,26 @@ export class ApiService {
 
   private toError(error: unknown): Error {
     if (typeof error === "object" && error !== null) {
-      const maybeHttp = error as { error?: { message?: string }; message?: string; status?: number };
+      const maybeHttp = error as {
+        error?: {
+          message?: string;
+          details?: Array<{
+            message?: string;
+            code?: string;
+            validation?: string;
+            path?: string[];
+            minimum?: number;
+            received?: string;
+          }>;
+        };
+        message?: string;
+        status?: number;
+      };
       if (maybeHttp.status === 0) {
         return new Error(this.i18nService.t("errors.api_unreachable"));
+      }
+      if (maybeHttp.error?.message === "Validation error." && maybeHttp.error.details?.length) {
+        return new Error(this.translateValidationDetails(maybeHttp.error.details));
       }
       if (maybeHttp.error?.message) {
         return new Error(this.translateBackendError(maybeHttp.error.message));
@@ -189,5 +217,50 @@ export class ApiService {
     }
 
     return normalized;
+  }
+
+  private translateValidationDetails(
+    details: Array<{
+      message?: string;
+      code?: string;
+      validation?: string;
+      path?: string[];
+      minimum?: number;
+      received?: string;
+    }>
+  ): string {
+    const translatedMessages = details
+      .map((detail) => this.translateValidationDetail(detail))
+      .filter((message, index, all) => !!message && all.indexOf(message) === index);
+
+    return translatedMessages.join(" ");
+  }
+
+  private translateValidationDetail(detail: {
+    message?: string;
+    code?: string;
+    validation?: string;
+    path?: string[];
+    minimum?: number;
+    received?: string;
+  }): string {
+    const directKey = detail.message ? this.validationDetailMap[detail.message.trim()] : undefined;
+    if (directKey) {
+      return this.i18nService.t(directKey);
+    }
+
+    if (detail.code === "invalid_string" && detail.validation === "email") {
+      return this.i18nService.t("errors.invalid_email");
+    }
+
+    if (detail.code === "too_small" && detail.minimum && detail.path?.[0] === "password") {
+      return this.i18nService.t("errors.password_min_length", { count: detail.minimum });
+    }
+
+    if (detail.message) {
+      return this.translateBackendError(detail.message);
+    }
+
+    return this.i18nService.t("errors.validation_error");
   }
 }

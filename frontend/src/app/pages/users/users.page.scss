@@ -256,6 +256,82 @@
   margin-top: 4px;
 }
 
+.invite-code-panel {
+  margin-bottom: 16px;
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid color-mix(in srgb, var(--app-border), transparent 10%);
+  background: color-mix(in srgb, var(--app-surface-strong), transparent 5%);
+}
+
+.invite-code-panel strong {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.invite-code-panel p {
+  margin: 0;
+  color: var(--app-ink-muted);
+  font-size: 0.9rem;
+}
+
+.invite-code-chip {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 12px;
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--ion-color-primary), transparent 46%);
+  background: color-mix(in srgb, var(--ion-color-primary), transparent 90%);
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.join-requests-panel {
+  margin-bottom: 18px;
+}
+
+.join-request-list {
+  display: grid;
+  gap: 12px;
+}
+
+.join-request-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px solid color-mix(in srgb, var(--app-border), transparent 10%);
+  background: color-mix(in srgb, var(--app-surface-strong), transparent 4%);
+}
+
+.join-request-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.join-request-copy strong {
+  font-size: 0.96rem;
+}
+
+.join-request-copy span {
+  color: var(--app-ink-muted);
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+.join-request-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: stretch;
+  min-width: 140px;
+}
+
 .team-section + .team-section {
   margin-top: 18px;
 }
@@ -630,6 +706,14 @@
   .create-photo-head,
   .create-photo-actions {
     display: block;
+  }
+
+  .join-request-card {
+    grid-template-columns: 1fr;
+  }
+
+  .join-request-actions {
+    min-width: 0;
   }
 
   .create-photo-actions ion-button:first-child {
