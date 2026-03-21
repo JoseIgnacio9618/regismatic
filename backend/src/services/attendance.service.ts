@@ -12,6 +12,7 @@ import { AppError } from "../middlewares/error.middleware";
 import { diffMinutes, madridDateKey, madridDayRange, nowUtc } from "../utils/dates";
 import { assertCanManageUser, assertCanViewUser, getScopedUserById, listVisibleUserIds } from "./access.service";
 import { createNotificationsForUsers, listApproverUsersForEmployee } from "./notification.service";
+import { buildProfilePhotoApiPath } from "./profile-photo.service";
 
 export type AttendanceState = "OFF" | "WORKING" | "ON_BREAK";
 
@@ -85,7 +86,7 @@ const mapUserSummary = (user: UserSummaryRecord): UserSummary => ({
   id: user.id,
   fullName: user.fullName,
   email: user.email,
-  profilePhotoUrl: user.profilePhotoPath ?? null
+  profilePhotoUrl: buildProfilePhotoApiPath(user.id, user.profilePhotoPath)
 });
 
 export type WorkEventEditRequestRecord = {

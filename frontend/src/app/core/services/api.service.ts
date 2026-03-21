@@ -130,6 +130,30 @@ export class ApiService {
     });
   }
 
+  async getProtectedAssetObjectUrl(path: string | null | undefined): Promise<string | null> {
+    if (!path) {
+      return null;
+    }
+
+    if (/^(blob:|data:)/i.test(path)) {
+      return path;
+    }
+
+    const url = this.buildAssetUrl(path);
+    if (!url) {
+      return null;
+    }
+
+    const blob = await firstValueFrom(
+      this.http.get(url, {
+        headers: this.buildHeaders(true),
+        responseType: "blob"
+      })
+    );
+
+    return URL.createObjectURL(blob);
+  }
+
   buildAssetUrl(path: string | null | undefined): string | null {
     if (!path) {
       return null;

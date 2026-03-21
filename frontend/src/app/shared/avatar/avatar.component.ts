@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, SimpleChanges } from "@angular/core";
+import { Component, Input, OnChanges, OnDestroy, SimpleChanges } from "@angular/core";
 import { ApiService } from "src/app/core/services/api.service";
 
 @Component({
@@ -7,27 +7,27 @@ import { ApiService } from "src/app/core/services/api.service";
   styleUrls: ["./avatar.component.scss"],
   standalone: false
 })
-export class AvatarComponent implements OnChanges {
+export class AvatarComponent implements OnChanges, OnDestroy {
   @Input() fullName = "";
   @Input() photoUrl: string | null | undefined = null;
   @Input() size: "sm" | "md" | "lg" = "md";
 
   hasImageError = false;
+  resolvedPhotoUrl: string | null = null;
+  private ownedObjectUrl: string | null = null;
+  private loadSequence = 0;
 
   constructor(private readonly apiService: ApiService) {}
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes["photoUrl"]) {
       this.hasImageError = false;
+      void this.loadPhotoUrl();
     }
   }
 
-  get resolvedPhotoUrl(): string | null {
-    if (this.hasImageError) {
-      return null;
-    }
-
-    return this.apiService.buildAssetUrl(this.photoUrl);
+  ngOnDestroy(): void {
+    this.clearOwnedObjectUrl();
   }
 
   get initials(): string {
@@ -46,5 +46,47 @@ export class AvatarComponent implements OnChanges {
 
   onImageError(): void {
     this.hasImageError = true;
+    this.resolvedPhotoUrl = null;
+    this.clearOwnedObjectUrl();
+  }
+
+  private async loadPhotoUrl(): Promise<void> {
+    const sequence = ++this.loadSequence;
+    this.clearOwnedObjectUrl();
+    this.resolvedPhotoUrl = null;
+
+    if (!this.photoUrl) {
+      return;
+    }
+
+    if (/^(blob:|data:)/i.test(this.photoUrl)) {
+      this.resolvedPhotoUrl = this.photoUrl;
+      return;
+    }
+
+    try {
+      const objectUrl = await this.apiService.getProtectedAssetObjectUrl(this.photoUrl);
+      if (sequence !== this.loadSequence) {
+        if (objectUrl?.startsWith("blob:")) {
+          URL.revokeObjectURL(objectUrl);
+        }
+        return;
+      }
+
+      this.ownedObjectUrl = objectUrl?.startsWith("blob:") ? objectUrl : null;
+      this.resolvedPhotoUrl = objectUrl;
+    } catch {
+      if (sequence === this.loadSequence) {
+        this.hasImageError = true;
+        this.resolvedPhotoUrl = null;
+      }
+    }
+  }
+
+  private clearOwnedObjectUrl(): void {
+    if (this.ownedObjectUrl) {
+      URL.revokeObjectURL(this.ownedObjectUrl);
+      this.ownedObjectUrl = null;
+    }
   }
 }

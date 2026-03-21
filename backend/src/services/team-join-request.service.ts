@@ -4,6 +4,7 @@ import { AppError } from "../middlewares/error.middleware";
 import { nowUtc } from "../utils/dates";
 import { createNotificationsForUsers, listSuperadminUsers } from "./notification.service";
 import { getScopedUserById } from "./access.service";
+import { buildProfilePhotoApiPath } from "./profile-photo.service";
 
 const teamJoinRequestSelect = {
   id: true,
@@ -52,7 +53,7 @@ const mapJoinRequest = (request: TeamJoinRequestRecord) => ({
     id: request.employee.id,
     fullName: request.employee.fullName,
     email: request.employee.email,
-    profilePhotoUrl: request.employee.profilePhotoPath ?? null,
+    profilePhotoUrl: buildProfilePhotoApiPath(request.employee.id, request.employee.profilePhotoPath),
     managerId: request.employee.managerId
   },
   targetManager: request.targetManager,

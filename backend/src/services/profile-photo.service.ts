@@ -16,6 +16,9 @@ export const MAX_PROFILE_PHOTO_BYTES = 512 * 1024;
 
 export const isSupportedProfilePhotoMimeType = (mimeType: string): boolean => allowedMimeTypes.has(mimeType);
 
+export const buildProfilePhotoApiPath = (userId: string, storedPath: string | null | undefined): string | null =>
+  storedPath ? `/api/users/${userId}/photo` : null;
+
 export const saveProfilePhotoFile = async (file: Express.Multer.File): Promise<string> => {
   const extension = allowedMimeTypes.get(file.mimetype);
 
@@ -34,12 +37,10 @@ export const saveProfilePhotoFile = async (file: Express.Multer.File): Promise<s
 };
 
 export const deleteStoredProfilePhoto = async (publicPath: string | null | undefined): Promise<void> => {
-  if (!publicPath || !publicPath.startsWith("/uploads/profile-photos/")) {
+  const absolutePath = resolveStoredProfilePhotoAbsolutePath(publicPath);
+  if (!absolutePath) {
     return;
   }
-
-  const relativePath = publicPath.replace(/^\/+/, "");
-  const absolutePath = path.resolve(process.cwd(), relativePath);
 
   try {
     await unlink(absolutePath);
@@ -49,4 +50,26 @@ export const deleteStoredProfilePhoto = async (publicPath: string | null | undef
       throw error;
     }
   }
+};
+
+export const resolveStoredProfilePhotoAbsolutePath = (storedPath: string | null | undefined): string | null => {
+  if (!storedPath) {
+    return null;
+  }
+
+  const normalized = storedPath.trim();
+  if (!normalized) {
+    return null;
+  }
+
+  if (normalized.startsWith("/uploads/profile-photos/")) {
+    const relativePath = normalized.replace(/^\/+/, "");
+    return path.resolve(process.cwd(), relativePath);
+  }
+
+  if (normalized.startsWith("profile-photos/")) {
+    return path.resolve(uploadsRoot, normalized);
+  }
+
+  return null;
 };

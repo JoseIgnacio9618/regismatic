@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "../config/prisma";
 import { AppError } from "../middlewares/error.middleware";
 import { ensureAdminInviteCode } from "../services/admin-invite.service";
+import { buildProfilePhotoApiPath } from "../services/profile-photo.service";
 import { login, registerAdmin, registerEmployee } from "../services/auth.service";
 
 const loginSchema = z.object({
@@ -83,6 +84,6 @@ export const meController = async (req: Request, res: Response) => {
   return res.json({
     ...rest,
     adminInviteCode,
-    profilePhotoUrl: profilePhotoPath ?? null
+    profilePhotoUrl: buildProfilePhotoApiPath(user.id, profilePhotoPath)
   });
 };

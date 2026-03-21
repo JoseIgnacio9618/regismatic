@@ -4,6 +4,7 @@ import {
   createTeamJoinRequestController,
   createUserController,
   deleteUserController,
+  getUserProfilePhotoController,
   listTeamJoinRequestsController,
   listUsersController,
   removeOwnProfilePhotoController,
@@ -20,6 +21,7 @@ import { asyncHandler } from "../utils/async-handler";
 export const userRouter = Router();
 
 userRouter.use(authMiddleware);
+userRouter.get("/:userId/photo", asyncHandler(getUserProfilePhotoController));
 userRouter.post("/me/photo", profilePhotoUpload.single("photo"), asyncHandler(updateOwnProfilePhotoController));
 userRouter.delete("/me/photo", asyncHandler(removeOwnProfilePhotoController));
 userRouter.get("/team-join-requests", asyncHandler(listTeamJoinRequestsController));

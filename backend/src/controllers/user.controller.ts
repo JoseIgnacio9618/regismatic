@@ -5,6 +5,7 @@ import {
   assignEmployeeManager,
   createUser,
   deleteUser,
+  getUserProfilePhotoFile,
   listUsers,
   removeUserProfilePhoto,
   updateUserProfilePhoto
@@ -152,6 +153,20 @@ export const updateOwnProfilePhotoController = async (req: Request, res: Respons
   });
 
   return res.json(user);
+};
+
+export const getUserProfilePhotoController = async (req: Request, res: Response) => {
+  if (!req.user) {
+    throw new AppError("Not authenticated.", 401);
+  }
+
+  const userId = z.string().min(1).parse(req.params.userId);
+  const absolutePath = await getUserProfilePhotoFile({
+    requesterId: req.user.id,
+    targetUserId: userId
+  });
+
+  return res.sendFile(absolutePath);
 };
 
 export const removeOwnProfilePhotoController = async (req: Request, res: Response) => {
