@@ -1,16 +1,23 @@
 import bcrypt from "bcryptjs";
 import { Prisma, type Role } from "@prisma/client";
+import { access } from "node:fs/promises";
 import { prisma } from "../config/prisma";
 import { AppError } from "../middlewares/error.middleware";
-import { assertCanManageUser, getScopedUserById, isElevatedRole } from "./access.service";
+import { assertCanManageUser, assertCanViewUser, getScopedUserById, isElevatedRole } from "./access.service";
 import { generateUniqueAdminInviteCode } from "./admin-invite.service";
-import { deleteStoredProfilePhoto, saveProfilePhotoFile } from "./profile-photo.service";
+import {
+  buildProfilePhotoApiPath,
+  deleteStoredProfilePhoto,
+  resolveStoredProfilePhotoAbsolutePath,
+  saveProfilePhotoFile
+} from "./profile-photo.service";
 
 const teamUserSelect = {
   id: true,
   email: true,
   fullName: true,
   profilePhotoPath: true,
+  adminInviteCode: true,
   role: true,
   isActive: true,
   createdAt: true,
@@ -40,7 +47,8 @@ const mapTeamUser = (user: TeamUserRecord) => ({
   id: user.id,
   email: user.email,
   fullName: user.fullName,
-  profilePhotoUrl: user.profilePhotoPath ?? null,
+  profilePhotoUrl: buildProfilePhotoApiPath(user.id, user.profilePhotoPath),
+  adminInviteCode: user.role === "ADMIN" ? user.adminInviteCode ?? null : null,
   role: user.role,
   isActive: user.isActive,
   createdAt: user.createdAt,
@@ -98,7 +106,7 @@ export const createUser = async (params: {
         ? creator.id
         : await validateEmployeeManager(params.managerId)
       : null;
-  const adminInviteCode = params.role === "ADMIN" || params.role === "SUPERADMIN" ? await generateUniqueAdminInviteCode() : null;
+  const adminInviteCode = params.role === "ADMIN" ? await generateUniqueAdminInviteCode() : null;
 
   const user = await prisma.user.create({
     data: {
@@ -326,4 +334,32 @@ export const removeUserProfilePhoto = async (params: { requesterId: string; targ
   await deleteStoredProfilePhoto(target.profilePhotoPath);
 
   return mapTeamUser(updated);
+};
+
+export const getUserProfilePhotoFile = async (params: { requesterId: string; targetUserId: string }): Promise<string> => {
+  await assertCanViewUser(params.requesterId, params.targetUserId);
+
+  const target = await prisma.user.findUnique({
+    where: { id: params.targetUserId },
+    select: {
+      profilePhotoPath: true
+    }
+  });
+
+  if (!target?.profilePhotoPath) {
+    throw new AppError("User not found.", 404);
+  }
+
+  const absolutePath = resolveStoredProfilePhotoAbsolutePath(target.profilePhotoPath);
+  if (!absolutePath) {
+    throw new AppError("User not found.", 404);
+  }
+
+  try {
+    await access(absolutePath);
+  } catch {
+    throw new AppError("User not found.", 404);
+  }
+
+  return absolutePath;
 };

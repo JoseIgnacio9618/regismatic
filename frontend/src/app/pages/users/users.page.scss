@@ -289,6 +289,21 @@
   letter-spacing: 0.08em;
 }
 
+.team-user-code {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  margin-top: 2px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--ion-color-primary), transparent 48%);
+  background: color-mix(in srgb, var(--ion-color-primary), transparent 92%);
+  color: var(--ion-text-color);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
 .join-requests-panel {
   margin-bottom: 18px;
 }

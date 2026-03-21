@@ -38,8 +38,23 @@ export const ensureAdminInviteCode = async (user: {
   role: "SUPERADMIN" | "ADMIN" | "EMPLOYEE";
   adminInviteCode?: string | null;
 }) => {
-  if ((user.role !== "ADMIN" && user.role !== "SUPERADMIN") || user.adminInviteCode) {
-    return user.adminInviteCode ?? null;
+  if (user.role !== "ADMIN") {
+    if (user.role === "SUPERADMIN" && user.adminInviteCode) {
+      await prisma.user.update({
+        where: {
+          id: user.id
+        },
+        data: {
+          adminInviteCode: null
+        }
+      });
+    }
+
+    return null;
+  }
+
+  if (user.adminInviteCode) {
+    return user.adminInviteCode;
   }
 
   const inviteCode = await generateUniqueAdminInviteCode();

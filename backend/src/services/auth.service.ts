@@ -4,6 +4,7 @@ import { AppError } from "../middlewares/error.middleware";
 import { prisma } from "../config/prisma";
 import { signToken } from "../utils/jwt";
 import { ensureAdminInviteCode, generateUniqueAdminInviteCode } from "./admin-invite.service";
+import { buildProfilePhotoApiPath } from "./profile-photo.service";
 import { createTeamJoinRequestForEmployee } from "./team-join-request.service";
 
 const buildAuthResponse = (user: {
@@ -26,7 +27,7 @@ const buildAuthResponse = (user: {
       id: user.id,
       email: user.email,
       fullName: user.fullName,
-      profilePhotoUrl: user.profilePhotoPath ?? null,
+      profilePhotoUrl: buildProfilePhotoApiPath(user.id, user.profilePhotoPath),
       role: user.role,
       adminInviteCode: user.adminInviteCode ?? null
     }
@@ -70,7 +71,7 @@ export const registerAdmin = async (params: {
 
   const passwordHash = await bcrypt.hash(params.password, 12);
   const role = superadminCount === 0 ? "SUPERADMIN" : "ADMIN";
-  const adminInviteCode = await generateUniqueAdminInviteCode();
+  const adminInviteCode = role === "ADMIN" ? await generateUniqueAdminInviteCode() : null;
 
   const user = await prisma.user.create({
     data: {

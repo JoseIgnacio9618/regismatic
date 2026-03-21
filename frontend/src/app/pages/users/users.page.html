@@ -21,7 +21,7 @@
 
       <ion-content class="profile-photo-viewer-content">
         <div class="profile-photo-viewer-shell" *ngIf="photoViewerUser">
-          <img *ngIf="selectedPhotoViewerUrl" [src]="selectedPhotoViewerUrl" [alt]="photoViewerUser.fullName" />
+          <img *ngIf="photoViewerResolvedUrl" [src]="photoViewerResolvedUrl" [alt]="photoViewerUser.fullName" />
           <div class="profile-photo-viewer-meta">
             <strong>{{ photoViewerUser.fullName }}</strong>
             <span>{{ roleMeta(photoViewerUser) }}</span>
@@ -120,7 +120,7 @@
 
             <ion-item>
               <ion-label position="stacked">{{ "common.password" | t }}</ion-label>
-              <ion-input type="text" [(ngModel)]="password"></ion-input>
+              <ion-input type="password" [(ngModel)]="password"></ion-input>
             </ion-item>
 
             <section class="create-photo-panel">
@@ -342,6 +342,9 @@
                               <strong>{{ user.fullName }}</strong>
                               <span>{{ user.email }}</span>
                               <span *ngIf="secondaryMeta(user) as meta">{{ meta }}</span>
+                              <span class="team-user-code" *ngIf="showAdminCode(user)">
+                                {{ "users.admin_code_short" | t }}: {{ user.adminInviteCode }}
+                              </span>
                             </div>
                           </div>
                         </td>

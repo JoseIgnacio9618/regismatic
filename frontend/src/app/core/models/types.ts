@@ -130,6 +130,7 @@ export interface TeamUser {
   email: string;
   fullName: string;
   profilePhotoUrl?: string | null;
+  adminInviteCode?: string | null;
   role: Role;
   isActive: boolean;
   createdAt: string;

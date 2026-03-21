@@ -76,6 +76,7 @@ export class UsersPage implements OnInit, OnDestroy {
   createPhotoPreviewUrl: string | null = null;
   photoViewerOpen = false;
   photoViewerUser: TeamUser | null = null;
+  photoViewerResolvedUrl: string | null = null;
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -102,6 +103,7 @@ export class UsersPage implements OnInit, OnDestroy {
     this.routeSubscription?.unsubscribe();
     this.clearCreatePhotoPreview();
     this.clearPhotoCropSource();
+    this.clearPhotoViewerResolvedUrl();
   }
 
   get isSuperadmin(): boolean {
@@ -207,7 +209,7 @@ export class UsersPage implements OnInit, OnDestroy {
   }
 
   get adminInviteCode(): string | null {
-    return this.authService.user?.adminInviteCode ?? null;
+    return this.authService.isAdmin ? this.authService.user?.adminInviteCode ?? null : null;
   }
 
   get pendingJoinRequests(): TeamJoinRequest[] {
@@ -315,10 +317,6 @@ export class UsersPage implements OnInit, OnDestroy {
     return Boolean(user.profilePhotoUrl);
   }
 
-  get selectedPhotoViewerUrl(): string | null {
-    return this.apiService.buildAssetUrl(this.photoViewerUser?.profilePhotoUrl);
-  }
-
   roleMeta(user: TeamUser): string {
     return `${user.email} | ${this.roleLabel(user.role)}`;
   }
@@ -365,6 +363,10 @@ export class UsersPage implements OnInit, OnDestroy {
     }
 
     return null;
+  }
+
+  showAdminCode(user: TeamUser): boolean {
+    return this.isSuperadmin && user.role === "ADMIN" && !!user.adminInviteCode;
   }
 
   managerValueFor(user: TeamUser): string {
@@ -470,18 +472,26 @@ export class UsersPage implements OnInit, OnDestroy {
     }
   }
 
-  openPhotoViewer(user: TeamUser): void {
+  async openPhotoViewer(user: TeamUser): Promise<void> {
     if (!this.canPreviewPhoto(user)) {
       return;
     }
 
     this.photoViewerUser = user;
     this.photoViewerOpen = true;
+    this.clearPhotoViewerResolvedUrl();
+
+    try {
+      this.photoViewerResolvedUrl = await this.apiService.getProtectedAssetObjectUrl(user.profilePhotoUrl);
+    } catch {
+      this.photoViewerResolvedUrl = null;
+    }
   }
 
   closePhotoViewer(): void {
     this.photoViewerOpen = false;
     this.photoViewerUser = null;
+    this.clearPhotoViewerResolvedUrl();
   }
 
   private matchesTeamSearch(user: TeamUser): boolean {
@@ -573,6 +583,14 @@ export class UsersPage implements OnInit, OnDestroy {
       URL.revokeObjectURL(this.photoCropSourceUrl);
       this.photoCropSourceUrl = null;
     }
+  }
+
+  private clearPhotoViewerResolvedUrl(): void {
+    if (this.photoViewerResolvedUrl?.startsWith("blob:")) {
+      URL.revokeObjectURL(this.photoViewerResolvedUrl);
+    }
+
+    this.photoViewerResolvedUrl = null;
   }
 
   private async loadUsers(): Promise<void> {
