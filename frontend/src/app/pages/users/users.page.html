@@ -134,7 +134,6 @@
 
               <div class="create-photo-actions">
                 <ion-button size="small" fill="outline" (click)="openCreatePhotoPicker()">
-                  <ion-icon slot="start" name="camera-outline"></ion-icon>
                   {{ createPhotoFile ? ("profile.photo_change" | t) : ("profile.photo_add" | t) }}
                 </ion-button>
                 <ion-button size="small" fill="clear" color="medium" *ngIf="createPhotoFile" (click)="clearCreatePhoto()">
@@ -237,7 +236,7 @@
                 <ion-label position="stacked">{{ "users.search_placeholder" | t }}</ion-label>
                 <ion-input [(ngModel)]="teamSearchTerm"></ion-input>
               </ion-item>
-              <ion-item class="team-filter-item">
+              <ion-item class="team-filter-item" *ngIf="showTeamRoleFilter">
                 <ion-label position="stacked">{{ "common.role" | t }}</ion-label>
                 <ion-select [(ngModel)]="teamRoleFilter">
                   <ion-select-option *ngFor="let filter of teamRoleFilterOptions" [value]="filter">
@@ -264,6 +263,13 @@
 
                 <div class="team-table-shell">
                   <table class="team-table">
+                    <colgroup>
+                      <col class="team-col-name" />
+                      <col class="team-col-role" />
+                      <col class="team-col-manager" />
+                      <col class="team-col-created" />
+                      <col class="team-col-actions" />
+                    </colgroup>
                     <thead>
                       <tr>
                         <th>{{ "users.table_name" | t }}</th>
@@ -275,7 +281,7 @@
                     </thead>
                     <tbody>
                       <tr *ngFor="let user of section.users; trackBy: trackUser">
-                        <td [attr.data-label]="'users.table_name' | t">
+                        <td class="team-name-col" [attr.data-label]="'users.table_name' | t">
                           <div class="team-user-cell">
                             <button
                               type="button"
@@ -293,30 +299,33 @@
                             </div>
                           </div>
                         </td>
-                        <td [attr.data-label]="'users.table_role' | t">
+                        <td class="team-role-col" [attr.data-label]="'users.table_role' | t">
                           <ion-badge [color]="roleColor(user.role)">{{ roleLabel(user.role) }}</ion-badge>
                         </td>
-                        <td [attr.data-label]="'users.table_manager' | t">
+                        <td class="team-manager-col" [attr.data-label]="'users.table_manager' | t">
                           <div class="manager-cell">
-                            <span>{{ user.manager?.fullName || "—" }}</span>
-                            <div class="manager-inline-edit" *ngIf="isSuperadmin && user.role === 'EMPLOYEE'">
-                              <ion-select [value]="managerValueFor(user)" (ionChange)="setManagerDraft(user.id, $event.detail.value)">
-                                <ion-select-option *ngFor="let manager of availableManagerUsers" [value]="manager.id">
-                                  {{ manager.fullName }}
-                                </ion-select-option>
-                              </ion-select>
-                              <ion-button
-                                size="small"
-                                [disabled]="availableManagerUsers.length === 0 || savingManagerUserId === user.id"
-                                (click)="saveManagerAssignment(user)"
-                              >
-                                {{ "users.save_assignment" | t }}
-                              </ion-button>
-                            </div>
+                            <ng-container *ngIf="isSuperadmin && user.role === 'EMPLOYEE'; else managerReadOnly">
+                              <div class="manager-inline-edit manager-inline-edit-simple">
+                                <ion-select
+                                  [value]="managerValueFor(user)"
+                                  [disabled]="savingManagerUserId === user.id"
+                                  (ionChange)="updateManagerAssignment(user, $event.detail.value)"
+                                >
+                                  <ion-select-option *ngFor="let manager of availableManagerUsers" [value]="manager.id">
+                                    {{ manager.fullName }}
+                                  </ion-select-option>
+                                </ion-select>
+                              </div>
+                            </ng-container>
+                            <ng-template #managerReadOnly>
+                              <span class="manager-name">{{ user.manager?.fullName || "-" }}</span>
+                            </ng-template>
                           </div>
                         </td>
-                        <td [attr.data-label]="'users.table_created' | t">{{ formatCreatedAt(user.createdAt) }}</td>
-                        <td [attr.data-label]="'users.table_actions' | t">
+                        <td class="team-created-col" [attr.data-label]="'users.table_created' | t">
+                          <span class="created-at">{{ formatCreatedAt(user.createdAt) }}</span>
+                        </td>
+                        <td class="team-actions-col" [attr.data-label]="'users.table_actions' | t">
                           <div class="table-actions">
                             <ion-button
                               size="small"
@@ -325,7 +334,6 @@
                               [disabled]="photoLoadingUserId === user.id"
                               (click)="openPhotoPicker(user)"
                             >
-                              <ion-icon slot="start" name="camera-outline"></ion-icon>
                               {{ user.profilePhotoUrl ? ("profile.photo_change" | t) : ("profile.photo_add" | t) }}
                             </ion-button>
                             <ion-button
@@ -346,7 +354,6 @@
                               [disabled]="deletingUserId === user.id"
                               (click)="confirmDeleteUser(user)"
                             >
-                              <ion-icon slot="start" name="trash-outline"></ion-icon>
                               {{ "users.action_delete" | t }}
                             </ion-button>
                           </div>

@@ -470,8 +470,59 @@ body.dark-theme ion-badge[color="light"] {
   --color: #f6f9ff;
 }
 
+body.dark-theme ion-item,
+body.dark-theme .data-item,
+body.dark-theme .metric-tile {
+  --color: var(--ion-text-color);
+}
+
 body.dark-theme ion-select {
+  color: var(--ion-text-color);
   --placeholder-color: color-mix(in srgb, var(--ion-text-color), transparent 34%);
+}
+
+body.dark-theme ion-select::part(container),
+body.dark-theme ion-select::part(text),
+body.dark-theme ion-select::part(icon),
+body.dark-theme ion-input::part(native),
+body.dark-theme ion-textarea::part(native),
+body.dark-theme ion-searchbar input,
+body.dark-theme ion-label,
+body.dark-theme ion-note,
+body.dark-theme .item-native,
+body.dark-theme .native-input,
+body.dark-theme .select-text {
+  color: var(--ion-text-color) !important;
+}
+
+body.dark-theme ion-select::part(placeholder),
+body.dark-theme ion-input::part(placeholder),
+body.dark-theme ion-textarea::part(placeholder),
+body.dark-theme ion-searchbar input::placeholder {
+  color: color-mix(in srgb, var(--ion-text-color), transparent 34%) !important;
+  opacity: 1;
+}
+
+body.dark-theme ion-select-popover,
+body.dark-theme ion-alert,
+body.dark-theme ion-action-sheet,
+body.dark-theme ion-picker {
+  --color: var(--ion-text-color);
+}
+
+body.dark-theme ion-select-popover ion-item,
+body.dark-theme ion-alert .alert-radio-label,
+body.dark-theme ion-alert .alert-checkbox-label,
+body.dark-theme ion-alert .alert-message,
+body.dark-theme ion-alert .alert-input,
+body.dark-theme ion-action-sheet .action-sheet-button,
+body.dark-theme ion-action-sheet .action-sheet-title,
+body.dark-theme ion-picker-column-option {
+  color: var(--ion-text-color) !important;
+}
+
+body.dark-theme ion-alert {
+  --button-color: var(--ion-color-primary);
 }
 
 .metric-tile {

@@ -2,6 +2,7 @@ import { Component, OnInit } from "@angular/core";
 import { addIcons } from "ionicons";
 import {
   barChartOutline,
+  cameraOutline,
   checkmarkDoneOutline,
   chevronDownOutline,
   chevronUpOutline,
@@ -42,6 +43,7 @@ export class AppComponent implements OnInit {
     if (!AppComponent.iconsRegistered) {
       addIcons({
         "bar-chart-outline": barChartOutline,
+        "camera-outline": cameraOutline,
         "checkmark-done-outline": checkmarkDoneOutline,
         "chevron-down-outline": chevronDownOutline,
         "chevron-up-outline": chevronUpOutline,

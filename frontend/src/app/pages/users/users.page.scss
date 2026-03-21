@@ -236,6 +236,18 @@
   flex-wrap: wrap;
 }
 
+.create-photo-actions ion-button::part(native),
+.table-actions ion-button::part(native) {
+  justify-content: flex-start;
+  gap: 8px;
+}
+
+.create-photo-actions ion-button ion-icon,
+.table-actions ion-button ion-icon {
+  flex-shrink: 0;
+  font-size: 1rem;
+}
+
 .create-side-panel {
   min-height: 100%;
 }
@@ -310,6 +322,27 @@
   width: 100%;
   border-collapse: collapse;
   min-width: 860px;
+  table-layout: fixed;
+}
+
+.team-col-name {
+  width: 34%;
+}
+
+.team-col-role {
+  width: 14%;
+}
+
+.team-col-manager {
+  width: 24%;
+}
+
+.team-col-created {
+  width: 14%;
+}
+
+.team-col-actions {
+  width: 14%;
 }
 
 .team-table thead th {
@@ -323,9 +356,13 @@
   background: color-mix(in srgb, var(--app-surface), transparent 2%);
 }
 
+.team-table thead th:last-child {
+  text-align: right;
+}
+
 .team-table tbody td {
   padding: 14px 16px;
-  vertical-align: top;
+  vertical-align: middle;
   border-bottom: 1px solid color-mix(in srgb, var(--app-border), transparent 14%);
 }
 
@@ -341,51 +378,109 @@
   background: color-mix(in srgb, var(--app-surface), var(--ion-color-primary) 4%);
 }
 
+.team-name-col {
+  vertical-align: top !important;
+}
+
+.team-role-col,
+.team-created-col {
+  white-space: nowrap;
+}
+
+.team-role-col {
+  text-align: left;
+}
+
+.team-actions-col {
+  text-align: right;
+}
+
 .team-user-cell {
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  min-width: 240px;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
 }
 
 .team-user-copy {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-width: 0;
 }
 
 .team-user-copy strong {
   font-size: 0.96rem;
+  line-height: 1.25;
 }
 
 .team-user-copy span {
   color: var(--app-ink-muted);
   font-size: 0.86rem;
   line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 
 .manager-cell {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
-  min-width: 180px;
+  align-items: center;
+  min-width: 0;
+  min-height: 34px;
+}
+
+.manager-name,
+.created-at {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--app-border), transparent 8%);
+  background: color-mix(in srgb, var(--app-surface), transparent 3%);
+  color: var(--ion-text-color);
+  font-size: 0.86rem;
+}
+
+.manager-name {
+  width: fit-content;
+  max-width: 100%;
 }
 
 .manager-inline-edit {
   display: flex;
   align-items: end;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 .manager-inline-edit ion-select {
   flex: 1;
+  min-width: 180px;
+}
+
+.manager-inline-edit-simple ion-select {
+  width: 100%;
+  --min-height: 34px;
+  --padding-start: 12px;
+  --padding-end: 12px;
+  border: 1px solid color-mix(in srgb, var(--app-border), transparent 8%);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--app-surface), transparent 3%);
 }
 
 .table-actions {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: stretch;
   gap: 8px;
-  min-width: 210px;
+  min-width: 0;
+  margin-left: auto;
+  max-width: 220px;
+}
+
+.table-actions ion-button {
+  width: 100%;
+  margin: 0;
 }
 
 .user-row-top {
@@ -580,6 +675,7 @@
 
   .team-table {
     min-width: 0;
+    table-layout: auto;
   }
 
   .team-table thead {
@@ -623,5 +719,14 @@
     flex-direction: column;
     align-items: stretch;
     min-width: 0;
+  }
+
+  .team-actions-col {
+    text-align: left;
+  }
+
+  .table-actions {
+    max-width: none;
+    margin-left: 0;
   }
 }

@@ -176,6 +176,10 @@ export class UsersPage implements OnInit, OnDestroy {
     return this.isSuperadmin ? ["ALL", "SUPERADMIN", "ADMIN", "EMPLOYEE"] : ["ALL", "EMPLOYEE"];
   }
 
+  get showTeamRoleFilter(): boolean {
+    return this.isSuperadmin;
+  }
+
   get totalFilteredUsers(): number {
     return this.filteredUsersByCurrentRole.length;
   }
@@ -345,6 +349,19 @@ export class UsersPage implements OnInit, OnDestroy {
     this.managerDraftByUserId[userId] = managerId ?? "";
   }
 
+  async updateManagerAssignment(user: TeamUser, managerId: string | null | undefined): Promise<void> {
+    const nextManagerId = managerId ?? "";
+    const currentManagerId = user.manager?.id ?? "";
+
+    this.setManagerDraft(user.id, nextManagerId);
+
+    if (!nextManagerId || nextManagerId === currentManagerId || this.savingManagerUserId === user.id) {
+      return;
+    }
+
+    await this.saveManagerAssignment(user);
+  }
+
   async saveManagerAssignment(user: TeamUser): Promise<void> {
     const managerId = this.managerValueFor(user);
     if (!managerId) {
@@ -356,6 +373,7 @@ export class UsersPage implements OnInit, OnDestroy {
     try {
       await this.userService.assignManager(user.id, managerId);
       await this.loadUsers();
+      delete this.managerDraftByUserId[user.id];
       await this.showToast(this.i18nService.t("users.toast_assignment_updated"), "success");
     } catch (error) {
       await this.showToast(error instanceof Error ? error.message : this.i18nService.t("users.toast_assignment_failed"), "danger");
