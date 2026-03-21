@@ -28,10 +28,16 @@ AUTH_RATE_LIMIT_WINDOW_MS=900000
 AUTH_RATE_LIMIT_MAX=10
 FCM_SERVICE_ACCOUNT_PATH=/run/secrets/firebase-service-account.json
 RUN_SEED=false
+RUN_DEMO_FIXTURES=false
 APP_DOMAIN=app.tudominio.com
 API_DOMAIN=api.tudominio.com
 VITE_API_BASE_URL=https://api.tudominio.com/api
 ```
+
+Notas:
+- manten `RUN_SEED=false` salvo despliegues demo controlados
+- manten `RUN_DEMO_FIXTURES=false` en produccion real
+- si vas a usar push, define `FCM_SERVICE_ACCOUNT_JSON` o `FCM_SERVICE_ACCOUNT_PATH`
 
 ## 3. Despliegue
 
@@ -84,6 +90,7 @@ PostgreSQL no se expone publicamente en produccion.
 - Monitorizar `api`, `db` y renovacion de certificados de Caddy
 - Rotar secretos periodicamente (`JWT_SECRET`, credenciales DB)
 - Mantener `RUN_SEED=false` fuera de entornos demo
+- Mantener `RUN_DEMO_FIXTURES=false` fuera de entornos demo
 - Restringir acceso admin y exigir contrasenas robustas
 
 ## 7. Actualizacion

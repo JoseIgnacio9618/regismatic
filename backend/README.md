@@ -20,6 +20,8 @@ npm install
 npm run prisma:generate
 npm run prisma:migrate
 npm run seed
+# opcional, para poblar muchos datos demo:
+npm run seed:fixtures
 ```
 
 3. Ejecuta API:
@@ -30,9 +32,49 @@ npm run dev
 
 API por defecto: `http://localhost:4000`
 
+## Variables importantes
+- `DATABASE_URL`
+- `JWT_SECRET`
+- `JWT_EXPIRES_IN`
+- `CORS_ORIGIN`
+- `PORT`
+- `AUTH_RATE_LIMIT_WINDOW_MS`
+- `AUTH_RATE_LIMIT_MAX`
+- `FCM_SERVICE_ACCOUNT_JSON`
+- `FCM_SERVICE_ACCOUNT_PATH`
+
+## Fixtures demo opcionales
+Existe una carga adicional de datos demo rica pensada para probar la aplicacion con volumen:
+- varios administradores
+- un superadmin de pruebas
+- decenas de empleados
+- muchas jornadas y fichajes
+- solicitudes de correccion en varios estados
+- solicitudes de union a equipo en varios estados
+- notificaciones demo
+
+Comando:
+
+```bash
+npm run seed:fixtures
+```
+
+Notas:
+- no se ejecuta por defecto
+- es reejecutable
+- limpia y reconstruye solo los usuarios `@fixtures.regismatic.local`
+- password comun de fixtures: `Regismatic2026!`
+
 ## Endpoints clave
 - `POST /api/auth/login`
+- `POST /api/auth/register-admin`
+- `POST /api/auth/register-employee`
 - `GET /api/auth/me`
+- `GET /api/users`
+- `POST /api/users`
+- `GET /api/users/team-join-requests`
+- `POST /api/users/team-join-requests`
+- `POST /api/users/team-join-requests/:requestId/review`
 - `GET /api/attendance/today`
 - `POST /api/attendance/clock-in`
 - `POST /api/attendance/break-start`
@@ -50,3 +92,8 @@ API por defecto: `http://localhost:4000`
 - `GET /api/reports/summary.xlsx`
 - `GET /health`
 - `GET /health/ready`
+
+## Notas
+- en Docker la entrada aplica `prisma migrate deploy` automaticamente
+- si `RUN_SEED=true`, carga el seed basico
+- si `RUN_DEMO_FIXTURES=true`, carga ademas los fixtures masivos

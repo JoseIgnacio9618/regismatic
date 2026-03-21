@@ -6,6 +6,18 @@ Aplicacion de control horario para Espana con dos proyectos separados en el mism
 
 La base de datos es **PostgreSQL (SQL)**, no SQLite.
 
+## Resumen rapido
+- Monorepo con frontend y backend separados
+- Frontend `Ionic Angular`, preparado para web y movil con Capacitor
+- Backend `Express + Prisma + PostgreSQL`
+- Roles:
+  - `EMPLOYEE`
+  - `ADMIN`
+  - `SUPERADMIN`
+- Soporta multiadministrador y equipos separados
+- Incluye notificaciones internas y push
+- Incluye datos demo basicos y fixtures demo opcionales masivos
+
 ## Estructura
 - [frontend](frontend)
 - [backend](backend)
@@ -21,10 +33,10 @@ La base de datos es **PostgreSQL (SQL)**, no SQLite.
 - El primer alta publica de administrador se promociona automaticamente a `SUPERADMIN`
 - Multiadministrador: cada admin gestiona solo su propia plantilla
 - Flujo de incorporacion a equipo por codigo:
-  - cada `ADMIN` y `SUPERADMIN` dispone de su propio codigo de acceso
+  - cada `ADMIN` dispone de su propio codigo de acceso
   - un empleado puede crear su perfil, introducir el codigo y generar una solicitud de union al equipo
   - el `ADMIN` objetivo puede aprobar o rechazar la solicitud
-  - el `SUPERADMIN` puede revisarlo todo y actuar sin depender de validaciones de terceros
+  - el `SUPERADMIN` puede revisarlo todo, ver los codigos de los admins y actuar sin depender de validaciones de terceros
 - Fichaje: entrada, pausa inicio/fin, salida
 - Trazabilidad de eventos con auditoria de modificaciones (quien y cuando)
 - Geolocalizacion opcional por evento
@@ -38,7 +50,60 @@ La base de datos es **PostgreSQL (SQL)**, no SQLite.
 - Gestion de usuarios por alcance:
   - `ADMIN`: solo crea y gestiona empleados propios
   - `SUPERADMIN`: ve todo, puede crear admins, superadmins y empleados asignados, y reasignar empleados entre administradores
+- Carga opcional de fixtures demo masiva para pruebas visuales y funcionales
 - Hardening basico de API: CORS configurable, rate limit de login, health checks
+
+## Arquitectura funcional
+- `frontend/`
+  - interfaz web responsiva
+  - soporte movil con Capacitor
+  - gestion de tema, idioma, notificaciones y navegacion por rol
+- `backend/`
+  - autenticacion JWT
+  - reglas de negocio de fichaje, incidencias, equipos y notificaciones
+  - Prisma como capa de acceso SQL
+- `PostgreSQL`
+  - persistencia de usuarios, fichajes, solicitudes, notificaciones y tokens push
+- `Caddy`
+  - proxy reverso TLS en produccion
+
+## Roles y permisos
+- `EMPLOYEE`
+  - ficha su propia jornada
+  - consulta sus registros
+  - solicita correcciones
+  - puede crear su perfil publicamente
+  - puede pedir unirse a un equipo con codigo de administrador
+- `ADMIN`
+  - gestiona solo su equipo
+  - crea empleados directamente
+  - aprueba o rechaza solicitudes de correccion de su equipo
+  - aprueba o rechaza solicitudes de union a su equipo
+  - puede modificar registros de su plantilla
+- `SUPERADMIN`
+  - visibilidad global
+  - puede crear `ADMIN`, `SUPERADMIN` y `EMPLOYEE`
+  - puede reasignar empleados entre administradores
+  - puede revisar cualquier incidencia y cualquier solicitud de union a equipo
+  - no depende de validaciones de terceros
+
+## Flujos principales
+- Alta publica de administrador
+  - ruta: `/register-admin`
+  - el primer administrador registrado pasa a `SUPERADMIN`
+- Alta publica de empleado
+  - ruta: `/register-employee`
+  - puede registrarse con o sin codigo de admin
+- Union a equipo por codigo
+  - el admin comparte su codigo
+  - el empleado crea o usa su perfil
+  - se genera una solicitud
+  - el admin o superadmin la revisa en `Equipo`
+- Gestion de incidencias
+  - el empleado solicita correccion en `Reportes`
+  - el admin o superadmin la revisa en `Reportes`
+- Notificaciones
+  - cada notificacion redirige a la pantalla donde se puede actuar sobre ella
 
 ## Requisitos
 - Node.js 20+
@@ -58,6 +123,12 @@ cp .env.example .env
 docker compose up --build
 ```
 
+Si quieres cargar una base muy poblada de pruebas, activa antes en `.env`:
+
+```env
+RUN_DEMO_FIXTURES=true
+```
+
 3. URLs:
 - Frontend: `http://localhost:8100`
 - API health: `http://localhost:4000/health`
@@ -75,6 +146,39 @@ Tambien puedes crear nuevos administradores desde la pantalla publica:
 Y tambien nuevos empleados desde:
 - `http://localhost:8100/register-employee`
 
+## Datos demo opcionales masivos
+Ademas del seed basico, existe una carga opcional de fixtures mucho mas completa pensada para revisar la app con volumen realista:
+- varios admins y un superadmin de pruebas
+- decenas de empleados
+- varias semanas de fichajes
+- ajustes manuales
+- solicitudes de correccion pendientes, aprobadas y rechazadas
+- solicitudes de union a equipo pendientes, aprobadas y rechazadas
+- notificaciones asociadas
+
+No se ejecuta sola salvo que la invoques expresamente o actives `RUN_DEMO_FIXTURES=true` en Docker.
+
+Ejecucion manual:
+
+```bash
+npm run seed:fixtures
+```
+
+Caracteristicas:
+- es reejecutable
+- antes de recrear los fixtures, elimina los fixtures anteriores
+- solo toca usuarios del dominio `@fixtures.regismatic.local`
+- no sustituye al seed basico; lo complementa
+
+Credencial comun de fixtures:
+- `Regismatic2026!`
+
+Ejemplos:
+- `superadmin.fixture@fixtures.regismatic.local`
+- `admin1.fixture@fixtures.regismatic.local`
+- `empleado-1-1@fixtures.regismatic.local`
+- `pendiente-1@fixtures.regismatic.local`
+
 ## 2) Desarrollo local sin Docker
 Instala dependencias en raiz:
 
@@ -88,8 +192,18 @@ cp backend/.env.example backend/.env
 npm run prisma:generate --workspace backend
 npm run prisma:migrate --workspace backend
 npm run seed --workspace backend
+# opcional:
+npm run seed:fixtures --workspace backend
 npm run dev:api
 ```
+
+Variables principales de backend:
+- `DATABASE_URL`
+- `JWT_SECRET`
+- `CORS_ORIGIN`
+- `PORT`
+- `FCM_SERVICE_ACCOUNT_JSON`
+- `FCM_SERVICE_ACCOUNT_PATH`
 
 ### Frontend
 En otra terminal:
@@ -98,6 +212,12 @@ En otra terminal:
 cp frontend/.env.example frontend/.env
 npm run dev:web
 ```
+
+Notas:
+- `npm run dev:web` usa `ionic serve`
+- el frontend queda en `http://localhost:8100`
+- el backend queda en `http://localhost:4000`
+- si usas PostgreSQL por Docker del proyecto, el puerto publicado local es `5433`
 
 Flujo recomendado para probar el alta libre de empleados:
 1. Entra como `admin@regismatic.local` o `superadmin@regismatic.local`
@@ -120,6 +240,7 @@ cp .env.production.example .env.production
 - `API_DOMAIN`
 - `VITE_API_BASE_URL`
 - `RUN_SEED=false`
+- `RUN_DEMO_FIXTURES=false`
 
 3. Despliega:
 
@@ -172,6 +293,36 @@ npm run cap:sync
 - Tamano maximo en API: `512 KB`
 - La app recorta y comprime la foto antes de subirla para dejarla ligera
 - En Docker las imagenes quedan persistidas en el volumen `regismatic-uploads`.
+
+## 7) Datos demo y fixtures
+- `npm run seed`
+  - carga el seed basico
+  - crea cuentas demo minimas para empezar rapido
+- `npm run seed:fixtures`
+  - carga fixtures masivos y reejecutables
+  - util para demos, QA visual y pruebas de flujos
+- `RUN_SEED`
+  - controla si Docker ejecuta el seed basico al arrancar la API
+- `RUN_DEMO_FIXTURES`
+  - controla si Docker ejecuta tambien los fixtures masivos
+
+## 8) Notas operativas
+- Las notificaciones de la app y push redirigen a la pantalla donde se gestionan
+- Las fotos de perfil se guardan en disco del backend y se sirven mediante endpoint autenticado de la API
+- En produccion PostgreSQL no se expone publicamente
+- La API aplica `prisma migrate deploy` al arrancar en Docker
+
+## 9) Solucion de problemas rapida
+- `ionic serve` no conecta con backend
+  - verifica `http://localhost:4000/health`
+- login o peticiones fallan por base de datos
+  - comprueba que PostgreSQL este accesible y que `DATABASE_URL` sea correcta
+- las fotos no se ven
+  - revisa que el backend este levantado y que la sesion siga siendo valida para cargar recursos protegidos
+- push no funciona
+  - revisa configuracion FCM y sincronizacion de Capacitor
+- quieres poblar muchos datos de prueba
+  - ejecuta `npm run seed:fixtures`
 
 ## Documentacion adicional
 - [Legal + benchmark](docs/legal-and-product-research.md)

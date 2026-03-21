@@ -1,9 +1,9 @@
 -hay partes del modo oscuro que se ven mal
 -Implementar un sistema de suscripciones con stipe para que se realicen pagos en funcion de los usuarios que pueda crear un admin (cada admin pagara x dinero y prodra crear a x usuarios).
 -Comprobar que las notificaciones solo llegan a quienes tienen que llegar
--Si se rechaza una peticion de cambio el empleado no lo ve el motivo solo que esta rechazada
+-Si se rechaza una peticion de cambio el empleado no lo ve el motivo de rechazo solo que esta rechazada
 -Cuando se pincha una notificacion antigua te lleva a la pantalla reportes pero no a esa cancelacion en concreto
-
+-En la reasignacion de admin par aun empleado debe haber un buscador o algo para que cuando haya muchos no se quede corto en ion select
 
 
 
