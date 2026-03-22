@@ -446,6 +446,26 @@ async function main() {
     );
   }
 
+  for (const admin of admins) {
+    await prisma.billingSubscription.upsert({
+      where: { adminId: admin.id },
+      update: {
+        planCode: "PACK_100",
+        status: "ACTIVE",
+        seatLimit: 100,
+        isTrial: false,
+        trialEndsAt: null
+      },
+      create: {
+        adminId: admin.id,
+        planCode: "PACK_100",
+        status: "ACTIVE",
+        seatLimit: 100,
+        isTrial: false
+      }
+    });
+  }
+
   const employees = [];
   for (let adminIndex = 0; adminIndex < admins.length; adminIndex += 1) {
     for (let employeeIndex = 0; employeeIndex < FIXTURE_EMPLOYEES_PER_ADMIN; employeeIndex += 1) {

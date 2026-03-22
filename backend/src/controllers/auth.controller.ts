@@ -3,8 +3,10 @@ import { z } from "zod";
 import { prisma } from "../config/prisma";
 import { AppError } from "../middlewares/error.middleware";
 import { ensureAdminInviteCode } from "../services/admin-invite.service";
+import { getBillingSnapshotForAuth } from "../services/billing.service";
 import { buildProfilePhotoApiPath } from "../services/profile-photo.service";
 import { login, registerAdmin, registerEmployee } from "../services/auth.service";
+import { getRequestIp } from "../utils/network";
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -45,7 +47,10 @@ export const loginController = async (req: Request, res: Response) => {
 
 export const registerAdminController = async (req: Request, res: Response) => {
   const payload = registerAdminSchema.parse(req.body);
-  const result = await registerAdmin(payload);
+  const result = await registerAdmin({
+    ...payload,
+    requestIp: getRequestIp(req)
+  });
   return res.status(201).json(result);
 };
 
@@ -81,9 +86,11 @@ export const meController = async (req: Request, res: Response) => {
 
   const adminInviteCode = await ensureAdminInviteCode(user);
   const { profilePhotoPath, ...rest } = user;
+  const billing = await getBillingSnapshotForAuth(user.id, user.role);
   return res.json({
     ...rest,
     adminInviteCode,
-    profilePhotoUrl: buildProfilePhotoApiPath(user.id, profilePhotoPath)
+    profilePhotoUrl: buildProfilePhotoApiPath(user.id, profilePhotoPath),
+    billing
   });
 };

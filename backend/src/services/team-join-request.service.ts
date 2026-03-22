@@ -4,6 +4,7 @@ import { AppError } from "../middlewares/error.middleware";
 import { nowUtc } from "../utils/dates";
 import { createNotificationsForUsers, listSuperadminUsers } from "./notification.service";
 import { getScopedUserById } from "./access.service";
+import { assertAdminSeatAvailability } from "./billing.service";
 import { buildProfilePhotoApiPath } from "./profile-photo.service";
 
 const teamJoinRequestSelect = {
@@ -255,6 +256,13 @@ export const reviewTeamJoinRequest = async (params: {
 
   if (params.action === "APPROVE" && existing.employee.managerId && existing.employee.managerId !== existing.targetManagerId) {
     throw new AppError("This employee is already assigned to an administrator.", 409);
+  }
+
+  if (params.action === "APPROVE") {
+    await assertAdminSeatAvailability({
+      adminId: existing.targetManagerId,
+      requesterRole: requester.role
+    });
   }
 
   const reviewedAt = nowUtc();

@@ -11,6 +11,44 @@ export type NotificationType =
   | "TEAM_JOIN_REQUEST_REJECTED"
   | "SYSTEM";
 export type PushPlatform = "WEB" | "ANDROID" | "IOS";
+export type BillingPlanCode = "DEMO_10" | "PACK_10" | "PACK_20" | "PACK_50" | "PACK_100";
+export type BillingSubscriptionStatus =
+  | "TRIALING"
+  | "ACTIVE"
+  | "PAST_DUE"
+  | "CANCELED"
+  | "INCOMPLETE"
+  | "INCOMPLETE_EXPIRED"
+  | "UNPAID";
+
+export interface BillingPlan {
+  code: BillingPlanCode;
+  name: string;
+  monthlyPriceEur: number;
+  seatLimit: number;
+  isDemo: boolean;
+  checkoutEnabled: boolean;
+}
+
+export interface BillingSummary {
+  isBypassed: boolean;
+  stripeConfigured: boolean;
+  plan: BillingPlan;
+  status: BillingSubscriptionStatus | "BYPASSED";
+  seatUsage: {
+    used: number;
+    limit: number;
+    remaining: number;
+  };
+  isTrial: boolean;
+  trialEndsAt: string | null;
+  currentPeriodEnd: string | null;
+  cancelAtPeriodEnd: boolean;
+  managementUrls: {
+    checkoutAvailable: boolean;
+    portalAvailable: boolean;
+  };
+}
 
 export interface AuthUser {
   id: string;
@@ -22,6 +60,7 @@ export interface AuthUser {
   managerId?: string | null;
   isActive: boolean;
   createdAt: string;
+  billing?: BillingSummary | null;
 }
 
 export interface LoginResponse {

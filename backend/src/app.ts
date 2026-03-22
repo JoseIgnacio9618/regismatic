@@ -8,6 +8,7 @@ import { env } from "./config/env";
 import { prisma } from "./config/prisma";
 import { authRouter } from "./routes/auth.routes";
 import { attendanceRouter } from "./routes/attendance.routes";
+import { billingRouter, billingWebhookRouter } from "./routes/billing.routes";
 import { notificationRouter } from "./routes/notification.routes";
 import { reportRouter } from "./routes/report.routes";
 import { userRouter } from "./routes/user.routes";
@@ -44,6 +45,7 @@ app.use(
   })
 );
 app.use(morgan(env.NODE_ENV === "production" ? "combined" : "dev"));
+app.use("/api/billing", billingWebhookRouter);
 app.use(express.json());
 
 app.get("/health", (_req, res) => {
@@ -64,6 +66,7 @@ app.use("/api/auth/register-admin", authLimiter);
 app.use("/api/auth/register-employee", authLimiter);
 app.use("/api/auth", authRouter);
 app.use("/api/attendance", attendanceRouter);
+app.use("/api/billing", billingRouter);
 app.use("/api/notifications", notificationRouter);
 app.use("/api/reports", reportRouter);
 app.use("/api/users", userRouter);

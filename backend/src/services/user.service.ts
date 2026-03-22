@@ -5,6 +5,7 @@ import { prisma } from "../config/prisma";
 import { AppError } from "../middlewares/error.middleware";
 import { assertCanManageUser, assertCanViewUser, getScopedUserById, isElevatedRole } from "./access.service";
 import { generateUniqueAdminInviteCode } from "./admin-invite.service";
+import { assertAdminSeatAvailability, ensureAdminBillingProfile } from "./billing.service";
 import {
   buildProfilePhotoApiPath,
   deleteStoredProfilePhoto,
@@ -113,6 +114,14 @@ export const createUser = async (params: {
         ? creator.id
         : await validateEmployeeManager(params.managerId)
       : null;
+
+  if (params.role === "EMPLOYEE" && creator.role === "ADMIN") {
+    await assertAdminSeatAvailability({
+      adminId: creator.id,
+      requesterRole: creator.role
+    });
+  }
+
   const adminInviteCode = params.role === "ADMIN" ? await generateUniqueAdminInviteCode() : null;
 
   const user = await prisma.user.create({
@@ -126,6 +135,10 @@ export const createUser = async (params: {
     },
     select: teamUserSelect
   });
+
+  if (params.role === "ADMIN") {
+    await ensureAdminBillingProfile({ adminId: user.id });
+  }
 
   return mapTeamUser(user);
 };
@@ -288,7 +301,8 @@ export const assignEmployeeManager = async (params: {
     where: { id: params.userId },
     select: {
       id: true,
-      role: true
+      role: true,
+      managerId: true
     }
   });
 
@@ -301,6 +315,13 @@ export const assignEmployeeManager = async (params: {
   }
 
   const managerId = await validateEmployeeManager(params.managerId);
+
+  if (target.managerId !== managerId) {
+    await assertAdminSeatAvailability({
+      adminId: managerId,
+      requesterRole: requester.role
+    });
+  }
 
   const updated = await prisma.user.update({
     where: { id: params.userId },

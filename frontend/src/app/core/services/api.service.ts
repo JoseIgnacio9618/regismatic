@@ -53,7 +53,13 @@ export class ApiService {
     "You already have a pending team request.": "errors.pending_team_request_exists",
     "Team join request not found.": "errors.team_join_request_not_found",
     "The team join request was already reviewed.": "errors.team_join_request_already_reviewed",
-    "Employees must belong to an administrator before recording attendance.": "errors.employee_team_assignment_required"
+    "Employees must belong to an administrator before recording attendance.": "errors.employee_team_assignment_required",
+    "A demo admin account was already created from this IP address.": "errors.demo_ip_already_used",
+    "Your billing plan is not active. Upgrade or renew it before adding more employees.": "errors.billing_not_active",
+    "Your current billing plan does not allow more employees.": "errors.billing_employee_limit_reached",
+    "Stripe billing is not fully configured.": "errors.stripe_not_configured",
+    "No Stripe customer is linked to this administrator yet.": "errors.stripe_customer_missing",
+    "Could not create Stripe checkout session.": "errors.checkout_session_failed"
   };
   private readonly validationDetailMap: Record<string, string> = {
     "Password must include lowercase letters.": "errors.password_requires_lowercase",

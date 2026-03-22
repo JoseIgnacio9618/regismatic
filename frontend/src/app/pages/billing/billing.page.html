@@ -1,0 +1,109 @@
+<app-main-layout [title]="'billing.layout_title' | t">
+  <ion-grid fixed class="billing-grid">
+    <ion-row>
+      <ion-col size="12" size-lg="5">
+        <ion-card class="glass-card panel">
+          <ion-card-header>
+            <ion-card-title>{{ "billing.current_title" | t }}</ion-card-title>
+            <p class="microcopy">{{ "billing.current_desc" | t }}</p>
+          </ion-card-header>
+          <ion-card-content *ngIf="summary as billing; else loadingState">
+            <section class="empty-state" *ngIf="billing.isBypassed">
+              <ion-icon name="shield-checkmark-outline" aria-hidden="true"></ion-icon>
+              <h3>{{ "billing.superadmin_title" | t }}</h3>
+              <p>{{ "billing.superadmin_desc" | t }}</p>
+            </section>
+
+            <ng-container *ngIf="!billing.isBypassed">
+              <div class="billing-status-card">
+                <div>
+                  <strong>{{ billing.plan.name }}</strong>
+                  <p>{{ formatPrice(billing.plan) }}</p>
+                </div>
+                <ion-badge [color]="billing.isTrial ? 'warning' : 'success'">{{ planStatusLabel() }}</ion-badge>
+              </div>
+
+              <ion-list lines="none" class="data-list">
+                <ion-item class="data-item">
+                  <ion-label>
+                    <h3 class="item-title">{{ "billing.seat_usage" | t }}</h3>
+                    <ion-note class="item-meta">
+                      {{ "billing.seat_usage_value" | t: { used: billing.seatUsage.used, limit: billing.seatUsage.limit, remaining: billing.seatUsage.remaining } }}
+                    </ion-note>
+                  </ion-label>
+                </ion-item>
+                <ion-item class="data-item" *ngIf="billing.isTrial">
+                  <ion-label>
+                    <h3 class="item-title">{{ "billing.trial_ends" | t }}</h3>
+                    <ion-note class="item-meta">{{ formatDate(billing.trialEndsAt) }}</ion-note>
+                  </ion-label>
+                </ion-item>
+                <ion-item class="data-item" *ngIf="!billing.isTrial">
+                  <ion-label>
+                    <h3 class="item-title">{{ "billing.period_ends" | t }}</h3>
+                    <ion-note class="item-meta">{{ formatDate(billing.currentPeriodEnd) }}</ion-note>
+                  </ion-label>
+                </ion-item>
+                <ion-item class="data-item" *ngIf="billing.cancelAtPeriodEnd">
+                  <ion-label>
+                    <h3 class="item-title">{{ "billing.cancel_pending" | t }}</h3>
+                    <ion-note class="item-meta">{{ "billing.cancel_pending_desc" | t }}</ion-note>
+                  </ion-label>
+                </ion-item>
+              </ion-list>
+
+              <div class="billing-actions">
+                <ion-button expand="block" fill="outline" [disabled]="actionLoading || !billing.managementUrls.portalAvailable" (click)="openPortal()">
+                  {{ "billing.open_portal" | t }}
+                </ion-button>
+              </div>
+            </ng-container>
+          </ion-card-content>
+        </ion-card>
+      </ion-col>
+
+      <ion-col size="12" size-lg="7">
+        <ion-card class="glass-card panel">
+          <ion-card-header>
+            <ion-card-title>{{ "billing.plans_title" | t }}</ion-card-title>
+            <p class="microcopy">{{ "billing.plans_desc" | t }}</p>
+          </ion-card-header>
+          <ion-card-content>
+            <div class="plans-grid">
+              <article class="plan-card" *ngFor="let plan of paidPlans" [class.plan-card-active]="summary?.plan?.code === plan.code">
+                <div class="plan-card-head">
+                  <div>
+                    <strong>{{ plan.name }}</strong>
+                    <p>{{ formatPrice(plan) }}</p>
+                  </div>
+                  <ion-badge color="primary">{{ "billing.seats" | t: { count: plan.seatLimit } }}</ion-badge>
+                </div>
+                <ion-button
+                  expand="block"
+                  [disabled]="actionLoading || !isAdminBilling || !plan.checkoutEnabled"
+                  (click)="startCheckout(plan.code)"
+                >
+                  {{ summary?.plan?.code === plan.code ? ("billing.change_plan" | t) : ("billing.choose_plan" | t) }}
+                </ion-button>
+              </article>
+            </div>
+
+            <section class="empty-state" *ngIf="!isAdminBilling">
+              <ion-icon name="information-circle-outline" aria-hidden="true"></ion-icon>
+              <h3>{{ "billing.superadmin_title" | t }}</h3>
+              <p>{{ "billing.superadmin_desc" | t }}</p>
+            </section>
+          </ion-card-content>
+        </ion-card>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+
+  <ng-template #loadingState>
+    <section class="empty-state">
+      <ion-icon name="card-outline" aria-hidden="true"></ion-icon>
+      <h3>{{ loading ? ("common.loading" | t) : ("billing.load_failed" | t) }}</h3>
+      <ion-button fill="outline" size="small" *ngIf="!loading" (click)="loadOverview()">{{ "common.retry" | t }}</ion-button>
+    </section>
+  </ng-template>
+</app-main-layout>

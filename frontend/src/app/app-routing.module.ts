@@ -32,6 +32,11 @@ const routes: Routes = [
     loadChildren: () => import("./pages/users/users.module").then((m) => m.UsersPageModule)
   },
   {
+    path: "billing",
+    canActivate: [AuthGuard],
+    loadChildren: () => import("./pages/billing/billing.module").then((m) => m.BillingPageModule)
+  },
+  {
     path: "",
     pathMatch: "full",
     redirectTo: "dashboard"

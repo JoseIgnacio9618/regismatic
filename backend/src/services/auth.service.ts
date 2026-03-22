@@ -4,6 +4,7 @@ import { AppError } from "../middlewares/error.middleware";
 import { prisma } from "../config/prisma";
 import { signToken } from "../utils/jwt";
 import { ensureAdminInviteCode, generateUniqueAdminInviteCode } from "./admin-invite.service";
+import { ensureAdminBillingProfile } from "./billing.service";
 import { buildProfilePhotoApiPath } from "./profile-photo.service";
 import { createTeamJoinRequestForEmployee } from "./team-join-request.service";
 
@@ -47,6 +48,7 @@ export const login = async (email: string, password: string) => {
   }
 
   const adminInviteCode = await ensureAdminInviteCode(user);
+  await ensureAdminBillingProfile({ adminId: user.id });
   return buildAuthResponse({ ...user, adminInviteCode });
 };
 
@@ -54,6 +56,7 @@ export const registerAdmin = async (params: {
   email: string;
   password: string;
   fullName: string;
+  requestIp?: string | null;
 }) => {
   const email = params.email.toLowerCase();
   const [existing, superadminCount] = await Promise.all([
@@ -81,6 +84,12 @@ export const registerAdmin = async (params: {
       role,
       adminInviteCode
     }
+  });
+
+  await ensureAdminBillingProfile({
+    adminId: user.id,
+    requestIp: params.requestIp,
+    enforceIpClaim: role === "ADMIN"
   });
 
   return buildAuthResponse(user);

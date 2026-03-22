@@ -57,6 +57,24 @@ enum TeamJoinRequestStatus {
   REJECTED
 }
 
+enum BillingPlanCode {
+  DEMO_10
+  PACK_10
+  PACK_20
+  PACK_50
+  PACK_100
+}
+
+enum BillingSubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  INCOMPLETE
+  INCOMPLETE_EXPIRED
+  UNPAID
+}
+
 model User {
   id                  String                 @id @default(cuid())
   email               String                 @unique
@@ -80,6 +98,8 @@ model User {
   teamJoinRequests    TeamJoinRequest[]      @relation("TeamJoinRequestEmployee")
   teamJoinReviews     TeamJoinRequest[]      @relation("TeamJoinRequestReviewer")
   incomingJoinRequests TeamJoinRequest[]     @relation("TeamJoinRequestManager")
+  billingSubscription BillingSubscription?
+  trialIpClaim        AdminTrialIpClaim?
 
   @@index([managerId])
   @@index([role, managerId])
@@ -182,4 +202,35 @@ model TeamJoinRequest {
   @@index([targetManagerId, status, createdAt])
   @@index([status, createdAt])
   @@index([reviewedById])
+}
+
+model BillingSubscription {
+  id                    String                    @id @default(cuid())
+  adminId               String                    @unique
+  admin                 User                      @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  planCode              BillingPlanCode
+  status                BillingSubscriptionStatus
+  seatLimit             Int
+  isTrial               Boolean                   @default(false)
+  trialEndsAt           DateTime?
+  stripeCustomerId      String?                   @unique
+  stripeSubscriptionId  String?                   @unique
+  stripePriceId         String?
+  stripeCheckoutSessionId String?
+  currentPeriodStart    DateTime?
+  currentPeriodEnd      DateTime?
+  cancelAtPeriodEnd     Boolean                   @default(false)
+  createdAt             DateTime                  @default(now())
+  updatedAt             DateTime                  @updatedAt
+
+  @@index([status, currentPeriodEnd])
+  @@index([planCode, status])
+}
+
+model AdminTrialIpClaim {
+  id        String   @id @default(cuid())
+  ipAddress String   @unique
+  adminId   String   @unique
+  admin     User     @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
 }

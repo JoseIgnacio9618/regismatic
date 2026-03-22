@@ -56,6 +56,24 @@ async function main() {
     }
   });
 
+  await prisma.billingSubscription.upsert({
+    where: { adminId: admin.id },
+    update: {
+      planCode: "PACK_20",
+      status: "ACTIVE",
+      seatLimit: 20,
+      isTrial: false,
+      trialEndsAt: null
+    },
+    create: {
+      adminId: admin.id,
+      planCode: "PACK_20",
+      status: "ACTIVE",
+      seatLimit: 20,
+      isTrial: false
+    }
+  });
+
   await prisma.user.upsert({
     where: { email: employeeEmail },
     update: {
