@@ -54,12 +54,14 @@ Uso real:
 - notificaciones internas
 - fotos de perfil con recorte
 - exportacion de reportes
+- facturacion con pagina de planes para administradores
 
 ## Pantallas principales
 - `Login`
 - `Dashboard`
 - `Reportes`
 - `Equipo`
+- `Billing`
 - `Register Admin`
 - `Register Employee`
 
@@ -100,3 +102,4 @@ Para que funcione de extremo a extremo:
 - `ionic serve` es el flujo recomendado para desarrollo Ionic
 - el frontend usa componentes Ionic (`ion-button`, `ion-modal`, `ion-select`, etc.) tambien validos para empaquetado nativo o escritorio
 - la navegacion y permisos efectivos siempre dependen tambien del backend
+- la integracion de Stripe en este proyecto usa redireccion desde backend, asi que no requiere clave publica en frontend

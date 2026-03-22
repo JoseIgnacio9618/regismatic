@@ -16,6 +16,7 @@ La base de datos es **PostgreSQL (SQL)**, no SQLite.
   - `SUPERADMIN`
 - Soporta multiadministrador y equipos separados
 - Incluye notificaciones internas y push
+- Incluye facturacion por planes con Stripe para admins
 - Incluye datos demo basicos y fixtures demo opcionales masivos
 
 ## Estructura
@@ -29,8 +30,17 @@ La base de datos es **PostgreSQL (SQL)**, no SQLite.
 ## Funcionalidades
 - Login JWT con roles `SUPERADMIN`, `ADMIN` y `EMPLOYEE`
 - Alta publica de administradores desde la propia app (`/register-admin`)
+- Facturacion por plan para administradores:
+  - `Demo 7 dias / 10 usuarios`
+  - `Pack 10: 19 EUR/mes`
+  - `Pack 20: 29 EUR/mes`
+  - `Pack 50: 59 EUR/mes`
+  - `Pack 100: 99 EUR/mes`
+  - checkout y portal de cliente con Stripe
 - Alta publica de empleados desde la propia app (`/register-employee`)
 - El primer alta publica de administrador se promociona automaticamente a `SUPERADMIN`
+- Los admins nuevos arrancan con una demo de 7 dias y 10 usuarios
+- La demo publica intenta reutilizar la IP para evitar multicuentas de prueba del mismo origen
 - Multiadministrador: cada admin gestiona solo su propia plantilla
 - Flujo de incorporacion a equipo por codigo:
   - cada `ADMIN` dispone de su propio codigo de acceso
@@ -77,6 +87,7 @@ La base de datos es **PostgreSQL (SQL)**, no SQLite.
 - `ADMIN`
   - gestiona solo su equipo
   - crea empleados directamente
+  - su limite de empleados depende del plan activo
   - aprueba o rechaza solicitudes de correccion de su equipo
   - aprueba o rechaza solicitudes de union a su equipo
   - puede modificar registros de su plantilla
@@ -86,6 +97,7 @@ La base de datos es **PostgreSQL (SQL)**, no SQLite.
   - puede reasignar empleados entre administradores
   - puede revisar cualquier incidencia y cualquier solicitud de union a equipo
   - no depende de validaciones de terceros
+  - no queda limitado por planes ni por Stripe
 
 ## Flujos principales
 - Alta publica de administrador
@@ -202,6 +214,18 @@ Variables principales de backend:
 - `JWT_SECRET`
 - `CORS_ORIGIN`
 - `PORT`
+- `BILLING_TRIAL_DAYS`
+- `BILLING_TRIAL_SEAT_LIMIT`
+- `BILLING_TRIAL_IP_ENFORCEMENT`
+- `STRIPE_SECRET_KEY`
+- `STRIPE_WEBHOOK_SECRET`
+- `STRIPE_PRICE_PACK_10_MONTHLY`
+- `STRIPE_PRICE_PACK_20_MONTHLY`
+- `STRIPE_PRICE_PACK_50_MONTHLY`
+- `STRIPE_PRICE_PACK_100_MONTHLY`
+- `STRIPE_CHECKOUT_SUCCESS_URL`
+- `STRIPE_CHECKOUT_CANCEL_URL`
+- `STRIPE_BILLING_PORTAL_RETURN_URL`
 - `FCM_SERVICE_ACCOUNT_JSON`
 - `FCM_SERVICE_ACCOUNT_PATH`
 
@@ -241,6 +265,15 @@ cp .env.production.example .env.production
 - `VITE_API_BASE_URL`
 - `RUN_SEED=false`
 - `RUN_DEMO_FIXTURES=false`
+- `STRIPE_SECRET_KEY`
+- `STRIPE_WEBHOOK_SECRET`
+- `STRIPE_PRICE_PACK_10_MONTHLY`
+- `STRIPE_PRICE_PACK_20_MONTHLY`
+- `STRIPE_PRICE_PACK_50_MONTHLY`
+- `STRIPE_PRICE_PACK_100_MONTHLY`
+- `STRIPE_CHECKOUT_SUCCESS_URL`
+- `STRIPE_CHECKOUT_CANCEL_URL`
+- `STRIPE_BILLING_PORTAL_RETURN_URL`
 
 3. Despliega:
 
@@ -249,6 +282,27 @@ docker compose --env-file .env.production -f docker-compose.prod.yml up -d --bui
 ```
 
 Guia ampliada: [docs/deploy-production.md](docs/deploy-production.md)
+
+## 3.1) Stripe Billing
+- La integracion usa `Stripe Checkout` para contratar/cambiar plan y `Customer Portal` para gestionar el cobro.
+- No hace falta clave publica en el frontend porque la redireccion a Stripe se crea desde backend.
+- Claves/IDs que debes configurar:
+  - `STRIPE_SECRET_KEY`: clave secreta de tu cuenta Stripe
+  - `STRIPE_WEBHOOK_SECRET`: secreto del endpoint webhook de Stripe
+  - `STRIPE_PRICE_PACK_10_MONTHLY`
+  - `STRIPE_PRICE_PACK_20_MONTHLY`
+  - `STRIPE_PRICE_PACK_50_MONTHLY`
+  - `STRIPE_PRICE_PACK_100_MONTHLY`
+  - `STRIPE_CHECKOUT_SUCCESS_URL`
+  - `STRIPE_CHECKOUT_CANCEL_URL`
+  - `STRIPE_BILLING_PORTAL_RETURN_URL`
+- El webhook del backend escucha en:
+  - `POST /api/billing/webhook`
+- En local puedes probarlo con Stripe CLI:
+
+```bash
+stripe listen --forward-to http://localhost:4000/api/billing/webhook
+```
 
 ## 4) Backups y restore de PostgreSQL
 Linux/macOS:

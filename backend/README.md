@@ -40,6 +40,18 @@ API por defecto: `http://localhost:4000`
 - `PORT`
 - `AUTH_RATE_LIMIT_WINDOW_MS`
 - `AUTH_RATE_LIMIT_MAX`
+- `BILLING_TRIAL_DAYS`
+- `BILLING_TRIAL_SEAT_LIMIT`
+- `BILLING_TRIAL_IP_ENFORCEMENT`
+- `STRIPE_SECRET_KEY`
+- `STRIPE_WEBHOOK_SECRET`
+- `STRIPE_PRICE_PACK_10_MONTHLY`
+- `STRIPE_PRICE_PACK_20_MONTHLY`
+- `STRIPE_PRICE_PACK_50_MONTHLY`
+- `STRIPE_PRICE_PACK_100_MONTHLY`
+- `STRIPE_CHECKOUT_SUCCESS_URL`
+- `STRIPE_CHECKOUT_CANCEL_URL`
+- `STRIPE_BILLING_PORTAL_RETURN_URL`
 - `FCM_SERVICE_ACCOUNT_JSON`
 - `FCM_SERVICE_ACCOUNT_PATH`
 
@@ -90,6 +102,10 @@ Notas:
 - `PATCH /api/notifications/:notificationId/read`
 - `POST /api/notifications/push-token`
 - `GET /api/reports/summary.xlsx`
+- `GET /api/billing/overview`
+- `POST /api/billing/checkout-session`
+- `POST /api/billing/portal-session`
+- `POST /api/billing/webhook`
 - `GET /health`
 - `GET /health/ready`
 
@@ -97,3 +113,5 @@ Notas:
 - en Docker la entrada aplica `prisma migrate deploy` automaticamente
 - si `RUN_SEED=true`, carga el seed basico
 - si `RUN_DEMO_FIXTURES=true`, carga ademas los fixtures masivos
+- los admins nuevos arrancan con demo de `7 dias / 10 usuarios`
+- el backend aplica limites de plan tanto al crear empleados como al aprobar solicitudes de union a equipo
