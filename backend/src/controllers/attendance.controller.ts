@@ -30,7 +30,9 @@ const adjustmentSchema = z.object({
 const listEventsQuerySchema = z.object({
   from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  userId: z.string().optional()
+  userId: z.string().optional(),
+  page: z.coerce.number().int().min(1).optional(),
+  pageSize: z.coerce.number().int().min(1).max(100).optional()
 });
 
 const updateEventSchema = z
@@ -51,7 +53,9 @@ const createEditRequestSchema = z.object({
 
 const listEditRequestsQuerySchema = z.object({
   status: z.nativeEnum(EditRequestStatus).optional(),
-  userId: z.string().optional()
+  userId: z.string().optional(),
+  page: z.coerce.number().int().min(1).optional(),
+  pageSize: z.coerce.number().int().min(1).max(100).optional()
 });
 
 const reviewEditRequestSchema = z.object({
@@ -146,15 +150,17 @@ export const listEventsController = async (req: Request, res: Response) => {
 
   const query = listEventsQuerySchema.parse(req.query);
   const range = parseReportRange(query.from, query.to);
-  const events = await listEvents({
+  const result = await listEvents({
     fromUtc: range.fromUtc,
     toUtc: range.toUtc,
     requesterRole: req.user.role,
     requesterUserId: req.user.id,
-    userId: query.userId
+    userId: query.userId,
+    page: query.page,
+    pageSize: query.pageSize
   });
 
-  return res.json({ events });
+  return res.json(result);
 };
 
 export const updateEventController = async (req: Request, res: Response) => {
@@ -205,14 +211,16 @@ export const listEditRequestsController = async (req: Request, res: Response) =>
   }
 
   const query = listEditRequestsQuerySchema.parse(req.query);
-  const requests = await listEditRequests({
+  const result = await listEditRequests({
     requesterRole: req.user.role,
     requesterUserId: req.user.id,
     status: query.status,
-    userId: query.userId
+    userId: query.userId,
+    page: query.page,
+    pageSize: query.pageSize
   });
 
-  return res.json({ requests });
+  return res.json(result);
 };
 
 export const reviewEditRequestController = async (req: Request, res: Response) => {

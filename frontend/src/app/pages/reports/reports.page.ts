@@ -1,6 +1,7 @@
-import { Component, OnInit } from "@angular/core";
+import { Component, OnDestroy, OnInit } from "@angular/core";
 import { ActivatedRoute } from "@angular/router";
 import { ToastController } from "@ionic/angular";
+import { Subscription } from "rxjs";
 import { AttendanceEventRecord, Role, SummaryRow, TeamUser, WorkEventEditRequestRecord } from "src/app/core/models/types";
 import { AttendanceService } from "src/app/core/services/attendance.service";
 import { AuthService } from "src/app/core/services/auth.service";
@@ -29,6 +30,14 @@ export class ReportsPage implements OnInit {
   events: AttendanceEventRecord[] = [];
   pendingRequests: WorkEventEditRequestRecord[] = [];
   loading = false;
+  summaryPage = 1;
+  eventsPage = 1;
+  pendingRequestsPage = 1;
+  readonly pageSize = 50;
+  readonly pendingPageSize = 20;
+  summaryTotal = 0;
+  eventsTotal = 0;
+  pendingRequestsTotal = 0;
 
   editingEventId: string | null = null;
   requestingEventId: string | null = null;
@@ -45,6 +54,8 @@ export class ReportsPage implements OnInit {
     requestedNote: "",
     reason: ""
   };
+  private authSubscription?: Subscription;
+  private lastUserId: string | null = null;
 
   constructor(
     public readonly authService: AuthService,
@@ -153,14 +164,43 @@ export class ReportsPage implements OnInit {
     return "medium";
   }
 
-  async ngOnInit(): Promise<void> {
-    if (this.authService.isAdmin) {
-      const apiUsers = await this.userService.listUsers();
-      this.users = this.authService.isSuperadmin ? apiUsers : apiUsers.filter((user) => user.role === "EMPLOYEE");
-    }
+  get summaryPageCount(): number {
+    return Math.max(1, Math.ceil(this.summaryTotal / this.pageSize));
+  }
 
-    await this.loadReport();
-    this.applyInitialFocus();
+  get eventsPageCount(): number {
+    return Math.max(1, Math.ceil(this.eventsTotal / this.pageSize));
+  }
+
+  get pendingRequestsPageCount(): number {
+    return Math.max(1, Math.ceil(this.pendingRequestsTotal / this.pendingPageSize));
+  }
+
+  async ngOnInit(): Promise<void> {
+    this.authSubscription = this.authService.user$.subscribe((user) => {
+      if (user?.id === this.lastUserId) {
+        return;
+      }
+
+      this.lastUserId = user?.id ?? null;
+      this.resetReportState();
+
+      if (!user) {
+        return;
+      }
+
+      void this.initializeForCurrentUser();
+    });
+
+    const currentUser = this.authService.user;
+    this.lastUserId = currentUser?.id ?? null;
+    if (currentUser) {
+      await this.initializeForCurrentUser();
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.authSubscription?.unsubscribe();
   }
 
   minutesToHuman(minutes: number): string {
@@ -206,18 +246,56 @@ export class ReportsPage implements OnInit {
 
   async loadReport(): Promise<void> {
     this.loading = true;
+    this.summaryPage = 1;
+    this.eventsPage = 1;
+    this.pendingRequestsPage = 1;
 
     try {
-      await this.loadSummaryRows();
-      await this.loadEvents();
-
-      if (this.authService.isAdmin) {
-        await this.loadPendingRequests();
-      }
+      const pendingRequestsPromise = this.authService.isAdmin ? this.loadPendingRequests() : Promise.resolve();
+      await Promise.all([this.loadSummaryRows(), this.loadEvents(), pendingRequestsPromise]);
     } catch (error) {
       await this.showToast(error instanceof Error ? error.message : this.i18nService.t("reports.toast_load_failed"), "danger");
     } finally {
       this.loading = false;
+    }
+  }
+
+  async goToSummaryPage(page: number): Promise<void> {
+    if (page < 1 || page > this.summaryPageCount || page === this.summaryPage) {
+      return;
+    }
+
+    this.summaryPage = page;
+    try {
+      await this.loadSummaryRows();
+    } catch (error) {
+      await this.showToast(error instanceof Error ? error.message : this.i18nService.t("reports.toast_load_failed"), "danger");
+    }
+  }
+
+  async goToEventsPage(page: number): Promise<void> {
+    if (page < 1 || page > this.eventsPageCount || page === this.eventsPage) {
+      return;
+    }
+
+    this.eventsPage = page;
+    try {
+      await this.loadEvents();
+    } catch (error) {
+      await this.showToast(error instanceof Error ? error.message : this.i18nService.t("reports.toast_load_failed"), "danger");
+    }
+  }
+
+  async goToPendingRequestsPage(page: number): Promise<void> {
+    if (page < 1 || page > this.pendingRequestsPageCount || page === this.pendingRequestsPage) {
+      return;
+    }
+
+    this.pendingRequestsPage = page;
+    try {
+      await this.loadPendingRequests();
+    } catch (error) {
+      await this.showToast(error instanceof Error ? error.message : this.i18nService.t("reports.toast_load_failed"), "danger");
     }
   }
 
@@ -313,6 +391,11 @@ export class ReportsPage implements OnInit {
   }
 
   async reviewRequest(request: WorkEventEditRequestRecord, action: "APPROVE" | "REJECT"): Promise<void> {
+    if (action === "REJECT" && !this.reviewCommentByRequestId[request.id]?.trim()) {
+      await this.showToast(this.i18nService.t("errors.rejection_comment_required"), "danger");
+      return;
+    }
+
     try {
       const reviewComment = this.reviewCommentByRequestId[request.id]?.trim();
       await this.attendanceService.reviewEditRequest(request.id, action, reviewComment || undefined);
@@ -329,18 +412,41 @@ export class ReportsPage implements OnInit {
   }
 
   private async loadSummaryRows(): Promise<void> {
-    const response = await this.reportService.getSummary(this.from, this.to, this.selectedUserId || undefined);
+    const response = await this.reportService.getSummary(this.from, this.to, this.selectedUserId || undefined, this.summaryPage, this.pageSize);
+    if (this.summaryPage > 1 && response.rows.length === 0 && response.total > 0) {
+      this.summaryPage -= 1;
+      await this.loadSummaryRows();
+      return;
+    }
     this.rows = response.rows;
+    this.summaryTotal = response.total;
   }
 
   private async loadEvents(): Promise<void> {
-    const response = await this.attendanceService.listEvents(this.from, this.to, this.selectedUserId || undefined);
+    const response = await this.attendanceService.listEvents(this.from, this.to, this.selectedUserId || undefined, this.eventsPage, this.pageSize);
+    if (this.eventsPage > 1 && response.events.length === 0 && response.total > 0) {
+      this.eventsPage -= 1;
+      await this.loadEvents();
+      return;
+    }
     this.events = response.events;
+    this.eventsTotal = response.total;
   }
 
   private async loadPendingRequests(): Promise<void> {
-    const response = await this.attendanceService.listEditRequests("PENDING", this.selectedUserId || undefined);
+    const response = await this.attendanceService.listEditRequests(
+      "PENDING",
+      this.selectedUserId || undefined,
+      this.pendingRequestsPage,
+      this.pendingPageSize
+    );
+    if (this.pendingRequestsPage > 1 && response.requests.length === 0 && response.total > 0) {
+      this.pendingRequestsPage -= 1;
+      await this.loadPendingRequests();
+      return;
+    }
     this.pendingRequests = response.requests;
+    this.pendingRequestsTotal = response.total;
   }
 
   private toLocalDateTimeValue(iso: string): string {
@@ -380,6 +486,46 @@ export class ReportsPage implements OnInit {
   private async showToast(message: string, color: "danger" | "success"): Promise<void> {
     const toast = await this.toastController.create({ message, duration: 2400, color });
     await toast.present();
+  }
+
+  private async initializeForCurrentUser(): Promise<void> {
+    if (this.authService.isAdmin) {
+      const apiUsers = await this.userService.listAllUsers();
+      this.users = this.authService.isSuperadmin ? apiUsers : apiUsers.filter((user) => user.role === "EMPLOYEE");
+    } else {
+      this.users = [];
+    }
+
+    await this.loadReport();
+    this.applyInitialFocus();
+  }
+
+  private resetReportState(): void {
+    this.selectedUserId = "";
+    this.users = [];
+    this.rows = [];
+    this.events = [];
+    this.pendingRequests = [];
+    this.loading = false;
+    this.summaryPage = 1;
+    this.eventsPage = 1;
+    this.pendingRequestsPage = 1;
+    this.summaryTotal = 0;
+    this.eventsTotal = 0;
+    this.pendingRequestsTotal = 0;
+    this.editingEventId = null;
+    this.requestingEventId = null;
+    this.reviewCommentByRequestId = {};
+    this.adminEditModel = {
+      eventAt: "",
+      note: "",
+      reason: ""
+    };
+    this.requestModel = {
+      requestedEventAt: "",
+      requestedNote: "",
+      reason: ""
+    };
   }
 }
 

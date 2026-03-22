@@ -2,6 +2,20 @@ import { Injectable } from "@angular/core";
 import { ApiService } from "./api.service";
 import { AttendanceEventRecord, EditRequestStatus, TodayStatus, WorkEvent, WorkEventEditRequestRecord } from "../models/types";
 
+export type AttendanceEventsResponse = {
+  events: AttendanceEventRecord[];
+  total: number;
+  page: number;
+  pageSize: number;
+};
+
+export type EditRequestsResponse = {
+  requests: WorkEventEditRequestRecord[];
+  total: number;
+  page: number;
+  pageSize: number;
+};
+
 @Injectable({ providedIn: "root" })
 export class AttendanceService {
   constructor(private readonly apiService: ApiService) {}
@@ -26,12 +40,14 @@ export class AttendanceService {
     return this.apiService.post<WorkEvent>("/attendance/clock-out", { source: "WEB", ...payload }, true);
   }
 
-  listEvents(from: string, to: string, userId?: string): Promise<{ events: AttendanceEventRecord[] }> {
+  listEvents(from: string, to: string, userId?: string, page = 1, pageSize = 50): Promise<AttendanceEventsResponse> {
     const params = new URLSearchParams({ from, to });
     if (userId) {
       params.set("userId", userId);
     }
-    return this.apiService.get<{ events: AttendanceEventRecord[] }>(`/attendance/events?${params.toString()}`, true);
+    params.set("page", String(page));
+    params.set("pageSize", String(pageSize));
+    return this.apiService.get<AttendanceEventsResponse>(`/attendance/events?${params.toString()}`, true);
   }
 
   updateEventAsAdmin(
@@ -48,7 +64,7 @@ export class AttendanceService {
     return this.apiService.post<WorkEventEditRequestRecord>(`/attendance/events/${eventId}/edit-requests`, payload, true);
   }
 
-  listEditRequests(status?: EditRequestStatus, userId?: string): Promise<{ requests: WorkEventEditRequestRecord[] }> {
+  listEditRequests(status?: EditRequestStatus, userId?: string, page = 1, pageSize = 20): Promise<EditRequestsResponse> {
     const params = new URLSearchParams();
     if (status) {
       params.set("status", status);
@@ -56,8 +72,10 @@ export class AttendanceService {
     if (userId) {
       params.set("userId", userId);
     }
+    params.set("page", String(page));
+    params.set("pageSize", String(pageSize));
     const query = params.toString();
-    return this.apiService.get<{ requests: WorkEventEditRequestRecord[] }>(`/attendance/edit-requests${query ? `?${query}` : ""}`, true);
+    return this.apiService.get<EditRequestsResponse>(`/attendance/edit-requests${query ? `?${query}` : ""}`, true);
   }
 
   reviewEditRequest(requestId: string, action: "APPROVE" | "REJECT", reviewComment?: string): Promise<WorkEventEditRequestRecord> {

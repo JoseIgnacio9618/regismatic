@@ -41,6 +41,7 @@ export class ApiService {
     "Ya tienes una solicitud pendiente para este registro.": "errors.request_already_pending",
     "Solicitud no encontrada.": "errors.request_not_found",
     "La solicitud ya fue revisada.": "errors.request_already_reviewed",
+    "El comentario de rechazo es obligatorio.": "errors.rejection_comment_required",
     "You cannot delete your own account.": "errors.cannot_delete_own_user",
     "Notification not found.": "errors.notification_not_found",
     "Invalid push token.": "errors.invalid_push_token",
@@ -51,7 +52,8 @@ export class ApiService {
     "This employee is already assigned to an administrator.": "errors.employee_already_assigned",
     "You already have a pending team request.": "errors.pending_team_request_exists",
     "Team join request not found.": "errors.team_join_request_not_found",
-    "The team join request was already reviewed.": "errors.team_join_request_already_reviewed"
+    "The team join request was already reviewed.": "errors.team_join_request_already_reviewed",
+    "Employees must belong to an administrator before recording attendance.": "errors.employee_team_assignment_required"
   };
   private readonly validationDetailMap: Record<string, string> = {
     "Password must include lowercase letters.": "errors.password_requires_lowercase",

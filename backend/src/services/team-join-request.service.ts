@@ -60,6 +60,13 @@ const mapJoinRequest = (request: TeamJoinRequestRecord) => ({
   reviewedBy: request.reviewedBy ?? null
 });
 
+export type PaginatedTeamJoinRequestsResult = {
+  requests: ReturnType<typeof mapJoinRequest>[];
+  total: number;
+  page: number;
+  pageSize: number;
+};
+
 const findTargetManagerByInviteCode = async (inviteCode: string) => {
   const manager = await prisma.user.findFirst({
     where: {
@@ -161,8 +168,16 @@ export const createTeamJoinRequestForEmployee = async (params: {
   return mapJoinRequest(request);
 };
 
-export const listTeamJoinRequests = async (requesterId: string) => {
-  const requester = await getScopedUserById(requesterId);
+export const listTeamJoinRequests = async (params: {
+  requesterId: string;
+  page?: number;
+  pageSize?: number;
+  status?: TeamJoinRequestStatus;
+}): Promise<PaginatedTeamJoinRequestsResult> => {
+  const requester = await getScopedUserById(params.requesterId);
+  const pageSize = Math.min(100, Math.max(1, params.pageSize ?? 10));
+  const page = Math.max(1, params.page ?? 1);
+  const skip = (page - 1) * pageSize;
 
   const where: Prisma.TeamJoinRequestWhereInput =
     requester.role === "SUPERADMIN"
@@ -171,13 +186,27 @@ export const listTeamJoinRequests = async (requesterId: string) => {
         ? { targetManagerId: requester.id }
         : { employeeId: requester.id };
 
-  const requests = await prisma.teamJoinRequest.findMany({
-    where,
-    orderBy: [{ createdAt: "desc" }],
-    select: teamJoinRequestSelect
-  });
+  if (params.status) {
+    where.status = params.status;
+  }
 
-  return requests.map((request) => mapJoinRequest(request));
+  const [total, requests] = await prisma.$transaction([
+    prisma.teamJoinRequest.count({ where }),
+    prisma.teamJoinRequest.findMany({
+      where,
+      orderBy: [{ createdAt: "desc" }],
+      select: teamJoinRequestSelect,
+      skip,
+      take: pageSize
+    })
+  ]);
+
+  return {
+    requests: requests.map((request) => mapJoinRequest(request)),
+    total,
+    page,
+    pageSize
+  };
 };
 
 export const reviewTeamJoinRequest = async (params: {

@@ -56,6 +56,13 @@ const mapTeamUser = (user: TeamUserRecord) => ({
   managedEmployeesCount: user._count.managedUsers
 });
 
+export type PaginatedUsersResult = {
+  users: ReturnType<typeof mapTeamUser>[];
+  total: number;
+  page: number;
+  pageSize: number;
+};
+
 const validateEmployeeManager = async (managerId: string | undefined): Promise<string> => {
   if (!managerId) {
     throw new AppError("An employee must be assigned to an administrator.", 400);
@@ -123,26 +130,61 @@ export const createUser = async (params: {
   return mapTeamUser(user);
 };
 
-export const listUsers = async (requesterId: string) => {
-  const requester = await getScopedUserById(requesterId);
+export const listUsers = async (params: {
+  requesterId: string;
+  page?: number;
+  pageSize?: number;
+  search?: string;
+  role?: Role;
+}): Promise<PaginatedUsersResult> => {
+  const requester = await getScopedUserById(params.requesterId);
   if (!isElevatedRole(requester.role)) {
     throw new AppError("Insufficient permissions.", 403);
   }
 
-  const users = await prisma.user.findMany({
-    where:
-      requester.role === "SUPERADMIN"
-        ? {}
-        : {
-            role: "EMPLOYEE",
-            managerId: requester.id
-          },
-    select: teamUserSelect
-  });
+  const trimmedSearch = params.search?.trim();
+  const requestedRole = params.role;
+  const pageSize = Math.min(100, Math.max(1, params.pageSize ?? 25));
+  const page = Math.max(1, params.page ?? 1);
+  const skip = (page - 1) * pageSize;
 
-  return users
+  const where: Prisma.UserWhereInput =
+    requester.role === "SUPERADMIN"
+      ? {}
+      : {
+          role: "EMPLOYEE",
+          managerId: requester.id
+        };
+
+  if (trimmedSearch) {
+    where.OR = [{ fullName: { contains: trimmedSearch, mode: "insensitive" } }, { email: { contains: trimmedSearch, mode: "insensitive" } }];
+  }
+
+  if (requestedRole && requester.role === "SUPERADMIN") {
+    where.role = requestedRole;
+  }
+
+  const [total, users] = await prisma.$transaction([
+    prisma.user.count({ where }),
+    prisma.user.findMany({
+      where,
+      select: teamUserSelect,
+      orderBy: [{ fullName: "asc" }],
+      skip,
+      take: pageSize
+    })
+  ]);
+
+  const mappedUsers = users
     .map((user) => mapTeamUser(user))
     .sort((left, right) => roleSortOrder[left.role] - roleSortOrder[right.role] || left.fullName.localeCompare(right.fullName));
+
+  return {
+    users: mappedUsers,
+    total,
+    page,
+    pageSize
+  };
 };
 
 export const deleteUser = async (params: { userId: string; requesterId: string }) => {

@@ -1,13 +1,48 @@
 import { Injectable } from "@angular/core";
 import { ApiService } from "./api.service";
-import { Role, TeamJoinRequest, TeamUser } from "../models/types";
+import { PaginatedResult, Role, TeamJoinRequest, TeamJoinRequestStatus, TeamUser } from "../models/types";
+
+export type PaginatedUsersResponse = Omit<PaginatedResult<TeamUser>, "items"> & { users: TeamUser[] };
+export type PaginatedTeamJoinRequestsResponse = Omit<PaginatedResult<TeamJoinRequest>, "items"> & { requests: TeamJoinRequest[] };
 
 @Injectable({ providedIn: "root" })
 export class UserService {
   constructor(private readonly apiService: ApiService) {}
 
-  listUsers(): Promise<TeamUser[]> {
-    return this.apiService.get<TeamUser[]>("/users", true);
+  listUsers(params?: { page?: number; pageSize?: number; search?: string; role?: Role }): Promise<PaginatedUsersResponse> {
+    const query = new URLSearchParams();
+    if (params?.page) {
+      query.set("page", String(params.page));
+    }
+    if (params?.pageSize) {
+      query.set("pageSize", String(params.pageSize));
+    }
+    if (params?.search?.trim()) {
+      query.set("search", params.search.trim());
+    }
+    if (params?.role) {
+      query.set("role", params.role);
+    }
+
+    const queryString = query.toString();
+    return this.apiService.get<PaginatedUsersResponse>(`/users${queryString ? `?${queryString}` : ""}`, true);
+  }
+
+  async listAllUsers(params?: { search?: string; role?: Role }): Promise<TeamUser[]> {
+    const pageSize = 100;
+    let page = 1;
+    let users: TeamUser[] = [];
+
+    while (true) {
+      const response = await this.listUsers({ ...params, page, pageSize });
+      users = users.concat(response.users);
+
+      if (users.length >= response.total || response.users.length === 0) {
+        return users;
+      }
+
+      page += 1;
+    }
   }
 
   createUser(payload: { email: string; fullName: string; password: string; role: Role; managerId?: string }): Promise<TeamUser> {
@@ -42,8 +77,37 @@ export class UserService {
     return this.apiService.delete<TeamUser>(`/users/${userId}`, true);
   }
 
-  listTeamJoinRequests(): Promise<TeamJoinRequest[]> {
-    return this.apiService.get<TeamJoinRequest[]>("/users/team-join-requests", true);
+  listTeamJoinRequests(params?: { page?: number; pageSize?: number; status?: TeamJoinRequestStatus }): Promise<PaginatedTeamJoinRequestsResponse> {
+    const query = new URLSearchParams();
+    if (params?.page) {
+      query.set("page", String(params.page));
+    }
+    if (params?.pageSize) {
+      query.set("pageSize", String(params.pageSize));
+    }
+    if (params?.status) {
+      query.set("status", params.status);
+    }
+
+    const queryString = query.toString();
+    return this.apiService.get<PaginatedTeamJoinRequestsResponse>(`/users/team-join-requests${queryString ? `?${queryString}` : ""}`, true);
+  }
+
+  async listAllTeamJoinRequests(params?: { status?: TeamJoinRequestStatus }): Promise<TeamJoinRequest[]> {
+    const pageSize = 100;
+    let page = 1;
+    let requests: TeamJoinRequest[] = [];
+
+    while (true) {
+      const response = await this.listTeamJoinRequests({ ...params, page, pageSize });
+      requests = requests.concat(response.requests);
+
+      if (requests.length >= response.total || response.requests.length === 0) {
+        return requests;
+      }
+
+      page += 1;
+    }
   }
 
   createTeamJoinRequest(payload: { inviteCode: string; message?: string }): Promise<TeamJoinRequest> {

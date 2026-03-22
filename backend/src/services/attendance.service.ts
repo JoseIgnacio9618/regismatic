@@ -34,6 +34,8 @@ type ListEventsParams = {
   requesterRole: Role;
   requesterUserId: string;
   userId?: string;
+  page?: number;
+  pageSize?: number;
 };
 
 type UpdateEventByAdminParams = {
@@ -57,6 +59,8 @@ type ListEditRequestsParams = {
   requesterUserId: string;
   status?: EditRequestStatus;
   userId?: string;
+  page?: number;
+  pageSize?: number;
 };
 
 type ReviewEditRequestParams = {
@@ -131,9 +135,23 @@ export type AttendanceEventRecord = {
     reviewComment: string | null;
     reviewedAt: Date | null;
     createdAt: Date;
-    requestedBy: UserSummary;
+    requestedBy: UserSummary | null;
     reviewedBy: UserSummary | null;
   }>;
+};
+
+export type AttendanceEventsResult = {
+  events: AttendanceEventRecord[];
+  total: number;
+  page: number;
+  pageSize: number;
+};
+
+export type EditRequestsResult = {
+  requests: WorkEventEditRequestRecord[];
+  total: number;
+  page: number;
+  pageSize: number;
 };
 
 const eventInclude = {
@@ -158,7 +176,33 @@ const eventInclude = {
   }
 } satisfies Prisma.WorkEventInclude;
 
+const listEventInclude = {
+  user: {
+    select: userSummarySelect
+  },
+  modifiedBy: {
+    select: userSummarySelect
+  },
+  editRequests: {
+    select: {
+      id: true,
+      status: true,
+      reason: true,
+      requestedEventAt: true,
+      requestedNote: true,
+      reviewComment: true,
+      reviewedAt: true,
+      createdAt: true
+    },
+    orderBy: {
+      createdAt: "desc"
+    },
+    take: 2
+  }
+} satisfies Prisma.WorkEventInclude;
+
 type WorkEventWithRelations = Prisma.WorkEventGetPayload<{ include: typeof eventInclude }>;
+type WorkEventListWithRelations = Prisma.WorkEventGetPayload<{ include: typeof listEventInclude }>;
 type EditRequestWithRelations = Prisma.WorkEventEditRequestGetPayload<{
   include: {
     requestedBy: { select: typeof userSummarySelect };
@@ -294,7 +338,7 @@ const calculateDailyTotals = (events: WorkEvent[]) => {
   };
 };
 
-const mapAttendanceEvent = (event: WorkEventWithRelations): AttendanceEventRecord => {
+const mapAttendanceEvent = (event: WorkEventWithRelations | WorkEventListWithRelations): AttendanceEventRecord => {
   return {
     id: event.id,
     userId: event.userId,
@@ -318,8 +362,8 @@ const mapAttendanceEvent = (event: WorkEventWithRelations): AttendanceEventRecor
       reviewComment: request.reviewComment ?? null,
       reviewedAt: request.reviewedAt ?? null,
       createdAt: request.createdAt,
-      requestedBy: mapUserSummary(request.requestedBy),
-      reviewedBy: request.reviewedBy ? mapUserSummary(request.reviewedBy) : null
+      requestedBy: "requestedBy" in request ? mapUserSummary(request.requestedBy) : null,
+      reviewedBy: "reviewedBy" in request && request.reviewedBy ? mapUserSummary(request.reviewedBy) : null
     }))
   };
 };
@@ -491,7 +535,27 @@ const getEventForAdmin = async (eventId: string): Promise<WorkEvent> => {
   return event;
 };
 
+const assertAttendanceEnabledForUser = async (userId: string): Promise<void> => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      role: true,
+      managerId: true,
+      isActive: true
+    }
+  });
+
+  if (!user || !user.isActive) {
+    throw new AppError("User not found.", 404);
+  }
+
+  if (user.role === "EMPLOYEE" && !user.managerId) {
+    throw new AppError("Employees must belong to an administrator before recording attendance.", 403);
+  }
+};
+
 export const getTodayStatus = async (userId: string) => {
+  await assertAttendanceEnabledForUser(userId);
   const events = await getTodayEvents(userId);
   const state = getStateFromEvents(events);
   const totals = calculateDailyTotals(events);
@@ -505,6 +569,7 @@ export const getTodayStatus = async (userId: string) => {
 };
 
 export const registerEvent = async (input: EventInput) => {
+  await assertAttendanceEnabledForUser(input.userId);
   const todayEvents = await getTodayEvents(input.userId);
   const state = getStateFromEvents(todayEvents);
 
@@ -553,22 +618,37 @@ export const addManualAdjustment = async (params: {
   });
 };
 
-export const listEvents = async (params: ListEventsParams): Promise<AttendanceEventRecord[]> => {
+export const listEvents = async (params: ListEventsParams): Promise<AttendanceEventsResult> => {
   const scopedUserWhere = await buildScopedEventUserWhere(params.requesterUserId, params.userId);
+  const pageSize = Math.min(100, Math.max(1, params.pageSize ?? 50));
+  const page = Math.max(1, params.page ?? 1);
+  const skip = (page - 1) * pageSize;
 
-  const events = await prisma.workEvent.findMany({
-    where: {
-      eventAt: {
-        gte: params.fromUtc,
-        lte: params.toUtc
-      },
-      ...scopedUserWhere
+  const where: Prisma.WorkEventWhereInput = {
+    eventAt: {
+      gte: params.fromUtc,
+      lte: params.toUtc
     },
-    include: eventInclude,
-    orderBy: [{ eventAt: "desc" }, { createdAt: "desc" }]
-  });
+    ...scopedUserWhere
+  };
 
-  return events.map((event) => mapAttendanceEvent(event));
+  const [total, events] = await prisma.$transaction([
+    prisma.workEvent.count({ where }),
+    prisma.workEvent.findMany({
+      where,
+      include: listEventInclude,
+      orderBy: [{ eventAt: "desc" }, { createdAt: "desc" }],
+      skip,
+      take: pageSize
+    })
+  ]);
+
+  return {
+    events: events.map((event) => mapAttendanceEvent(event)),
+    total,
+    page,
+    pageSize
+  };
 };
 
 export const updateEventAsAdmin = async (params: UpdateEventByAdminParams): Promise<AttendanceEventRecord> => {
@@ -695,10 +775,13 @@ export const createEditRequest = async (params: CreateEditRequestParams): Promis
   return mapEditRequest(created);
 };
 
-export const listEditRequests = async (params: ListEditRequestsParams): Promise<WorkEventEditRequestRecord[]> => {
+export const listEditRequests = async (params: ListEditRequestsParams): Promise<EditRequestsResult> => {
   const where: Prisma.WorkEventEditRequestWhereInput = {
     ...(params.status ? { status: params.status } : {})
   };
+  const pageSize = Math.min(100, Math.max(1, params.pageSize ?? 20));
+  const page = Math.max(1, params.page ?? 1);
+  const skip = (page - 1) * pageSize;
 
   if (params.requesterRole === "EMPLOYEE") {
     where.requestedById = params.requesterUserId;
@@ -706,27 +789,37 @@ export const listEditRequests = async (params: ListEditRequestsParams): Promise<
     Object.assign(where, await buildScopedEditRequestWhere(params.requesterUserId, params.userId));
   }
 
-  const requests = await prisma.workEventEditRequest.findMany({
-    where,
-    include: {
-      requestedBy: {
-        select: userSummarySelect
-      },
-      reviewedBy: {
-        select: userSummarySelect
-      },
-      workEvent: {
-        include: {
-          user: {
-            select: userSummarySelect
+  const [total, requests] = await prisma.$transaction([
+    prisma.workEventEditRequest.count({ where }),
+    prisma.workEventEditRequest.findMany({
+      where,
+      include: {
+        requestedBy: {
+          select: userSummarySelect
+        },
+        reviewedBy: {
+          select: userSummarySelect
+        },
+        workEvent: {
+          include: {
+            user: {
+              select: userSummarySelect
+            }
           }
         }
-      }
-    },
-    orderBy: [{ status: "asc" }, { createdAt: "desc" }]
-  });
+      },
+      orderBy: [{ status: "asc" }, { createdAt: "desc" }],
+      skip,
+      take: pageSize
+    })
+  ]);
 
-  return requests.map((request) => mapEditRequest(request));
+  return {
+    requests: requests.map((request) => mapEditRequest(request)),
+    total,
+    page,
+    pageSize
+  };
 };
 
 export const reviewEditRequest = async (params: ReviewEditRequestParams): Promise<WorkEventEditRequestRecord> => {
@@ -768,6 +861,10 @@ export const reviewEditRequest = async (params: ReviewEditRequestParams): Promis
   const reviewComment = normalizeOptionalText(params.reviewComment) ?? null;
 
   if (!params.approve) {
+    if (!reviewComment) {
+      throw new AppError("El comentario de rechazo es obligatorio.", 400);
+    }
+
     const rejected = await prisma.workEventEditRequest.update({
       where: { id: request.id },
       data: {

@@ -11,6 +11,8 @@ type ReportParams = {
   requesterRole: Role;
   requesterUserId: string;
   userId?: string;
+  page?: number;
+  pageSize?: number;
 };
 
 export type SummaryRow = {
@@ -25,6 +27,13 @@ export type SummaryRow = {
   overtimeMinutes: number;
   adjustmentsMinutes: number;
   status: "OPEN" | "CLOSED";
+};
+
+export type SummaryReportResult = {
+  rows: SummaryRow[];
+  total: number;
+  page: number;
+  pageSize: number;
 };
 
 const sortEvents = (events: WorkEvent[]): WorkEvent[] => {
@@ -104,7 +113,7 @@ const buildDailySummary = (events: WorkEvent[]) => {
   };
 };
 
-export const getSummaryReport = async (params: ReportParams): Promise<SummaryRow[]> => {
+export const getSummaryReport = async (params: ReportParams): Promise<SummaryReportResult> => {
   let userWhere: Prisma.WorkEventWhereInput = {};
 
   if (params.userId) {
@@ -185,12 +194,24 @@ export const getSummaryReport = async (params: ReportParams): Promise<SummaryRow
     });
   }
 
-  return rows.sort((a, b) => {
+  const sortedRows = rows.sort((a, b) => {
     if (a.date === b.date) {
       return a.employee.localeCompare(b.employee);
     }
     return a.date.localeCompare(b.date);
   });
+
+  const pageSize =
+    params.pageSize === undefined ? sortedRows.length || 1 : Math.min(100, Math.max(1, params.pageSize));
+  const page = Math.max(1, params.page ?? 1);
+  const start = (page - 1) * pageSize;
+
+  return {
+    rows: sortedRows.slice(start, start + pageSize),
+    total: sortedRows.length,
+    page,
+    pageSize
+  };
 };
 
 export const summaryToCsv = (rows: SummaryRow[]): string => {

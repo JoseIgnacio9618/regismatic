@@ -1,5 +1,6 @@
-import { Component, OnInit } from "@angular/core";
+import { Component, OnDestroy, OnInit } from "@angular/core";
 import { ToastController } from "@ionic/angular";
+import { Subscription } from "rxjs";
 import { AttendanceService } from "src/app/core/services/attendance.service";
 import { TeamJoinRequest, TodayStatus } from "src/app/core/models/types";
 import { AuthService } from "src/app/core/services/auth.service";
@@ -21,6 +22,8 @@ export class DashboardPage implements OnInit {
   inviteCode = "";
   requestMessage = "";
   joinBusy = false;
+  private authSubscription?: Subscription;
+  private lastUserId: string | null = null;
 
   constructor(
     private readonly attendanceService: AttendanceService,
@@ -31,12 +34,40 @@ export class DashboardPage implements OnInit {
   ) {}
 
   async ngOnInit(): Promise<void> {
-    await this.refreshStatus();
-    await this.refreshJoinRequests();
+    this.authSubscription = this.authService.user$.subscribe((user) => {
+      if (user?.id === this.lastUserId) {
+        return;
+      }
+
+      this.lastUserId = user?.id ?? null;
+      this.resetDashboardState();
+
+      if (!user) {
+        return;
+      }
+
+      void this.refreshStatus();
+      void this.refreshJoinRequests();
+    });
+
+    const currentUser = this.authService.user;
+    this.lastUserId = currentUser?.id ?? null;
+    if (currentUser) {
+      await this.refreshStatus();
+      await this.refreshJoinRequests();
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.authSubscription?.unsubscribe();
   }
 
   get showJoinTeamCard(): boolean {
     return this.authService.user?.role === "EMPLOYEE" && !this.authService.user?.managerId;
+  }
+
+  get isAttendanceLocked(): boolean {
+    return this.showJoinTeamCard;
   }
 
   get pendingJoinRequests(): TeamJoinRequest[] {
@@ -85,6 +116,11 @@ export class DashboardPage implements OnInit {
   }
 
   async handleAction(action: "clockIn" | "breakStart" | "breakEnd" | "clockOut"): Promise<void> {
+    if (this.isAttendanceLocked) {
+      await this.showToast(this.i18nService.t("errors.employee_team_assignment_required"), "danger");
+      return;
+    }
+
     this.busy = true;
 
     try {
@@ -109,6 +145,13 @@ export class DashboardPage implements OnInit {
   }
 
   async refreshStatus(showErrorToast = false): Promise<void> {
+    if (this.isAttendanceLocked) {
+      this.status = null;
+      this.loadError = null;
+      this.statusLoading = false;
+      return;
+    }
+
     this.statusLoading = true;
     this.loadError = null;
     try {
@@ -131,7 +174,7 @@ export class DashboardPage implements OnInit {
     }
 
     try {
-      this.joinRequests = await this.userService.listTeamJoinRequests();
+      this.joinRequests = await this.userService.listAllTeamJoinRequests();
     } catch {
       this.joinRequests = [];
     }
@@ -183,5 +226,15 @@ export class DashboardPage implements OnInit {
   private async showToast(message: string, color: "danger" | "success"): Promise<void> {
     const toast = await this.toastController.create({ message, duration: 2000, color });
     await toast.present();
+  }
+
+  private resetDashboardState(): void {
+    this.status = null;
+    this.loadError = null;
+    this.statusLoading = false;
+    this.joinRequests = [];
+    this.inviteCode = "";
+    this.requestMessage = "";
+    this.joinBusy = false;
   }
 }

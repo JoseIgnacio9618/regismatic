@@ -383,6 +383,20 @@
   font-size: 0.88rem;
 }
 
+.report-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.report-pagination span {
+  color: var(--app-ink-muted);
+  font-size: 0.9rem;
+}
+
 .team-section-head {
   display: flex;
   align-items: start;
@@ -517,6 +531,40 @@
   align-items: center;
   min-width: 0;
   min-height: 34px;
+}
+
+.manager-picker-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid color-mix(in srgb, var(--app-border), transparent 8%);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--app-surface), transparent 3%);
+  color: var(--ion-text-color);
+  cursor: pointer;
+  transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+
+.manager-picker-trigger:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--ion-color-primary), transparent 40%);
+  background: color-mix(in srgb, var(--ion-color-primary), transparent 94%);
+}
+
+.manager-picker-trigger span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.manager-picker-trigger ion-icon {
+  font-size: 1rem;
+  flex-shrink: 0;
+  color: var(--app-ink-muted);
 }
 
 .manager-name,
@@ -689,6 +737,90 @@
   font-size: 0.92rem;
 }
 
+.manager-picker-content {
+  --background:
+    radial-gradient(circle at top, color-mix(in srgb, var(--ion-color-primary), transparent 88%) 0%, transparent 40%),
+    linear-gradient(180deg, color-mix(in srgb, var(--app-surface-strong), transparent 2%) 0%, var(--app-surface) 100%);
+}
+
+.manager-picker-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 18px;
+}
+
+.manager-picker-head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.manager-picker-head strong {
+  font-size: 1rem;
+}
+
+.manager-picker-head span {
+  color: var(--app-ink-muted);
+  font-size: 0.9rem;
+}
+
+.manager-picker-search {
+  margin: 0;
+}
+
+.manager-picker-list {
+  display: grid;
+  gap: 10px;
+}
+
+.manager-picker-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid color-mix(in srgb, var(--app-border), transparent 8%);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--app-surface-strong), transparent 5%);
+  color: var(--ion-text-color);
+  text-align: left;
+  cursor: pointer;
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+
+.manager-picker-option:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--ion-color-primary), transparent 40%);
+}
+
+.manager-picker-option-active {
+  border-color: color-mix(in srgb, var(--ion-color-primary), transparent 28%);
+  background: color-mix(in srgb, var(--ion-color-primary), transparent 92%);
+}
+
+.manager-picker-option-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.manager-picker-option-copy strong {
+  font-size: 0.94rem;
+}
+
+.manager-picker-option-copy span {
+  color: var(--app-ink-muted);
+  font-size: 0.86rem;
+  overflow-wrap: anywhere;
+}
+
+.manager-picker-empty {
+  margin: 0;
+}
+
 @media (max-width: 900px) {
   .scope-hero {
     grid-template-columns: 1fr;
@@ -818,6 +950,11 @@
     flex-direction: column;
     align-items: stretch;
     min-width: 0;
+  }
+
+  .manager-picker-option {
+    align-items: start;
+    flex-direction: column;
   }
 
   .team-actions-col {

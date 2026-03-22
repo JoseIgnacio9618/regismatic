@@ -25,16 +25,22 @@
               <ion-button size="small" fill="outline" (click)="refreshStatus(true)">{{ "common.retry" | t }}</ion-button>
             </section>
 
-            <div class="mt-16" *ngIf="effectiveState === 'OFF'">
+            <section class="empty-state mt-16 status-error" *ngIf="isAttendanceLocked">
+              <ion-icon name="lock-closed-outline" aria-hidden="true"></ion-icon>
+              <h3>{{ "dashboard.attendance_locked_title" | t }}</h3>
+              <p>{{ "dashboard.attendance_locked_desc" | t }}</p>
+            </section>
+
+            <div class="mt-16" *ngIf="!isAttendanceLocked && effectiveState === 'OFF'">
               <ion-button expand="block" [disabled]="busy" (click)="handleAction('clockIn')">{{ "dashboard.clock_in" | t }}</ion-button>
             </div>
 
-            <div class="mt-16" *ngIf="effectiveState === 'WORKING'">
+            <div class="mt-16" *ngIf="!isAttendanceLocked && effectiveState === 'WORKING'">
               <ion-button expand="block" color="warning" [disabled]="busy" (click)="handleAction('breakStart')">{{ "dashboard.break_start" | t }}</ion-button>
               <ion-button expand="block" color="tertiary" [disabled]="busy" (click)="handleAction('clockOut')">{{ "dashboard.clock_out" | t }}</ion-button>
             </div>
 
-            <div class="mt-16" *ngIf="effectiveState === 'ON_BREAK'">
+            <div class="mt-16" *ngIf="!isAttendanceLocked && effectiveState === 'ON_BREAK'">
               <ion-button expand="block" color="success" [disabled]="busy" (click)="handleAction('breakEnd')">{{ "dashboard.break_end" | t }}</ion-button>
             </div>
           </ion-card-content>

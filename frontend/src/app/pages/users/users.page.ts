@@ -34,6 +34,8 @@ export class UsersPage implements OnInit, OnDestroy {
   @ViewChild("createPhotoInput") createPhotoInput?: ElementRef<HTMLInputElement>;
   @ViewChild("userPhotoInput") userPhotoInput?: ElementRef<HTMLInputElement>;
   private routeSubscription?: Subscription;
+  private authSubscription?: Subscription;
+  private lastUserId: string | null = null;
   private readonly roleOptions: RoleOption[] = [
     {
       role: "EMPLOYEE",
@@ -53,10 +55,18 @@ export class UsersPage implements OnInit, OnDestroy {
   ];
 
   users: TeamUser[] = [];
+  managerUsers: TeamUser[] = [];
   joinRequests: TeamJoinRequest[] = [];
   activeWorkspace: UserWorkspace = "directory";
   teamSearchTerm = "";
   teamRoleFilter: TeamRoleFilter = "ALL";
+  usersPage = 1;
+  readonly usersPageSize = 25;
+  usersTotal = 0;
+  joinRequestsPage = 1;
+  readonly joinRequestsPageSize = 10;
+  joinRequestsTotal = 0;
+  private teamSearchDebounceHandle: ReturnType<typeof setTimeout> | null = null;
 
   fullName = "";
   email = "";
@@ -77,6 +87,9 @@ export class UsersPage implements OnInit, OnDestroy {
   photoViewerOpen = false;
   photoViewerUser: TeamUser | null = null;
   photoViewerResolvedUrl: string | null = null;
+  managerPickerOpen = false;
+  managerPickerUser: TeamUser | null = null;
+  managerSearchTerm = "";
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -96,11 +109,34 @@ export class UsersPage implements OnInit, OnDestroy {
       }
     });
 
-    await this.loadUsers();
+    this.authSubscription = this.authService.user$.subscribe((user) => {
+      if (user?.id === this.lastUserId) {
+        return;
+      }
+
+      this.lastUserId = user?.id ?? null;
+      this.resetUsersState();
+
+      if (!user) {
+        return;
+      }
+
+      void this.loadUsers();
+    });
+
+    const currentUser = this.authService.user;
+    this.lastUserId = currentUser?.id ?? null;
+    if (currentUser) {
+      await this.loadUsers();
+    }
   }
 
   ngOnDestroy(): void {
     this.routeSubscription?.unsubscribe();
+    this.authSubscription?.unsubscribe();
+    if (this.teamSearchDebounceHandle) {
+      clearTimeout(this.teamSearchDebounceHandle);
+    }
     this.clearCreatePhotoPreview();
     this.clearPhotoCropSource();
     this.clearPhotoViewerResolvedUrl();
@@ -111,7 +147,7 @@ export class UsersPage implements OnInit, OnDestroy {
   }
 
   get availableManagerUsers(): TeamUser[] {
-    return this.users.filter((user) => user.role === "ADMIN");
+    return this.managerUsers;
   }
 
   get effectiveRole(): Role {
@@ -197,7 +233,7 @@ export class UsersPage implements OnInit, OnDestroy {
   }
 
   get totalFilteredUsers(): number {
-    return this.filteredUsersByCurrentRole.length;
+    return this.usersTotal;
   }
 
   get scopeTitle(): string {
@@ -214,6 +250,26 @@ export class UsersPage implements OnInit, OnDestroy {
 
   get pendingJoinRequests(): TeamJoinRequest[] {
     return this.joinRequests.filter((request) => request.status === "PENDING");
+  }
+
+  get usersPageCount(): number {
+    return Math.max(1, Math.ceil(this.usersTotal / this.usersPageSize));
+  }
+
+  get joinRequestsPageCount(): number {
+    return Math.max(1, Math.ceil(this.joinRequestsTotal / this.joinRequestsPageSize));
+  }
+
+  get filteredManagerUsers(): TeamUser[] {
+    const term = this.managerSearchTerm.trim().toLowerCase();
+    if (!term) {
+      return this.availableManagerUsers;
+    }
+
+    return this.availableManagerUsers.filter((manager) => {
+      const haystack = [manager.fullName, manager.email].join(" ").toLowerCase();
+      return haystack.includes(term);
+    });
   }
 
   get selectedRoleOption(): RoleOption {
@@ -240,6 +296,22 @@ export class UsersPage implements OnInit, OnDestroy {
 
   selectWorkspace(workspace: UserWorkspace): void {
     this.activeWorkspace = workspace;
+  }
+
+  onTeamSearchChange(): void {
+    if (this.teamSearchDebounceHandle) {
+      clearTimeout(this.teamSearchDebounceHandle);
+    }
+
+    this.teamSearchDebounceHandle = setTimeout(() => {
+      this.usersPage = 1;
+      void this.loadUsers();
+    }, 250);
+  }
+
+  async onTeamRoleFilterChange(): Promise<void> {
+    this.usersPage = 1;
+    await this.loadUsers();
   }
 
   async createUser(): Promise<void> {
@@ -373,6 +445,10 @@ export class UsersPage implements OnInit, OnDestroy {
     return this.managerDraftByUserId[user.id] ?? user.manager?.id ?? "";
   }
 
+  managerLabelFor(user: TeamUser): string {
+    return user.manager?.fullName ?? this.i18nService.t("users.manager_unassigned");
+  }
+
   setManagerDraft(userId: string, managerId: string | null | undefined): void {
     this.managerDraftByUserId[userId] = managerId ?? "";
   }
@@ -388,6 +464,39 @@ export class UsersPage implements OnInit, OnDestroy {
     }
 
     await this.saveManagerAssignment(user);
+  }
+
+  openManagerPicker(user: TeamUser): void {
+    if (!this.isSuperadmin || user.role !== "EMPLOYEE") {
+      return;
+    }
+
+    this.managerPickerUser = user;
+    this.managerSearchTerm = "";
+    this.managerPickerOpen = true;
+  }
+
+  closeManagerPicker(): void {
+    this.managerPickerOpen = false;
+    this.managerPickerUser = null;
+    this.managerSearchTerm = "";
+  }
+
+  isSelectedManager(user: TeamUser, manager: TeamUser): boolean {
+    return this.managerValueFor(user) === manager.id;
+  }
+
+  async selectManagerForCurrentUser(managerId: string): Promise<void> {
+    if (!this.managerPickerUser) {
+      return;
+    }
+
+    const user = this.managerPickerUser;
+    await this.updateManagerAssignment(user, managerId);
+
+    if (this.savingManagerUserId !== user.id) {
+      this.closeManagerPicker();
+    }
   }
 
   async saveManagerAssignment(user: TeamUser): Promise<void> {
@@ -494,15 +603,26 @@ export class UsersPage implements OnInit, OnDestroy {
     this.clearPhotoViewerResolvedUrl();
   }
 
-  private matchesTeamSearch(user: TeamUser): boolean {
-    const term = this.teamSearchTerm.trim().toLowerCase();
-    if (!term) {
-      return true;
+  private matchesTeamSearch(_user: TeamUser): boolean {
+    return true;
+  }
+
+  async goToUsersPage(page: number): Promise<void> {
+    if (page < 1 || page > this.usersPageCount || page === this.usersPage) {
+      return;
     }
 
-    const managerName = user.manager?.fullName?.toLowerCase() ?? "";
-    const haystack = [user.fullName, user.email, this.roleLabel(user.role), managerName].join(" ").toLowerCase();
-    return haystack.includes(term);
+    this.usersPage = page;
+    await this.loadUsers();
+  }
+
+  async goToJoinRequestsPage(page: number): Promise<void> {
+    if (page < 1 || page > this.joinRequestsPageCount || page === this.joinRequestsPage) {
+      return;
+    }
+
+    this.joinRequestsPage = page;
+    await this.loadUsers();
   }
 
   private async deleteUser(userId: string): Promise<void> {
@@ -594,9 +714,39 @@ export class UsersPage implements OnInit, OnDestroy {
   }
 
   private async loadUsers(): Promise<void> {
-    const [apiUsers, joinRequests] = await Promise.all([this.userService.listUsers(), this.userService.listTeamJoinRequests()]);
-    this.users = this.isSuperadmin ? apiUsers : apiUsers.filter((user) => user.role === "EMPLOYEE");
-    this.joinRequests = joinRequests;
+    const roleFilter = this.isSuperadmin && this.teamRoleFilter !== "ALL" ? this.teamRoleFilter : undefined;
+    const [usersResponse, joinRequestsResponse, managerUsers] = await Promise.all([
+      this.userService.listUsers({
+        page: this.usersPage,
+        pageSize: this.usersPageSize,
+        search: this.teamSearchTerm,
+        role: roleFilter
+      }),
+      this.userService.listTeamJoinRequests({
+        page: this.joinRequestsPage,
+        pageSize: this.joinRequestsPageSize,
+        status: "PENDING"
+      }),
+      this.isSuperadmin ? this.userService.listAllUsers({ role: "ADMIN" }) : Promise.resolve<TeamUser[]>([])
+    ]);
+
+    if (this.usersPage > 1 && usersResponse.users.length === 0 && usersResponse.total > 0) {
+      this.usersPage -= 1;
+      await this.loadUsers();
+      return;
+    }
+
+    if (this.joinRequestsPage > 1 && joinRequestsResponse.requests.length === 0 && joinRequestsResponse.total > 0) {
+      this.joinRequestsPage -= 1;
+      await this.loadUsers();
+      return;
+    }
+
+    this.users = usersResponse.users;
+    this.managerUsers = managerUsers;
+    this.usersTotal = usersResponse.total;
+    this.joinRequests = joinRequestsResponse.requests;
+    this.joinRequestsTotal = joinRequestsResponse.total;
 
     this.managerDraftByUserId = this.users
       .filter((user) => user.role === "EMPLOYEE")
@@ -635,5 +785,34 @@ export class UsersPage implements OnInit, OnDestroy {
   private async showToast(message: string, color: "danger" | "success"): Promise<void> {
     const toast = await this.toastController.create({ message, duration: 2200, color });
     await toast.present();
+  }
+
+  private resetUsersState(): void {
+    this.users = [];
+    this.managerUsers = [];
+    this.joinRequests = [];
+    this.teamSearchTerm = "";
+    this.teamRoleFilter = "ALL";
+    this.usersPage = 1;
+    this.usersTotal = 0;
+    this.joinRequestsPage = 1;
+    this.joinRequestsTotal = 0;
+    this.fullName = "";
+    this.email = "";
+    this.password = "Regismatic2026!";
+    this.role = "EMPLOYEE";
+    this.managerId = "";
+    this.managerDraftByUserId = {};
+    this.deletingUserId = null;
+    this.savingManagerUserId = null;
+    this.photoTargetUserId = null;
+    this.photoLoadingUserId = null;
+    this.reviewingJoinRequestId = null;
+    this.managerPickerOpen = false;
+    this.managerPickerUser = null;
+    this.managerSearchTerm = "";
+    this.photoViewerOpen = false;
+    this.photoViewerUser = null;
+    this.clearPhotoViewerResolvedUrl();
   }
 }

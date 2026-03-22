@@ -30,6 +30,57 @@
       </ion-content>
     </ng-template>
   </ion-modal>
+  <ion-modal [isOpen]="managerPickerOpen" (didDismiss)="closeManagerPicker()" class="manager-picker-modal">
+    <ng-template>
+      <ion-header translucent="true">
+        <ion-toolbar>
+          <ion-title>{{ "users.manager_picker_title" | t }}</ion-title>
+          <ion-buttons slot="end">
+            <ion-button fill="clear" (click)="closeManagerPicker()">{{ "common.close" | t }}</ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+
+      <ion-content class="manager-picker-content">
+        <div class="manager-picker-shell" *ngIf="managerPickerUser">
+          <div class="manager-picker-head">
+            <strong>{{ managerPickerUser.fullName }}</strong>
+            <span>{{ "users.manager_picker_current" | t }}: {{ managerLabelFor(managerPickerUser) }}</span>
+          </div>
+
+          <ion-item class="manager-picker-search">
+            <ion-label position="stacked">{{ "users.manager_picker_search_label" | t }}</ion-label>
+            <ion-input [(ngModel)]="managerSearchTerm"></ion-input>
+          </ion-item>
+
+          <div class="manager-picker-list" *ngIf="filteredManagerUsers.length > 0; else emptyManagerResults">
+            <button
+              type="button"
+              class="manager-picker-option"
+              *ngFor="let manager of filteredManagerUsers; trackBy: trackUser"
+              [class.manager-picker-option-active]="isSelectedManager(managerPickerUser, manager)"
+              [disabled]="savingManagerUserId === managerPickerUser.id"
+              (click)="selectManagerForCurrentUser(manager.id)"
+            >
+              <div class="manager-picker-option-copy">
+                <strong>{{ manager.fullName }}</strong>
+                <span>{{ manager.email }}</span>
+              </div>
+              <ion-badge color="primary" *ngIf="isSelectedManager(managerPickerUser, manager)">{{ "common.selected" | t }}</ion-badge>
+            </button>
+          </div>
+
+          <ng-template #emptyManagerResults>
+            <section class="empty-state manager-picker-empty">
+              <ion-icon name="search-outline" aria-hidden="true"></ion-icon>
+              <h3>{{ "users.manager_picker_empty_title" | t }}</h3>
+              <p>{{ "users.manager_picker_empty_desc" | t }}</p>
+            </section>
+          </ng-template>
+        </div>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
   <ion-grid fixed class="users-grid">
     <ion-row>
       <ion-col size="12">
@@ -46,7 +97,7 @@
 
               <div class="scope-metrics">
                 <article class="scope-metric">
-                  <strong>{{ users.length }}</strong>
+                  <strong>{{ usersTotal }}</strong>
                   <span>{{ "users.metric_visible" | t }}</span>
                 </article>
                 <article class="scope-metric" *ngIf="isSuperadmin">
@@ -205,7 +256,7 @@
 
             <div class="scope-metrics compact-metrics">
               <article class="scope-metric">
-                <strong>{{ users.length }}</strong>
+                <strong>{{ usersTotal }}</strong>
                 <span>{{ "users.metric_visible" | t }}</span>
               </article>
               <article class="scope-metric">
@@ -243,7 +294,7 @@
                   <h3>{{ "users.join_requests_title" | t }}</h3>
                   <p>{{ "users.join_requests_desc" | t }}</p>
                 </div>
-                <ion-badge color="warning">{{ pendingJoinRequests.length }}</ion-badge>
+                <ion-badge color="warning">{{ joinRequestsTotal }}</ion-badge>
               </div>
 
               <div class="join-request-list">
@@ -275,16 +326,31 @@
                   </div>
                 </article>
               </div>
+
+              <div class="report-pagination" *ngIf="joinRequestsTotal > joinRequestsPageSize">
+                <ion-button size="small" fill="outline" [disabled]="joinRequestsPage === 1" (click)="goToJoinRequestsPage(joinRequestsPage - 1)">
+                  {{ "common.previous" | t }}
+                </ion-button>
+                <span>{{ "reports.pagination_page" | t: { page: joinRequestsPage, total: joinRequestsPageCount } }}</span>
+                <ion-button
+                  size="small"
+                  fill="outline"
+                  [disabled]="joinRequestsPage === joinRequestsPageCount"
+                  (click)="goToJoinRequestsPage(joinRequestsPage + 1)"
+                >
+                  {{ "common.next" | t }}
+                </ion-button>
+              </div>
             </section>
 
             <div class="team-toolbar">
               <ion-item class="team-search-item">
                 <ion-label position="stacked">{{ "users.search_placeholder" | t }}</ion-label>
-                <ion-input [(ngModel)]="teamSearchTerm"></ion-input>
+                <ion-input [(ngModel)]="teamSearchTerm" (ngModelChange)="onTeamSearchChange()"></ion-input>
               </ion-item>
               <ion-item class="team-filter-item" *ngIf="showTeamRoleFilter">
                 <ion-label position="stacked">{{ "common.role" | t }}</ion-label>
-                <ion-select [(ngModel)]="teamRoleFilter">
+                <ion-select [(ngModel)]="teamRoleFilter" (ngModelChange)="onTeamRoleFilterChange()">
                   <ion-select-option *ngFor="let filter of teamRoleFilterOptions" [value]="filter">
                     {{ roleFilterLabel(filter) }}
                   </ion-select-option>
@@ -293,7 +359,7 @@
             </div>
 
             <div class="team-results-summary" *ngIf="users.length > 0">
-              <strong>{{ totalFilteredUsers }}</strong>
+              <strong>{{ usersTotal }}</strong>
               <span>{{ "users.metric_visible" | t }}</span>
             </div>
 
@@ -354,17 +420,15 @@
                         <td class="team-manager-col" [attr.data-label]="'users.table_manager' | t">
                           <div class="manager-cell">
                             <ng-container *ngIf="isSuperadmin && user.role === 'EMPLOYEE'; else managerReadOnly">
-                              <div class="manager-inline-edit manager-inline-edit-simple">
-                                <ion-select
-                                  [value]="managerValueFor(user)"
-                                  [disabled]="savingManagerUserId === user.id"
-                                  (ionChange)="updateManagerAssignment(user, $event.detail.value)"
-                                >
-                                  <ion-select-option *ngFor="let manager of availableManagerUsers" [value]="manager.id">
-                                    {{ manager.fullName }}
-                                  </ion-select-option>
-                                </ion-select>
-                              </div>
+                              <button
+                                type="button"
+                                class="manager-picker-trigger"
+                                [disabled]="savingManagerUserId === user.id"
+                                (click)="openManagerPicker(user)"
+                              >
+                                <span>{{ managerLabelFor(user) }}</span>
+                                <ion-icon name="search-outline" aria-hidden="true"></ion-icon>
+                              </button>
                             </ng-container>
                             <ng-template #managerReadOnly>
                               <span class="manager-name">{{ user.manager?.fullName || "-" }}</span>
@@ -412,6 +476,16 @@
                   </table>
                 </div>
               </section>
+
+              <div class="report-pagination" *ngIf="usersTotal > usersPageSize">
+                <ion-button size="small" fill="outline" [disabled]="usersPage === 1" (click)="goToUsersPage(usersPage - 1)">
+                  {{ "common.previous" | t }}
+                </ion-button>
+                <span>{{ "reports.pagination_page" | t: { page: usersPage, total: usersPageCount } }}</span>
+                <ion-button size="small" fill="outline" [disabled]="usersPage === usersPageCount" (click)="goToUsersPage(usersPage + 1)">
+                  {{ "common.next" | t }}
+                </ion-button>
+              </div>
             </ng-container>
 
             <ng-template #emptySearchState>

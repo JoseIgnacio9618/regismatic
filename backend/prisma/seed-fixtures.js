@@ -8,7 +8,10 @@ const prisma = new PrismaClient();
 
 const FIXTURE_DOMAIN = "fixtures.regismatic.local";
 const FIXTURE_PASSWORD = "Regismatic2026!";
-const FIXTURE_WINDOW_DAYS = 45;
+const FIXTURE_WINDOW_DAYS = Number(process.env.FIXTURE_WINDOW_DAYS ?? 75);
+const FIXTURE_ADMIN_COUNT = Number(process.env.FIXTURE_ADMIN_COUNT ?? 6);
+const FIXTURE_EMPLOYEES_PER_ADMIN = Number(process.env.FIXTURE_EMPLOYEES_PER_ADMIN ?? 20);
+const FIXTURE_AVAILABLE_EMPLOYEES = Number(process.env.FIXTURE_AVAILABLE_EMPLOYEES ?? 12);
 
 const addDays = (date, days) => {
   const value = new Date(date);
@@ -427,24 +430,25 @@ async function main() {
     passwordHash
   });
 
-  const adminNames = ["Norte", "Centro", "Levante", "Sur"];
+  const adminNames = ["Norte", "Centro", "Levante", "Sur", "Canarias", "Portugal", "Baleares", "Internacional"];
   const admins = [];
 
-  for (let index = 0; index < adminNames.length; index += 1) {
+  for (let index = 0; index < FIXTURE_ADMIN_COUNT; index += 1) {
+    const adminLabel = adminNames[index] ?? `Zona ${index + 1}`;
     admins.push(
       await createUser({
         email: `admin${index + 1}.fixture@${FIXTURE_DOMAIN}`,
-        fullName: `Admin ${adminNames[index]} Fixtures`,
+        fullName: `Admin ${adminLabel} Fixtures`,
         role: "ADMIN",
         passwordHash,
-        adminInviteCode: `RGM-FXADM0${index + 1}`
+        adminInviteCode: `RGM-FXADM${String(index + 1).padStart(2, "0")}`
       })
     );
   }
 
   const employees = [];
   for (let adminIndex = 0; adminIndex < admins.length; adminIndex += 1) {
-    for (let employeeIndex = 0; employeeIndex < 8; employeeIndex += 1) {
+    for (let employeeIndex = 0; employeeIndex < FIXTURE_EMPLOYEES_PER_ADMIN; employeeIndex += 1) {
       employees.push(
         await createUser({
           email: `empleado-${adminIndex + 1}-${employeeIndex + 1}@${FIXTURE_DOMAIN}`,
@@ -458,7 +462,7 @@ async function main() {
   }
 
   const availableEmployees = [];
-  for (let index = 0; index < 6; index += 1) {
+  for (let index = 0; index < FIXTURE_AVAILABLE_EMPLOYEES; index += 1) {
     availableEmployees.push(
       await createUser({
         email: `pendiente-${index + 1}@${FIXTURE_DOMAIN}`,
@@ -483,6 +487,7 @@ async function main() {
   console.log(`Empleados asignados fixture: ${employees.length}`);
   console.log(`Empleados libres con solicitudes fixture: ${availableEmployees.length}`);
   console.log(`Eventos generados: ${workEvents.length}`);
+  console.log(`Ventana de dias: ${FIXTURE_WINDOW_DAYS}`);
 }
 
 main()

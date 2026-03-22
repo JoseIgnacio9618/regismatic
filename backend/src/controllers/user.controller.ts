@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { z } from "zod";
+import { TeamJoinRequestStatus } from "@prisma/client";
 import { AppError } from "../middlewares/error.middleware";
 import {
   assignEmployeeManager,
@@ -15,6 +16,19 @@ import {
   listTeamJoinRequests,
   reviewTeamJoinRequest
 } from "../services/team-join-request.service";
+
+const paginatedUsersQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).optional(),
+  pageSize: z.coerce.number().int().min(1).max(100).optional(),
+  search: z.string().trim().optional(),
+  role: z.enum(["SUPERADMIN", "ADMIN", "EMPLOYEE"]).optional()
+});
+
+const paginatedJoinRequestsQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).optional(),
+  pageSize: z.coerce.number().int().min(1).max(100).optional(),
+  status: z.nativeEnum(TeamJoinRequestStatus).optional()
+});
 
 const createUserSchema = z.object({
   email: z.string().email(),
@@ -62,8 +76,15 @@ export const listUsersController = async (req: Request, res: Response) => {
     throw new AppError("Not authenticated.", 401);
   }
 
-  const users = await listUsers(req.user.id);
-  return res.json(users);
+  const query = paginatedUsersQuerySchema.parse(req.query);
+  const result = await listUsers({
+    requesterId: req.user.id,
+    page: query.page,
+    pageSize: query.pageSize,
+    search: query.search,
+    role: query.role
+  });
+  return res.json(result);
 };
 
 export const createTeamJoinRequestController = async (req: Request, res: Response) => {
@@ -86,8 +107,14 @@ export const listTeamJoinRequestsController = async (req: Request, res: Response
     throw new AppError("Not authenticated.", 401);
   }
 
-  const requests = await listTeamJoinRequests(req.user.id);
-  return res.json(requests);
+  const query = paginatedJoinRequestsQuerySchema.parse(req.query);
+  const result = await listTeamJoinRequests({
+    requesterId: req.user.id,
+    page: query.page,
+    pageSize: query.pageSize,
+    status: query.status
+  });
+  return res.json(result);
 };
 
 export const reviewTeamJoinRequestController = async (req: Request, res: Response) => {

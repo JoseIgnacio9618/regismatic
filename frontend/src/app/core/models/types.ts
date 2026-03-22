@@ -69,7 +69,7 @@ export interface WorkEventEditRequestSummary {
   reviewComment: string | null;
   reviewedAt: string | null;
   createdAt: string;
-  requestedBy: UserSummary;
+  requestedBy: UserSummary | null;
   reviewedBy: UserSummary | null;
 }
 
@@ -162,4 +162,11 @@ export interface UserNotification {
   isRead: boolean;
   readAt: string | null;
   createdAt: string;
+}
+
+export interface PaginatedResult<T> {
+  total: number;
+  page: number;
+  pageSize: number;
+  items: T[];
 }
