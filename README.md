@@ -327,6 +327,7 @@ npm run cap:sync
 ## Documentacion adicional
 - [Legal + benchmark](docs/legal-and-product-research.md)
 - [Despliegue produccion](docs/deploy-production.md)
+- [Checklist aislamiento de sesion](docs/session-isolation-checklist.md)
 - [Backend README](backend/README.md)
 - [Frontend README](frontend/README.md)
 
