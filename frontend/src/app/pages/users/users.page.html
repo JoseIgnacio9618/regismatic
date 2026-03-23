@@ -93,6 +93,13 @@
                 </ion-badge>
                 <h2>{{ scopeTitle }}</h2>
                 <p>{{ scopeDescription }}</p>
+
+                <section class="billing-notice" *ngIf="showAdminBillingNotice && adminBilling as billing">
+                  <strong>{{ billing.plan.name }}</strong>
+                  <span>{{ "billing.seat_usage_value" | t: { used: billing.seatUsage.used, limit: billing.seatUsage.limit, remaining: billing.seatUsage.remaining } }}</span>
+                  <span *ngIf="billing.isTrial">{{ "billing.trial_ends" | t }}: {{ formatBillingDate(billing.trialEndsAt) }}</span>
+                  <span *ngIf="!billing.isTrial">{{ "billing.period_ends" | t }}: {{ formatBillingDate(billing.currentPeriodEnd) }}</span>
+                </section>
               </div>
 
               <div class="scope-metrics">

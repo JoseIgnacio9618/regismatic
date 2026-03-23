@@ -1,5 +1,6 @@
 import express, { Router } from "express";
 import {
+  billingPaymentsHistoryController,
   billingOverviewController,
   createBillingPortalSessionController,
   createCheckoutSessionController,
@@ -15,5 +16,6 @@ export const billingRouter = Router();
 
 billingRouter.use(authMiddleware);
 billingRouter.get("/overview", asyncHandler(billingOverviewController));
+billingRouter.get("/payments-history", asyncHandler(billingPaymentsHistoryController));
 billingRouter.post("/checkout-session", asyncHandler(createCheckoutSessionController));
 billingRouter.post("/portal-session", asyncHandler(createBillingPortalSessionController));

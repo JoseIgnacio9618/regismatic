@@ -12,6 +12,7 @@ export type NotificationType =
   | "SYSTEM";
 export type PushPlatform = "WEB" | "ANDROID" | "IOS";
 export type BillingPlanCode = "DEMO_10" | "PACK_10" | "PACK_20" | "PACK_50" | "PACK_100";
+export type BillingInterval = "month" | "year";
 export type BillingSubscriptionStatus =
   | "TRIALING"
   | "ACTIVE"
@@ -21,19 +22,31 @@ export type BillingSubscriptionStatus =
   | "INCOMPLETE_EXPIRED"
   | "UNPAID";
 
+export interface BillingPriceOption {
+  interval: BillingInterval;
+  priceId: string | null;
+  amountEur: number | null;
+  currency: string | null;
+  pricePerSeatEur: number | null;
+  monthlyEquivalentEur: number | null;
+  savingsVsMonthlyPercent: number | null;
+  checkoutEnabled: boolean;
+}
+
 export interface BillingPlan {
   code: BillingPlanCode;
   name: string;
-  monthlyPriceEur: number;
   seatLimit: number;
   isDemo: boolean;
   checkoutEnabled: boolean;
+  pricingOptions: BillingPriceOption[];
 }
 
 export interface BillingSummary {
   isBypassed: boolean;
   stripeConfigured: boolean;
   plan: BillingPlan;
+  currentPrice: BillingPriceOption | null;
   status: BillingSubscriptionStatus | "BYPASSED";
   seatUsage: {
     used: number;
@@ -48,6 +61,54 @@ export interface BillingSummary {
     checkoutAvailable: boolean;
     portalAvailable: boolean;
   };
+}
+
+export interface BillingPaymentRecord {
+  invoiceId: string;
+  stripeSubscriptionId: string | null;
+  status: string;
+  currency: string | null;
+  amountDueEur: number | null;
+  amountPaidEur: number | null;
+  amountRemainingEur: number | null;
+  createdAt: string | null;
+  dueAt: string | null;
+  paidAt: string | null;
+  periodStart: string | null;
+  periodEnd: string | null;
+  hostedInvoiceUrl: string | null;
+  invoicePdfUrl: string | null;
+}
+
+export interface BillingAccountPaymentsView {
+  admin: {
+    id: string;
+    email: string;
+    fullName: string;
+  };
+  subscription: {
+    planCode: BillingPlanCode;
+    status: BillingSubscriptionStatus;
+    seatLimit: number;
+    isTrial: boolean;
+    trialEndsAt: string | null;
+    currentPeriodEnd: string | null;
+    cancelAtPeriodEnd: boolean;
+    stripeCustomerId: string | null;
+    stripeSubscriptionId: string | null;
+  };
+  paymentStats: {
+    paidInvoicesCount: number;
+    totalPaidEur: number;
+    lastPaymentAt: string | null;
+  };
+  payments: BillingPaymentRecord[];
+}
+
+export interface BillingPaymentsHistoryResponse {
+  scope: "ADMIN" | "SUPERADMIN";
+  stripeConfigured: boolean;
+  accounts: BillingAccountPaymentsView[];
 }
 
 export interface AuthUser {

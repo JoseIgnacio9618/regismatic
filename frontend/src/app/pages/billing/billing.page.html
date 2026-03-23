@@ -18,7 +18,7 @@
               <div class="billing-status-card">
                 <div>
                   <strong>{{ billing.plan.name }}</strong>
-                  <p>{{ formatPrice(billing.plan) }}</p>
+                  <p>{{ formatCurrentPrice(billing) }}</p>
                 </div>
                 <ion-badge [color]="billing.isTrial ? 'warning' : 'success'">{{ planStatusLabel() }}</ion-badge>
               </div>
@@ -74,17 +74,36 @@
                 <div class="plan-card-head">
                   <div>
                     <strong>{{ plan.name }}</strong>
-                    <p>{{ formatPrice(plan) }}</p>
+                    <p>{{ "billing.seats" | t: { count: plan.seatLimit } }}</p>
                   </div>
                   <ion-badge color="primary">{{ "billing.seats" | t: { count: plan.seatLimit } }}</ion-badge>
                 </div>
-                <ion-button
-                  expand="block"
-                  [disabled]="actionLoading || !isAdminBilling || !plan.checkoutEnabled"
-                  (click)="startCheckout(plan.code)"
-                >
-                  {{ summary?.plan?.code === plan.code ? ("billing.change_plan" | t) : ("billing.choose_plan" | t) }}
-                </ion-button>
+
+                <div class="price-options">
+                  <article class="price-option" *ngFor="let price of plan.pricingOptions; trackBy: trackPlanPrice">
+                    <div class="price-option-head">
+                      <div>
+                        <strong>{{ formatPriceOption(price) }}</strong>
+                        <p>{{ formatPriceHint(price) }}</p>
+                      </div>
+                      <ion-badge color="tertiary">
+                        {{ price.interval === "year" ? ("billing.yearly" | t) : ("billing.monthly" | t) }}
+                      </ion-badge>
+                    </div>
+
+                    <ion-badge color="success" *ngIf="price.interval === 'year' && price.savingsVsMonthlyPercent">
+                      {{ "billing.save_percent" | t: { percent: price.savingsVsMonthlyPercent } }}
+                    </ion-badge>
+
+                    <ion-button
+                      expand="block"
+                      [disabled]="actionLoading || !isAdminBilling || !price.checkoutEnabled"
+                      (click)="startCheckout(price)"
+                    >
+                      {{ summary?.currentPrice?.priceId === price.priceId ? ("billing.change_plan" | t) : ("billing.choose_plan" | t) }}
+                    </ion-button>
+                  </article>
+                </div>
               </article>
             </div>
 

@@ -46,9 +46,13 @@ API por defecto: `http://localhost:4000`
 - `STRIPE_SECRET_KEY`
 - `STRIPE_WEBHOOK_SECRET`
 - `STRIPE_PRICE_PACK_10_MONTHLY`
+- `STRIPE_PRICE_PACK_10_YEARLY`
 - `STRIPE_PRICE_PACK_20_MONTHLY`
+- `STRIPE_PRICE_PACK_20_YEARLY`
 - `STRIPE_PRICE_PACK_50_MONTHLY`
+- `STRIPE_PRICE_PACK_50_YEARLY`
 - `STRIPE_PRICE_PACK_100_MONTHLY`
+- `STRIPE_PRICE_PACK_100_YEARLY`
 - `STRIPE_CHECKOUT_SUCCESS_URL`
 - `STRIPE_CHECKOUT_CANCEL_URL`
 - `STRIPE_BILLING_PORTAL_RETURN_URL`
@@ -113,5 +117,5 @@ Notas:
 - en Docker la entrada aplica `prisma migrate deploy` automaticamente
 - si `RUN_SEED=true`, carga el seed basico
 - si `RUN_DEMO_FIXTURES=true`, carga ademas los fixtures masivos
-- los admins nuevos arrancan con demo de `7 dias / 10 usuarios`
+- los admins nuevos arrancan con demo de `7 dias / 3 usuarios`
 - el backend aplica limites de plan tanto al crear empleados como al aprobar solicitudes de union a equipo

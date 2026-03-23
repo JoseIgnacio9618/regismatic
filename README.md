@@ -31,15 +31,16 @@ La base de datos es **PostgreSQL (SQL)**, no SQLite.
 - Login JWT con roles `SUPERADMIN`, `ADMIN` y `EMPLOYEE`
 - Alta publica de administradores desde la propia app (`/register-admin`)
 - Facturacion por plan para administradores:
-  - `Demo 7 dias / 10 usuarios`
-  - `Pack 10: 19 EUR/mes`
+  - `Demo 7 dias / 3 usuarios`
+  - `Pack 10` con precio mensual/anual definido en Stripe
   - `Pack 20: 29 EUR/mes`
   - `Pack 50: 59 EUR/mes`
   - `Pack 100: 99 EUR/mes`
+  - planes mensual y anual en Stripe
   - checkout y portal de cliente con Stripe
 - Alta publica de empleados desde la propia app (`/register-employee`)
 - El primer alta publica de administrador se promociona automaticamente a `SUPERADMIN`
-- Los admins nuevos arrancan con una demo de 7 dias y 10 usuarios
+- Los admins nuevos arrancan con una demo de 7 dias y 3 usuarios
 - La demo publica intenta reutilizar la IP para evitar multicuentas de prueba del mismo origen
 - Multiadministrador: cada admin gestiona solo su propia plantilla
 - Flujo de incorporacion a equipo por codigo:
@@ -220,9 +221,13 @@ Variables principales de backend:
 - `STRIPE_SECRET_KEY`
 - `STRIPE_WEBHOOK_SECRET`
 - `STRIPE_PRICE_PACK_10_MONTHLY`
+- `STRIPE_PRICE_PACK_10_YEARLY`
 - `STRIPE_PRICE_PACK_20_MONTHLY`
+- `STRIPE_PRICE_PACK_20_YEARLY`
 - `STRIPE_PRICE_PACK_50_MONTHLY`
+- `STRIPE_PRICE_PACK_50_YEARLY`
 - `STRIPE_PRICE_PACK_100_MONTHLY`
+- `STRIPE_PRICE_PACK_100_YEARLY`
 - `STRIPE_CHECKOUT_SUCCESS_URL`
 - `STRIPE_CHECKOUT_CANCEL_URL`
 - `STRIPE_BILLING_PORTAL_RETURN_URL`
@@ -268,9 +273,13 @@ cp .env.production.example .env.production
 - `STRIPE_SECRET_KEY`
 - `STRIPE_WEBHOOK_SECRET`
 - `STRIPE_PRICE_PACK_10_MONTHLY`
+- `STRIPE_PRICE_PACK_10_YEARLY`
 - `STRIPE_PRICE_PACK_20_MONTHLY`
+- `STRIPE_PRICE_PACK_20_YEARLY`
 - `STRIPE_PRICE_PACK_50_MONTHLY`
+- `STRIPE_PRICE_PACK_50_YEARLY`
 - `STRIPE_PRICE_PACK_100_MONTHLY`
+- `STRIPE_PRICE_PACK_100_YEARLY`
 - `STRIPE_CHECKOUT_SUCCESS_URL`
 - `STRIPE_CHECKOUT_CANCEL_URL`
 - `STRIPE_BILLING_PORTAL_RETURN_URL`
@@ -290,9 +299,13 @@ Guia ampliada: [docs/deploy-production.md](docs/deploy-production.md)
   - `STRIPE_SECRET_KEY`: clave secreta de tu cuenta Stripe
   - `STRIPE_WEBHOOK_SECRET`: secreto del endpoint webhook de Stripe
   - `STRIPE_PRICE_PACK_10_MONTHLY`
+  - `STRIPE_PRICE_PACK_10_YEARLY`
   - `STRIPE_PRICE_PACK_20_MONTHLY`
+  - `STRIPE_PRICE_PACK_20_YEARLY`
   - `STRIPE_PRICE_PACK_50_MONTHLY`
+  - `STRIPE_PRICE_PACK_50_YEARLY`
   - `STRIPE_PRICE_PACK_100_MONTHLY`
+  - `STRIPE_PRICE_PACK_100_YEARLY`
   - `STRIPE_CHECKOUT_SUCCESS_URL`
   - `STRIPE_CHECKOUT_CANCEL_URL`
   - `STRIPE_BILLING_PORTAL_RETURN_URL`

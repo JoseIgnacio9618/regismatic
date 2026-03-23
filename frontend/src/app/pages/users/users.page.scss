@@ -89,6 +89,17 @@
   color: var(--app-ink-muted);
 }
 
+.billing-notice {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 16px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px solid color-mix(in srgb, var(--ion-color-primary), transparent 48%);
+  background: color-mix(in srgb, var(--ion-color-primary), transparent 93%);
+}
+
 .scope-metrics {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

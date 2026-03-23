@@ -10,13 +10,29 @@ import { env } from "../config/env";
 import { AppError } from "../middlewares/error.middleware";
 import { getScopedUserById } from "./access.service";
 
+type BillingInterval = "month" | "year";
+
 type BillingPlanDefinition = {
   code: BillingPlanCode;
-  name: string;
-  monthlyPriceEur: number;
+  defaultName: string;
   seatLimit: number;
-  stripePriceId?: string;
   isDemo?: boolean;
+};
+
+type BillingPriceConfig = {
+  planCode: Exclude<BillingPlanCode, "DEMO_10">;
+  interval: BillingInterval;
+  priceId?: string;
+};
+
+type StripeCatalogPrice = {
+  priceId: string;
+  planCode: Exclude<BillingPlanCode, "DEMO_10">;
+  interval: BillingInterval;
+  amountEur: number | null;
+  currency: string | null;
+  productName: string | null;
+  active: boolean;
 };
 
 const STRIPE_ENABLED = Boolean(env.STRIPE_SECRET_KEY);
@@ -43,19 +59,31 @@ const BILLING_SUBSCRIPTION_SELECT = {
 
 type BillingSubscriptionRecord = Prisma.BillingSubscriptionGetPayload<{ select: typeof BILLING_SUBSCRIPTION_SELECT }>;
 
+export type BillingPriceView = {
+  interval: BillingInterval;
+  priceId: string | null;
+  amountEur: number | null;
+  currency: string | null;
+  pricePerSeatEur: number | null;
+  monthlyEquivalentEur: number | null;
+  savingsVsMonthlyPercent: number | null;
+  checkoutEnabled: boolean;
+};
+
 export type BillingPlanView = {
   code: BillingPlanCode;
   name: string;
-  monthlyPriceEur: number;
   seatLimit: number;
   isDemo: boolean;
   checkoutEnabled: boolean;
+  pricingOptions: BillingPriceView[];
 };
 
 export type BillingSummary = {
   isBypassed: boolean;
   stripeConfigured: boolean;
   plan: BillingPlanView;
+  currentPrice: BillingPriceView | null;
   status: BillingSubscriptionStatus | "BYPASSED";
   seatUsage: {
     used: number;
@@ -72,68 +100,313 @@ export type BillingSummary = {
   };
 };
 
+export type BillingPaymentRecord = {
+  invoiceId: string;
+  stripeSubscriptionId: string | null;
+  status: string;
+  currency: string | null;
+  amountDueEur: number | null;
+  amountPaidEur: number | null;
+  amountRemainingEur: number | null;
+  createdAt: string | null;
+  dueAt: string | null;
+  paidAt: string | null;
+  periodStart: string | null;
+  periodEnd: string | null;
+  hostedInvoiceUrl: string | null;
+  invoicePdfUrl: string | null;
+};
+
+export type BillingAccountPaymentsView = {
+  admin: {
+    id: string;
+    email: string;
+    fullName: string;
+  };
+  subscription: {
+    planCode: BillingPlanCode;
+    status: BillingSubscriptionStatus;
+    seatLimit: number;
+    isTrial: boolean;
+    trialEndsAt: string | null;
+    currentPeriodEnd: string | null;
+    cancelAtPeriodEnd: boolean;
+    stripeCustomerId: string | null;
+    stripeSubscriptionId: string | null;
+  };
+  paymentStats: {
+    paidInvoicesCount: number;
+    totalPaidEur: number;
+    lastPaymentAt: string | null;
+  };
+  payments: BillingPaymentRecord[];
+};
+
+export type BillingPaymentsHistoryResponse = {
+  scope: "ADMIN" | "SUPERADMIN";
+  stripeConfigured: boolean;
+  accounts: BillingAccountPaymentsView[];
+};
+
 const BILLING_PLANS: Record<BillingPlanCode, BillingPlanDefinition> = {
   DEMO_10: {
     code: "DEMO_10",
-    name: "Demo 10",
-    monthlyPriceEur: 0,
+    defaultName: "Demo 3",
     seatLimit: env.BILLING_TRIAL_SEAT_LIMIT,
     isDemo: true
   },
   PACK_10: {
     code: "PACK_10",
-    name: "Pack 10",
-    monthlyPriceEur: 19,
-    seatLimit: 10,
-    stripePriceId: env.STRIPE_PRICE_PACK_10_MONTHLY
+    defaultName: "Pack 10",
+    seatLimit: 10
   },
   PACK_20: {
     code: "PACK_20",
-    name: "Pack 20",
-    monthlyPriceEur: 29,
-    seatLimit: 20,
-    stripePriceId: env.STRIPE_PRICE_PACK_20_MONTHLY
+    defaultName: "Pack 20",
+    seatLimit: 20
   },
   PACK_50: {
     code: "PACK_50",
-    name: "Pack 50",
-    monthlyPriceEur: 59,
-    seatLimit: 50,
-    stripePriceId: env.STRIPE_PRICE_PACK_50_MONTHLY
+    defaultName: "Pack 50",
+    seatLimit: 50
   },
   PACK_100: {
     code: "PACK_100",
-    name: "Pack 100",
-    monthlyPriceEur: 99,
-    seatLimit: 100,
-    stripePriceId: env.STRIPE_PRICE_PACK_100_MONTHLY
+    defaultName: "Pack 100",
+    seatLimit: 100
   }
 };
+
+const STRIPE_PRICE_CONFIGS: BillingPriceConfig[] = [
+  {
+    planCode: "PACK_10",
+    interval: "month",
+    priceId: env.STRIPE_PRICE_PACK_10_MONTHLY
+  },
+  {
+    planCode: "PACK_10",
+    interval: "year",
+    priceId: env.STRIPE_PRICE_PACK_10_YEARLY
+  },
+  {
+    planCode: "PACK_20",
+    interval: "month",
+    priceId: env.STRIPE_PRICE_PACK_20_MONTHLY
+  },
+  {
+    planCode: "PACK_20",
+    interval: "year",
+    priceId: env.STRIPE_PRICE_PACK_20_YEARLY
+  },
+  {
+    planCode: "PACK_50",
+    interval: "month",
+    priceId: env.STRIPE_PRICE_PACK_50_MONTHLY
+  },
+  {
+    planCode: "PACK_50",
+    interval: "year",
+    priceId: env.STRIPE_PRICE_PACK_50_YEARLY
+  },
+  {
+    planCode: "PACK_100",
+    interval: "month",
+    priceId: env.STRIPE_PRICE_PACK_100_MONTHLY
+  },
+  {
+    planCode: "PACK_100",
+    interval: "year",
+    priceId: env.STRIPE_PRICE_PACK_100_YEARLY
+  }
+];
 
 const ACTIVE_BILLING_STATUSES = new Set<BillingSubscriptionStatus>(["TRIALING", "ACTIVE"]);
 
 const normalizeDate = (value: Date | null | undefined): string | null => value?.toISOString() ?? null;
 
-const toPlanView = (plan: BillingPlanDefinition): BillingPlanView => ({
-  code: plan.code,
-  name: plan.name,
-  monthlyPriceEur: plan.monthlyPriceEur,
-  seatLimit: plan.seatLimit,
-  isDemo: Boolean(plan.isDemo),
-  checkoutEnabled: !plan.isDemo && STRIPE_ENABLED && Boolean(plan.stripePriceId)
-});
+const roundMoney = (value: number): number => Math.round(value * 100) / 100;
 
-const getCheckoutPlan = (planCode: BillingPlanCode): BillingPlanDefinition => {
-  const plan = BILLING_PLANS[planCode];
-  if (!plan || plan.isDemo) {
-    throw new AppError("Selected billing plan is not available for checkout.", 400);
+const centsToEur = (value: number | null | undefined): number | null => {
+  if (typeof value !== "number") {
+    return null;
   }
 
-  if (!plan.stripePriceId) {
-    throw new AppError("Stripe billing is not fully configured.", 503);
+  return roundMoney(value / 100);
+};
+
+const resolveExpandedProductName = (product: Stripe.Price["product"]): string | null => {
+  if (!product || typeof product === "string") {
+    return null;
   }
 
-  return plan;
+  if ("deleted" in product && product.deleted) {
+    return null;
+  }
+
+  return product.name?.trim() || null;
+};
+
+const loadStripeCatalog = async (): Promise<Map<string, StripeCatalogPrice>> => {
+  const catalog = new Map<string, StripeCatalogPrice>();
+  if (!stripe) {
+    return catalog;
+  }
+
+  const configuredPrices = STRIPE_PRICE_CONFIGS.filter((config) => Boolean(config.priceId?.trim()));
+  if (configuredPrices.length === 0) {
+    return catalog;
+  }
+
+  const results = await Promise.allSettled(
+    configuredPrices.map(async (config) => {
+      const price = await stripe.prices.retrieve(config.priceId as string, {
+        expand: ["product"]
+      });
+
+      return {
+        config,
+        price
+      };
+    })
+  );
+
+  for (const result of results) {
+    if (result.status !== "fulfilled") {
+      continue;
+    }
+
+    const {
+      config,
+      price
+    } = result.value;
+
+    catalog.set(price.id, {
+      priceId: price.id,
+      planCode: config.planCode,
+      interval: config.interval,
+      amountEur: price.unit_amount === null ? null : roundMoney(price.unit_amount / 100),
+      currency: price.currency?.toUpperCase() ?? null,
+      productName: resolveExpandedProductName(price.product),
+      active: price.active
+    });
+  }
+
+  return catalog;
+};
+
+const getPlanCatalogPrice = (
+  catalog: Map<string, StripeCatalogPrice>,
+  planCode: Exclude<BillingPlanCode, "DEMO_10">,
+  interval: BillingInterval
+): StripeCatalogPrice | null => {
+  const config = STRIPE_PRICE_CONFIGS.find((item) => item.planCode === planCode && item.interval === interval);
+  if (!config?.priceId) {
+    return null;
+  }
+
+  return catalog.get(config.priceId) ?? null;
+};
+
+const toBillingPriceView = (
+  plan: BillingPlanDefinition,
+  interval: BillingInterval,
+  price: StripeCatalogPrice | null,
+  monthlyAmount: number | null
+): BillingPriceView => {
+  const amountEur = price?.amountEur ?? null;
+  const monthlyEquivalentEur =
+    amountEur === null
+      ? null
+      : interval === "year"
+        ? roundMoney(amountEur / 12)
+        : amountEur;
+
+  const savingsVsMonthlyPercent =
+    interval === "year" && monthlyAmount !== null && monthlyAmount > 0 && monthlyEquivalentEur !== null
+      ? Math.max(0, Math.round((1 - monthlyEquivalentEur / monthlyAmount) * 100))
+      : null;
+
+  return {
+    interval,
+    priceId: price?.priceId ?? null,
+    amountEur,
+    currency: price?.currency ?? "EUR",
+    pricePerSeatEur: amountEur === null ? null : roundMoney(amountEur / plan.seatLimit),
+    monthlyEquivalentEur,
+    savingsVsMonthlyPercent,
+    checkoutEnabled: Boolean(price?.active && price.priceId)
+  };
+};
+
+const buildPlanView = (plan: BillingPlanDefinition, catalog: Map<string, StripeCatalogPrice>): BillingPlanView => {
+  if (plan.isDemo) {
+    return {
+      code: plan.code,
+      name: plan.defaultName,
+      seatLimit: plan.seatLimit,
+      isDemo: true,
+      checkoutEnabled: false,
+      pricingOptions: []
+    };
+  }
+
+  const paidPlanCode = plan.code as Exclude<BillingPlanCode, "DEMO_10">;
+  const monthlyPrice = getPlanCatalogPrice(catalog, paidPlanCode, "month");
+  const yearlyPrice = getPlanCatalogPrice(catalog, paidPlanCode, "year");
+  const monthlyView = toBillingPriceView(plan, "month", monthlyPrice, monthlyPrice?.amountEur ?? null);
+  const yearlyView = toBillingPriceView(plan, "year", yearlyPrice, monthlyPrice?.amountEur ?? null);
+  const pricingOptions = [monthlyView, yearlyView].filter((option) => option.priceId !== null || STRIPE_ENABLED);
+  const planName = monthlyPrice?.productName ?? yearlyPrice?.productName ?? plan.defaultName;
+
+  return {
+    code: plan.code,
+    name: planName,
+    seatLimit: plan.seatLimit,
+    isDemo: false,
+    checkoutEnabled: pricingOptions.some((option) => option.checkoutEnabled),
+    pricingOptions
+  };
+};
+
+const buildPlansCatalog = async (): Promise<Record<BillingPlanCode, BillingPlanView>> => {
+  const catalog = await loadStripeCatalog();
+
+  return {
+    DEMO_10: buildPlanView(BILLING_PLANS.DEMO_10, catalog),
+    PACK_10: buildPlanView(BILLING_PLANS.PACK_10, catalog),
+    PACK_20: buildPlanView(BILLING_PLANS.PACK_20, catalog),
+    PACK_50: buildPlanView(BILLING_PLANS.PACK_50, catalog),
+    PACK_100: buildPlanView(BILLING_PLANS.PACK_100, catalog)
+  };
+};
+
+const resolveCurrentPriceView = (
+  plan: BillingPlanView,
+  subscription: BillingSubscriptionRecord | null
+): BillingPriceView | null => {
+  if (!subscription?.stripePriceId) {
+    return plan.pricingOptions.find((option) => option.interval === "month" && option.checkoutEnabled) ?? plan.pricingOptions[0] ?? null;
+  }
+
+  return plan.pricingOptions.find((option) => option.priceId === subscription.stripePriceId) ?? plan.pricingOptions[0] ?? null;
+};
+
+const toIsoFromUnix = (value: number | null | undefined): string | null => {
+  if (!value) {
+    return null;
+  }
+
+  return new Date(value * 1000).toISOString();
+};
+
+const getCheckoutPriceConfig = (priceId: string): BillingPriceConfig => {
+  const trimmed = priceId.trim();
+  const config = STRIPE_PRICE_CONFIGS.find((item) => item.priceId === trimmed);
+  if (!config) {
+    throw new AppError("Selected billing price is not available for checkout.", 400);
+  }
+
+  return config;
 };
 
 const ensureStripeReady = (): Stripe => {
@@ -149,7 +422,12 @@ const getPlanByPriceId = (priceId: string | null | undefined): BillingPlanDefini
     return null;
   }
 
-  return Object.values(BILLING_PLANS).find((plan) => plan.stripePriceId === priceId) ?? null;
+  const config = STRIPE_PRICE_CONFIGS.find((item) => item.priceId === priceId);
+  if (!config) {
+    return null;
+  }
+
+  return BILLING_PLANS[config.planCode];
 };
 
 const mapStripeStatus = (status: Stripe.Subscription.Status): BillingSubscriptionStatus => {
@@ -214,13 +492,6 @@ const loadOrCreateAdminSubscription = async (adminId: string): Promise<BillingSu
   return createDefaultTrialSubscription(adminId);
 };
 
-const getAdminSubscriptionForUpdate = async (adminId: string): Promise<BillingSubscriptionRecord | null> => {
-  return prisma.billingSubscription.findUnique({
-    where: { adminId },
-    select: BILLING_SUBSCRIPTION_SELECT
-  });
-};
-
 const isTrialExpired = (subscription: BillingSubscriptionRecord): boolean => {
   return Boolean(subscription.isTrial && subscription.trialEndsAt && subscription.trialEndsAt.getTime() < Date.now());
 };
@@ -246,12 +517,15 @@ const buildBillingSummary = async (
     return null;
   }
 
+  const plansCatalog = await buildPlansCatalog();
+
   if (role === "SUPERADMIN") {
-    const plan = toPlanView(BILLING_PLANS.PACK_100);
+    const plan = plansCatalog.PACK_100;
     return {
       isBypassed: true,
       stripeConfigured: STRIPE_ENABLED,
       plan,
+      currentPrice: resolveCurrentPriceView(plan, null),
       status: "BYPASSED",
       seatUsage: {
         used: 0,
@@ -270,7 +544,7 @@ const buildBillingSummary = async (
   }
 
   const ensuredSubscription = subscription ?? (await loadOrCreateAdminSubscription(userId));
-  const plan = toPlanView(BILLING_PLANS[ensuredSubscription.planCode]);
+  const plan = plansCatalog[ensuredSubscription.planCode];
   const used = await getManagedEmployeesCount(userId);
   const remaining = Math.max(0, ensuredSubscription.seatLimit - used);
 
@@ -278,6 +552,7 @@ const buildBillingSummary = async (
     isBypassed: false,
     stripeConfigured: STRIPE_ENABLED,
     plan,
+    currentPrice: resolveCurrentPriceView(plan, ensuredSubscription),
     status: ensuredSubscription.status,
     seatUsage: {
       used,
@@ -351,13 +626,14 @@ const resolveStripeCustomerId = async (
   return customer.id;
 };
 
-export const listBillingPlans = (): BillingPlanView[] => {
+export const listBillingPlans = async (): Promise<BillingPlanView[]> => {
+  const plansCatalog = await buildPlansCatalog();
   return [
-    toPlanView(BILLING_PLANS.DEMO_10),
-    toPlanView(BILLING_PLANS.PACK_10),
-    toPlanView(BILLING_PLANS.PACK_20),
-    toPlanView(BILLING_PLANS.PACK_50),
-    toPlanView(BILLING_PLANS.PACK_100)
+    plansCatalog.DEMO_10,
+    plansCatalog.PACK_10,
+    plansCatalog.PACK_20,
+    plansCatalog.PACK_50,
+    plansCatalog.PACK_100
   ];
 };
 
@@ -396,7 +672,7 @@ export const getBillingOverviewForUser = async (requesterId: string): Promise<{ 
   const summary = await buildBillingSummary(requester.role, requester.role === "ADMIN" ? await loadOrCreateAdminSubscription(requester.id) : null, requester.id);
 
   return {
-    plans: listBillingPlans(),
+    plans: await listBillingPlans(),
     summary
   };
 };
@@ -434,14 +710,14 @@ export const assertAdminSeatAvailability = async (params: { adminId: string; req
   }
 };
 
-export const createCheckoutSessionForAdmin = async (params: { requesterId: string; planCode: BillingPlanCode }) => {
+export const createCheckoutSessionForAdmin = async (params: { requesterId: string; priceId: string }) => {
   const requester = await getScopedUserById(params.requesterId);
   if (requester.role !== "ADMIN") {
     throw new AppError("Insufficient permissions.", 403);
   }
 
   const stripeClient = ensureStripeReady();
-  const plan = getCheckoutPlan(params.planCode);
+  const selectedPrice = getCheckoutPriceConfig(params.priceId);
   const subscription = await loadOrCreateAdminSubscription(requester.id);
   const customerId = await resolveStripeCustomerId(
     stripeClient,
@@ -462,18 +738,18 @@ export const createCheckoutSessionForAdmin = async (params: { requesterId: strin
     allow_promotion_codes: true,
     line_items: [
       {
-        price: plan.stripePriceId as string,
+        price: selectedPrice.priceId as string,
         quantity: 1
       }
     ],
     metadata: {
       adminId: requester.id,
-      planCode: params.planCode
+      planCode: selectedPrice.planCode
     },
     subscription_data: {
       metadata: {
         adminId: requester.id,
-        planCode: params.planCode
+        planCode: selectedPrice.planCode
       }
     }
   });
@@ -616,5 +892,128 @@ export const getAdminSeatUsage = async (adminId: string): Promise<{ used: number
   return {
     used,
     limit: subscription.seatLimit
+  };
+};
+
+const listStripeInvoicesForCustomer = async (customerId: string): Promise<BillingPaymentRecord[]> => {
+  if (!stripe) {
+    return [];
+  }
+
+  const invoices = await stripe.invoices.list({
+    customer: customerId,
+    limit: 100
+  });
+
+  return invoices.data.map((invoice) => {
+    const rawInvoice = invoice as Stripe.Invoice & {
+      subscription?: string | Stripe.Subscription | null;
+    };
+
+    return {
+    invoiceId: invoice.id ?? "",
+    stripeSubscriptionId:
+      typeof rawInvoice.subscription === "string"
+        ? rawInvoice.subscription
+        : rawInvoice.subscription?.id ?? null,
+    status: invoice.status ?? "unknown",
+    currency: invoice.currency?.toUpperCase() ?? null,
+    amountDueEur: centsToEur(invoice.amount_due),
+    amountPaidEur: centsToEur(invoice.amount_paid),
+    amountRemainingEur: centsToEur(invoice.amount_remaining),
+    createdAt: toIsoFromUnix(invoice.created),
+    dueAt: toIsoFromUnix(invoice.due_date),
+    paidAt: invoice.status_transitions?.paid_at ? toIsoFromUnix(invoice.status_transitions.paid_at) : null,
+    periodStart: toIsoFromUnix(invoice.period_start),
+    periodEnd: toIsoFromUnix(invoice.period_end),
+    hostedInvoiceUrl: invoice.hosted_invoice_url ?? null,
+    invoicePdfUrl: invoice.invoice_pdf ?? null
+  };
+  });
+};
+
+const buildPaymentStats = (payments: BillingPaymentRecord[]) => {
+  const paidPayments = payments.filter((payment) => payment.amountPaidEur !== null && payment.amountPaidEur > 0);
+  const totalPaidEur = roundMoney(paidPayments.reduce((sum, payment) => sum + (payment.amountPaidEur ?? 0), 0));
+  const lastPaymentAt = paidPayments
+    .map((payment) => payment.paidAt)
+    .filter((value): value is string => Boolean(value))
+    .sort((left, right) => right.localeCompare(left))[0] ?? null;
+
+  return {
+    paidInvoicesCount: paidPayments.length,
+    totalPaidEur,
+    lastPaymentAt
+  };
+};
+
+export const getBillingPaymentsHistoryForUser = async (requesterId: string): Promise<BillingPaymentsHistoryResponse> => {
+  const requester = await getScopedUserById(requesterId);
+  if (requester.role !== "ADMIN" && requester.role !== "SUPERADMIN") {
+    throw new AppError("Insufficient permissions.", 403);
+  }
+
+  const subscriptions = await prisma.billingSubscription.findMany({
+    where:
+      requester.role === "ADMIN"
+        ? {
+            adminId: requester.id
+          }
+        : undefined,
+    select: {
+      adminId: true,
+      planCode: true,
+      status: true,
+      seatLimit: true,
+      isTrial: true,
+      trialEndsAt: true,
+      stripeCustomerId: true,
+      stripeSubscriptionId: true,
+      currentPeriodEnd: true,
+      cancelAtPeriodEnd: true,
+      admin: {
+        select: {
+          id: true,
+          email: true,
+          fullName: true
+        }
+      }
+    },
+    orderBy: [
+      {
+        admin: {
+          fullName: "asc"
+        }
+      }
+    ]
+  });
+
+  const accounts = await Promise.all(
+    subscriptions.map(async (subscription) => {
+      const payments = STRIPE_ENABLED && subscription.stripeCustomerId ? await listStripeInvoicesForCustomer(subscription.stripeCustomerId) : [];
+
+      return {
+        admin: subscription.admin,
+        subscription: {
+          planCode: subscription.planCode,
+          status: subscription.status,
+          seatLimit: subscription.seatLimit,
+          isTrial: subscription.isTrial,
+          trialEndsAt: normalizeDate(subscription.trialEndsAt),
+          currentPeriodEnd: normalizeDate(subscription.currentPeriodEnd),
+          cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
+          stripeCustomerId: subscription.stripeCustomerId,
+          stripeSubscriptionId: subscription.stripeSubscriptionId
+        },
+        paymentStats: buildPaymentStats(payments),
+        payments
+      };
+    })
+  );
+
+  return {
+    scope: requester.role === "SUPERADMIN" ? "SUPERADMIN" : "ADMIN",
+    stripeConfigured: STRIPE_ENABLED,
+    accounts
   };
 };

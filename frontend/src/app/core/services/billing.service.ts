@@ -1,5 +1,5 @@
 import { Injectable } from "@angular/core";
-import { BillingPlan, BillingPlanCode, BillingSummary } from "../models/types";
+import { BillingPaymentsHistoryResponse, BillingPlan, BillingSummary } from "../models/types";
 import { ApiService } from "./api.service";
 
 type BillingOverviewResponse = {
@@ -15,8 +15,12 @@ export class BillingService {
     return this.apiService.get<BillingOverviewResponse>("/billing/overview", true);
   }
 
-  createCheckoutSession(planCode: Exclude<BillingPlanCode, "DEMO_10">): Promise<{ url: string }> {
-    return this.apiService.post<{ url: string }>("/billing/checkout-session", { planCode }, true);
+  getPaymentsHistory(): Promise<BillingPaymentsHistoryResponse> {
+    return this.apiService.get<BillingPaymentsHistoryResponse>("/billing/payments-history", true);
+  }
+
+  createCheckoutSession(priceId: string): Promise<{ url: string }> {
+    return this.apiService.post<{ url: string }>("/billing/checkout-session", { priceId }, true);
   }
 
   createPortalSession(): Promise<{ url: string }> {

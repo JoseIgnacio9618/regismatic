@@ -17,6 +17,7 @@
       <ion-button fill="clear" [class.active-nav]="isActive('/reports')" (click)="go('/reports')">{{ "nav.reports" | t }}</ion-button>
       <ion-button fill="clear" *ngIf="authService.isAdmin" [class.active-nav]="isActive('/users')" (click)="go('/users')">{{ "nav.team" | t }}</ion-button>
       <ion-button fill="clear" *ngIf="authService.isAdmin" [class.active-nav]="isActive('/billing')" (click)="go('/billing')">{{ "nav.billing" | t }}</ion-button>
+      <ion-button fill="clear" *ngIf="authService.isAdmin" [class.active-nav]="isActive('/billing-history')" (click)="go('/billing-history')">{{ "nav.payments" | t }}</ion-button>
       <ion-badge *ngIf="authService.user" class="toolbar-role-chip" [color]="currentRoleColor">{{ currentRoleLabel }}</ion-badge>
       <ion-button fill="clear" [id]="desktopNotificationsTriggerId" class="notification-button" [attr.aria-label]="'nav.notifications' | t">
         <ion-icon slot="icon-only" name="notifications-outline" aria-hidden="true"></ion-icon>
@@ -210,6 +211,9 @@
       </ion-item>
       <ion-item button detail="false" *ngIf="authService.isAdmin" (click)="go('/billing')" [class.active-item]="isActive('/billing')">
         <ion-label>{{ "nav.billing" | t }}</ion-label>
+      </ion-item>
+      <ion-item button detail="false" *ngIf="authService.isAdmin" (click)="go('/billing-history')" [class.active-item]="isActive('/billing-history')">
+        <ion-label>{{ "nav.payments" | t }}</ion-label>
       </ion-item>
       <ion-item class="menu-language">
         <ion-label>{{ "common.language" | t }}</ion-label>

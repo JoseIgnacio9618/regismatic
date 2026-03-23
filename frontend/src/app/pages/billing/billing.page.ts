@@ -1,6 +1,6 @@
 import { Component, OnInit } from "@angular/core";
 import { ToastController } from "@ionic/angular";
-import { BillingPlan, BillingSummary } from "src/app/core/models/types";
+import { BillingPlan, BillingPriceOption, BillingSummary } from "src/app/core/models/types";
 import { AuthService } from "src/app/core/services/auth.service";
 import { BillingService } from "src/app/core/services/billing.service";
 import { I18nService } from "src/app/core/services/i18n.service";
@@ -36,12 +36,41 @@ export class BillingPage implements OnInit {
     return this.authService.user?.role === "ADMIN";
   }
 
-  formatPrice(plan: BillingPlan): string {
-    if (plan.monthlyPriceEur === 0) {
+  formatCurrentPrice(billing: BillingSummary): string {
+    if (billing.isTrial || !billing.currentPrice?.amountEur) {
       return this.i18nService.t("billing.free");
     }
 
-    return `${plan.monthlyPriceEur} EUR/${this.i18nService.t("billing.month_short")}`;
+    return this.formatPriceOption(billing.currentPrice);
+  }
+
+  formatPriceOption(price: BillingPriceOption): string {
+    if (!price.amountEur) {
+      return this.i18nService.t("billing.not_available");
+    }
+
+    const intervalKey = price.interval === "year" ? "billing.year_short" : "billing.month_short";
+    return `${price.amountEur} EUR/${this.i18nService.t(intervalKey)}`;
+  }
+
+  formatPriceHint(price: BillingPriceOption): string {
+    if (price.interval === "year" && price.monthlyEquivalentEur) {
+      return this.i18nService.t("billing.year_equivalent", {
+        amount: price.monthlyEquivalentEur
+      });
+    }
+
+    if (price.pricePerSeatEur) {
+      return this.i18nService.t("billing.per_user_value", {
+        amount: price.pricePerSeatEur
+      });
+    }
+
+    return this.i18nService.t("billing.not_available");
+  }
+
+  trackPlanPrice(_index: number, price: BillingPriceOption): string {
+    return `${price.interval}:${price.priceId ?? "unconfigured"}`;
   }
 
   formatDate(value: string | null | undefined): string {
@@ -65,14 +94,14 @@ export class BillingPage implements OnInit {
     return this.i18nService.t(`billing.status.${status}`);
   }
 
-  async startCheckout(planCode: BillingPlan["code"]): Promise<void> {
-    if (!this.isAdminBilling || planCode === "DEMO_10") {
+  async startCheckout(price: BillingPriceOption): Promise<void> {
+    if (!this.isAdminBilling || !price.priceId || !price.checkoutEnabled) {
       return;
     }
 
     this.actionLoading = true;
     try {
-      const session = await this.billingService.createCheckoutSession(planCode);
+      const session = await this.billingService.createCheckoutSession(price.priceId);
       window.location.href = session.url;
     } catch (error) {
       await this.showToast(error instanceof Error ? error.message : this.i18nService.t("billing.checkout_failed"), "danger");

@@ -59,6 +59,7 @@ export class ApiService {
     "Your current billing plan does not allow more employees.": "errors.billing_employee_limit_reached",
     "Stripe billing is not fully configured.": "errors.stripe_not_configured",
     "No Stripe customer is linked to this administrator yet.": "errors.stripe_customer_missing",
+    "Selected billing price is not available for checkout.": "errors.checkout_session_failed",
     "Could not create Stripe checkout session.": "errors.checkout_session_failed"
   };
   private readonly validationDetailMap: Record<string, string> = {

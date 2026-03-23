@@ -11,10 +11,14 @@ Necesitas estos datos:
 1. `STRIPE_SECRET_KEY`
 2. `STRIPE_WEBHOOK_SECRET`
 3. `STRIPE_PRICE_PACK_10_MONTHLY`
-4. `STRIPE_PRICE_PACK_20_MONTHLY`
-5. `STRIPE_PRICE_PACK_50_MONTHLY`
-6. `STRIPE_PRICE_PACK_100_MONTHLY`
-7. Las URLs de retorno:
+4. `STRIPE_PRICE_PACK_10_YEARLY`
+5. `STRIPE_PRICE_PACK_20_MONTHLY`
+6. `STRIPE_PRICE_PACK_20_YEARLY`
+7. `STRIPE_PRICE_PACK_50_MONTHLY`
+8. `STRIPE_PRICE_PACK_50_YEARLY`
+9. `STRIPE_PRICE_PACK_100_MONTHLY`
+10. `STRIPE_PRICE_PACK_100_YEARLY`
+11. Las URLs de retorno:
    - `STRIPE_CHECKOUT_SUCCESS_URL`
    - `STRIPE_CHECKOUT_CANCEL_URL`
    - `STRIPE_BILLING_PORTAL_RETURN_URL`
@@ -42,11 +46,12 @@ Ese valor va en:
 STRIPE_SECRET_KEY=sk_test_xxx
 ```
 
-## Paso 2. Crear los 4 precios mensuales
+## Paso 2. Crear los productos y sus precios mensual y anual
 
 En Stripe:
 - entra en `Product catalog` o `Products`
-- crea 4 productos con precio recurrente mensual
+- crea `4` productos
+- para cada producto crea `2` precios recurrentes: uno mensual y otro anual
 
 Recomendacion de nombres:
 - `Regismatic Pack 10`
@@ -57,23 +62,27 @@ Recomendacion de nombres:
 Configuracion de cada precio:
 - moneda: `EUR`
 - tipo: `Recurring`
-- intervalo: `Monthly`
+- intervalo: `Monthly` o `Yearly`
 
-Importes:
-- `Pack 10` -> `19 EUR/mes`
-- `Pack 20` -> `29 EUR/mes`
-- `Pack 50` -> `59 EUR/mes`
-- `Pack 100` -> `99 EUR/mes`
+Ejemplo comercial recomendado:
+- `Pack 10` -> `17 EUR/mes` o `170 EUR/ano`
+- `Pack 20` -> `29 EUR/mes` o `290 EUR/ano`
+- `Pack 50` -> `59 EUR/mes` o `590 EUR/ano`
+- `Pack 100` -> `99 EUR/mes` o `990 EUR/ano`
 
-Despues copia el `Price ID` de cada uno.
+Despues copia los `Price ID` de cada precio.
 
 Quedaran asi:
 
 ```env
 STRIPE_PRICE_PACK_10_MONTHLY=price_xxx
+STRIPE_PRICE_PACK_10_YEARLY=price_xxx
 STRIPE_PRICE_PACK_20_MONTHLY=price_xxx
+STRIPE_PRICE_PACK_20_YEARLY=price_xxx
 STRIPE_PRICE_PACK_50_MONTHLY=price_xxx
+STRIPE_PRICE_PACK_50_YEARLY=price_xxx
 STRIPE_PRICE_PACK_100_MONTHLY=price_xxx
+STRIPE_PRICE_PACK_100_YEARLY=price_xxx
 ```
 
 ## Paso 3. Crear el webhook
@@ -157,9 +166,13 @@ Bloque completo:
 STRIPE_SECRET_KEY=sk_test_xxx
 STRIPE_WEBHOOK_SECRET=whsec_xxx
 STRIPE_PRICE_PACK_10_MONTHLY=price_xxx
+STRIPE_PRICE_PACK_10_YEARLY=price_xxx
 STRIPE_PRICE_PACK_20_MONTHLY=price_xxx
+STRIPE_PRICE_PACK_20_YEARLY=price_xxx
 STRIPE_PRICE_PACK_50_MONTHLY=price_xxx
+STRIPE_PRICE_PACK_50_YEARLY=price_xxx
 STRIPE_PRICE_PACK_100_MONTHLY=price_xxx
+STRIPE_PRICE_PACK_100_YEARLY=price_xxx
 STRIPE_CHECKOUT_SUCCESS_URL=http://localhost:8100/billing?checkout=success
 STRIPE_CHECKOUT_CANCEL_URL=http://localhost:8100/billing?checkout=cancel
 STRIPE_BILLING_PORTAL_RETURN_URL=http://localhost:8100/billing
@@ -189,7 +202,7 @@ La integracion implementada hace esto:
 
 - los admins nuevos arrancan con:
   - demo de `7 dias`
-  - limite de `10 usuarios`
+  - limite de `3 usuarios`
 - se intenta evitar multicuentas demo por IP
 - cada empleado aceptado en el equipo cuenta para el limite del plan
 - el limite se aplica en:
@@ -211,19 +224,21 @@ Cuando vuelvas a esto otro dia, revisa esta lista:
 3. Crear `Pack 20`
 4. Crear `Pack 50`
 5. Crear `Pack 100`
-6. Copiar los cuatro `price_...`
-7. Crear webhook a `/api/billing/webhook`
-8. Seleccionar los 4 eventos necesarios
-9. Copiar `STRIPE_WEBHOOK_SECRET`
-10. Rellenar URLs de retorno
-11. Guardar todo en `.env` o `.env.production`
-12. Aplicar migraciones:
+6. Crear sus precios `Monthly`
+7. Crear sus precios `Yearly`
+8. Copiar los ocho `price_...`
+9. Crear webhook a `/api/billing/webhook`
+10. Seleccionar los 4 eventos necesarios
+11. Copiar `STRIPE_WEBHOOK_SECRET`
+12. Rellenar URLs de retorno
+13. Guardar todo en `.env` o `.env.production`
+14. Aplicar migraciones:
 
 ```bash
 npm run prisma:migrate --workspace backend
 ```
 
-13. Reiniciar backend
+15. Reiniciar backend
 
 ## 8. Referencias del proyecto
 

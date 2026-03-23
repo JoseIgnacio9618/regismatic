@@ -1,0 +1,102 @@
+.billing-history-grid {
+  padding-bottom: 32px;
+}
+
+.accounts-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.account-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 18px;
+  border: 1px solid color-mix(in srgb, var(--app-border), transparent 10%);
+  border-radius: 22px;
+  background: color-mix(in srgb, var(--app-surface-strong), transparent 6%);
+}
+
+.account-head {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.account-head p {
+  margin: 6px 0 0;
+  color: var(--app-ink-muted);
+}
+
+.account-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+}
+
+.metric-chip {
+  padding: 12px 14px;
+  border-radius: 18px;
+  border: 1px solid color-mix(in srgb, var(--app-border), transparent 12%);
+  background: color-mix(in srgb, var(--app-surface), transparent 3%);
+}
+
+.metric-chip strong {
+  display: block;
+  font-size: 1rem;
+}
+
+.metric-chip span {
+  display: block;
+  margin-top: 4px;
+  color: var(--app-ink-muted);
+  font-size: 0.86rem;
+}
+
+.account-info-list {
+  padding: 0;
+}
+
+.payments-table-shell {
+  overflow-x: auto;
+  border: 1px solid color-mix(in srgb, var(--app-border), transparent 12%);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--app-surface), transparent 3%);
+}
+
+.payments-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 640px;
+}
+
+.payments-table th,
+.payments-table td {
+  padding: 12px 14px;
+  text-align: left;
+  border-bottom: 1px solid color-mix(in srgb, var(--app-border), transparent 12%);
+}
+
+.payments-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.payments-table th {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--app-ink-muted);
+}
+
+.empty-inline p {
+  margin: 0;
+  color: var(--app-ink-muted);
+}
+
+@media (max-width: 767px) {
+  .account-head {
+    flex-direction: column;
+    align-items: start;
+  }
+}

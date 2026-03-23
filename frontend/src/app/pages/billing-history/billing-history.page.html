@@ -1,0 +1,118 @@
+<app-main-layout [title]="'billing_history.layout_title' | t">
+  <ion-grid fixed class="billing-history-grid">
+    <ion-row>
+      <ion-col size="12">
+        <ion-card class="glass-card panel">
+          <ion-card-header>
+            <ion-card-title>{{ "billing_history.title" | t }}</ion-card-title>
+            <p class="microcopy">
+              {{ isSuperadminView ? ("billing_history.desc_superadmin" | t) : ("billing_history.desc_admin" | t) }}
+            </p>
+          </ion-card-header>
+          <ion-card-content>
+            <section class="empty-state" *ngIf="loading">
+              <ion-icon name="card-outline" aria-hidden="true"></ion-icon>
+              <h3>{{ "common.loading" | t }}</h3>
+            </section>
+
+            <section class="empty-state" *ngIf="!loading && !history?.stripeConfigured">
+              <ion-icon name="alert-circle-outline" aria-hidden="true"></ion-icon>
+              <h3>{{ "billing_history.stripe_missing_title" | t }}</h3>
+              <p>{{ "billing_history.stripe_missing_desc" | t }}</p>
+            </section>
+
+            <section class="empty-state" *ngIf="!loading && history?.stripeConfigured && accounts.length === 0">
+              <ion-icon name="document-text-outline" aria-hidden="true"></ion-icon>
+              <h3>{{ "billing_history.empty_title" | t }}</h3>
+              <p>{{ "billing_history.empty_desc" | t }}</p>
+            </section>
+
+            <div class="accounts-grid" *ngIf="!loading && history?.stripeConfigured && accounts.length > 0">
+              <article class="account-card" *ngFor="let account of accounts">
+                <div class="account-head">
+                  <div>
+                    <strong>{{ account.admin.fullName }}</strong>
+                    <p>{{ account.admin.email }}</p>
+                  </div>
+                  <ion-badge [color]="subscriptionStatusColor(account.subscription.status)">
+                    {{ account.subscription.status }}
+                  </ion-badge>
+                </div>
+
+                <div class="account-metrics">
+                  <article class="metric-chip">
+                    <strong>{{ planLabel(account) }}</strong>
+                    <span>{{ "billing.seats" | t: { count: account.subscription.seatLimit } }}</span>
+                  </article>
+                  <article class="metric-chip">
+                    <strong>{{ account.paymentStats.paidInvoicesCount }}</strong>
+                    <span>{{ "billing_history.paid_count" | t }}</span>
+                  </article>
+                  <article class="metric-chip">
+                    <strong>{{ formatMoney(account.paymentStats.totalPaidEur) }}</strong>
+                    <span>{{ "billing_history.total_paid" | t }}</span>
+                  </article>
+                  <article class="metric-chip">
+                    <strong>{{ formatDate(account.paymentStats.lastPaymentAt) }}</strong>
+                    <span>{{ "billing_history.last_payment" | t }}</span>
+                  </article>
+                </div>
+
+                <ion-list lines="none" class="account-info-list">
+                  <ion-item>
+                    <ion-label>
+                      <h3>{{ "billing_history.trial_or_period" | t }}</h3>
+                      <ion-note>
+                        {{
+                          account.subscription.isTrial
+                            ? (("billing.trial_ends" | t) + ": " + formatDate(account.subscription.trialEndsAt))
+                            : (("billing.period_ends" | t) + ": " + formatDate(account.subscription.currentPeriodEnd))
+                        }}
+                      </ion-note>
+                    </ion-label>
+                  </ion-item>
+                </ion-list>
+
+                <div class="payments-table-shell" *ngIf="account.payments.length > 0; else noPaymentsState">
+                  <table class="payments-table">
+                    <thead>
+                      <tr>
+                        <th>{{ "billing_history.table_date" | t }}</th>
+                        <th>{{ "billing_history.table_status" | t }}</th>
+                        <th>{{ "billing_history.table_due" | t }}</th>
+                        <th>{{ "billing_history.table_paid" | t }}</th>
+                        <th>{{ "billing_history.table_link" | t }}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let payment of account.payments">
+                        <td>{{ formatDate(payment.paidAt || payment.createdAt) }}</td>
+                        <td>
+                          <ion-badge [color]="paymentStatusColor(payment.status)">{{ payment.status }}</ion-badge>
+                        </td>
+                        <td>{{ formatMoney(payment.amountDueEur, payment.currency) }}</td>
+                        <td>{{ formatMoney(payment.amountPaidEur, payment.currency) }}</td>
+                        <td>
+                          <a *ngIf="invoicePrimaryLink(payment) as paymentLink" [href]="paymentLink" target="_blank" rel="noreferrer">
+                            {{ "billing_history.open_invoice" | t }}
+                          </a>
+                          <span *ngIf="!invoicePrimaryLink(payment)">--</span>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <ng-template #noPaymentsState>
+                  <section class="empty-inline">
+                    <p>{{ "billing_history.no_payments" | t }}</p>
+                  </section>
+                </ng-template>
+              </article>
+            </div>
+          </ion-card-content>
+        </ion-card>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+</app-main-layout>

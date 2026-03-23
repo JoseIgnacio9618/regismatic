@@ -2,7 +2,7 @@ import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from "@angular/co
 import { ActivatedRoute } from "@angular/router";
 import { AlertController, ToastController } from "@ionic/angular";
 import { Subscription } from "rxjs";
-import { Role, TeamJoinRequest, TeamUser } from "src/app/core/models/types";
+import { BillingSummary, Role, TeamJoinRequest, TeamUser } from "src/app/core/models/types";
 import { ApiService } from "src/app/core/services/api.service";
 import { AuthService } from "src/app/core/services/auth.service";
 import { I18nService } from "src/app/core/services/i18n.service";
@@ -248,6 +248,14 @@ export class UsersPage implements OnInit, OnDestroy {
     return this.authService.isAdmin ? this.authService.user?.adminInviteCode ?? null : null;
   }
 
+  get adminBilling(): BillingSummary | null {
+    return this.authService.isAdmin ? this.authService.user?.billing ?? null : null;
+  }
+
+  get showAdminBillingNotice(): boolean {
+    return Boolean(this.adminBilling && !this.isSuperadmin);
+  }
+
   get pendingJoinRequests(): TeamJoinRequest[] {
     return this.joinRequests.filter((request) => request.status === "PENDING");
   }
@@ -399,6 +407,14 @@ export class UsersPage implements OnInit, OnDestroy {
       month: "2-digit",
       year: "numeric"
     });
+  }
+
+  formatBillingDate(iso: string | null | undefined): string {
+    if (!iso) {
+      return "--";
+    }
+
+    return this.formatCreatedAt(iso);
   }
 
   roleColor(role: Role): "medium" | "primary" | "warning" {

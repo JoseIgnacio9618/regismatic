@@ -35,9 +35,13 @@ VITE_API_BASE_URL=https://api.tudominio.com/api
 STRIPE_SECRET_KEY=sk_live_xxx
 STRIPE_WEBHOOK_SECRET=whsec_xxx
 STRIPE_PRICE_PACK_10_MONTHLY=price_xxx
+STRIPE_PRICE_PACK_10_YEARLY=price_xxx
 STRIPE_PRICE_PACK_20_MONTHLY=price_xxx
+STRIPE_PRICE_PACK_20_YEARLY=price_xxx
 STRIPE_PRICE_PACK_50_MONTHLY=price_xxx
+STRIPE_PRICE_PACK_50_YEARLY=price_xxx
 STRIPE_PRICE_PACK_100_MONTHLY=price_xxx
+STRIPE_PRICE_PACK_100_YEARLY=price_xxx
 STRIPE_CHECKOUT_SUCCESS_URL=https://app.tudominio.com/billing?checkout=success
 STRIPE_CHECKOUT_CANCEL_URL=https://app.tudominio.com/billing?checkout=cancel
 STRIPE_BILLING_PORTAL_RETURN_URL=https://app.tudominio.com/billing
@@ -66,16 +70,20 @@ curl https://api.tudominio.com/health/ready
 ```
 
 ## 3.1. Configuracion de Stripe
-1. Crea en Stripe cuatro precios recurrentes mensuales:
+1. Crea en Stripe cuatro productos con dos precios recurrentes cada uno:
    - Pack 10 -> `19 EUR/mes`
    - Pack 20 -> `29 EUR/mes`
    - Pack 50 -> `59 EUR/mes`
    - Pack 100 -> `99 EUR/mes`
 2. Copia sus `price_...` en:
    - `STRIPE_PRICE_PACK_10_MONTHLY`
+   - `STRIPE_PRICE_PACK_10_YEARLY`
    - `STRIPE_PRICE_PACK_20_MONTHLY`
+   - `STRIPE_PRICE_PACK_20_YEARLY`
    - `STRIPE_PRICE_PACK_50_MONTHLY`
+   - `STRIPE_PRICE_PACK_50_YEARLY`
    - `STRIPE_PRICE_PACK_100_MONTHLY`
+   - `STRIPE_PRICE_PACK_100_YEARLY`
 3. Crea un endpoint webhook apuntando a:
 
 ```text
@@ -90,7 +98,7 @@ https://api.tudominio.com/api/billing/webhook
 5. Copia el secreto del webhook en `STRIPE_WEBHOOK_SECRET`
 
 Resultado:
-- los admins nuevos arrancan con demo de `7 dias / 10 usuarios`
+- los admins nuevos arrancan con demo de `7 dias / 3 usuarios`
 - al contratar o cambiar plan, Stripe actualiza el backend por webhook
 - el limite de empleados se aplica tanto al crear empleados como al aceptar solicitudes de union al equipo
 
