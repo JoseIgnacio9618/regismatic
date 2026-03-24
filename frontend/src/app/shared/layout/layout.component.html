@@ -66,7 +66,7 @@
     <ion-list lines="none" class="header-menu-list">
       <ion-item class="menu-language">
         <ion-label>{{ "common.language" | t }}</ion-label>
-        <ion-select class="menu-language-select" interface="popover" [value]="i18nService.language" (ionChange)="setLanguage($event.detail.value)">
+        <ion-select class="menu-language-select app-compact-select" interface="popover" [value]="i18nService.language" (ionChange)="setLanguage($event.detail.value)">
           <ion-select-option value="es">{{ "lang.es" | t }}</ion-select-option>
           <ion-select-option value="en">{{ "lang.en" | t }}</ion-select-option>
           <ion-select-option value="fr">{{ "lang.fr" | t }}</ion-select-option>
@@ -217,7 +217,7 @@
       </ion-item>
       <ion-item class="menu-language">
         <ion-label>{{ "common.language" | t }}</ion-label>
-        <ion-select class="menu-language-select" interface="popover" [value]="i18nService.language" (ionChange)="setLanguage($event.detail.value)">
+        <ion-select class="menu-language-select app-compact-select" interface="popover" [value]="i18nService.language" (ionChange)="setLanguage($event.detail.value)">
           <ion-select-option value="es">{{ "lang.es" | t }}</ion-select-option>
           <ion-select-option value="en">{{ "lang.en" | t }}</ion-select-option>
           <ion-select-option value="fr">{{ "lang.fr" | t }}</ion-select-option>

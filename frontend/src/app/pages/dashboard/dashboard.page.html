@@ -8,7 +8,7 @@
             <p class="microcopy">{{ "dashboard.realtime_microcopy" | t }}</p>
           </ion-card-header>
           <ion-card-content>
-            <section class="role-hint" *ngIf="authService.isAdmin">
+            <section class="role-hint app-inline-panel app-inline-panel--accent" *ngIf="authService.isAdmin">
               <ion-badge [color]="authService.isSuperadmin ? 'warning' : 'primary'">
                 {{ authService.isSuperadmin ? ("role.SUPERADMIN" | t) : ("role.ADMIN" | t) }}
               </ion-badge>
@@ -32,16 +32,24 @@
             </section>
 
             <div class="mt-16" *ngIf="!isAttendanceLocked && effectiveState === 'OFF'">
-              <ion-button expand="block" [disabled]="busy" (click)="handleAction('clockIn')">{{ "dashboard.clock_in" | t }}</ion-button>
+              <ion-button expand="block" class="attendance-action attendance-action--clock-in" [disabled]="busy" (click)="handleAction('clockIn')">
+                {{ "dashboard.clock_in" | t }}
+              </ion-button>
             </div>
 
             <div class="mt-16" *ngIf="!isAttendanceLocked && effectiveState === 'WORKING'">
-              <ion-button expand="block" color="warning" [disabled]="busy" (click)="handleAction('breakStart')">{{ "dashboard.break_start" | t }}</ion-button>
-              <ion-button expand="block" color="tertiary" [disabled]="busy" (click)="handleAction('clockOut')">{{ "dashboard.clock_out" | t }}</ion-button>
+              <ion-button expand="block" class="attendance-action attendance-action--break-start" [disabled]="busy" (click)="handleAction('breakStart')">
+                {{ "dashboard.break_start" | t }}
+              </ion-button>
+              <ion-button expand="block" class="attendance-action attendance-action--clock-out" [disabled]="busy" (click)="handleAction('clockOut')">
+                {{ "dashboard.clock_out" | t }}
+              </ion-button>
             </div>
 
             <div class="mt-16" *ngIf="!isAttendanceLocked && effectiveState === 'ON_BREAK'">
-              <ion-button expand="block" color="success" [disabled]="busy" (click)="handleAction('breakEnd')">{{ "dashboard.break_end" | t }}</ion-button>
+              <ion-button expand="block" class="attendance-action attendance-action--break-end" [disabled]="busy" (click)="handleAction('breakEnd')">
+                {{ "dashboard.break_end" | t }}
+              </ion-button>
             </div>
           </ion-card-content>
         </ion-card>
@@ -70,7 +78,7 @@
 
             <section class="pending-join-list" *ngIf="pendingJoinRequests.length > 0">
               <strong>{{ "dashboard.join_team_pending" | t }}</strong>
-              <article class="pending-join-card" *ngFor="let request of pendingJoinRequests">
+              <article class="pending-join-card app-inline-panel" *ngFor="let request of pendingJoinRequests">
                 <span>{{ request.targetManager.fullName }}</span>
                 <span>{{ request.employee.email }}</span>
                 <span>{{ request.message || ("dashboard.join_team_pending_desc" | t) }}</span>

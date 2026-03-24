@@ -1,16 +1,14 @@
 .app-toolbar {
-  --min-height: 70px;
-  --padding-start: 8px;
-  --padding-end: 8px;
-  --background:
-    linear-gradient(180deg, color-mix(in srgb, var(--app-surface-strong), transparent 1%) 0%, color-mix(in srgb, var(--app-surface), transparent 4%) 100%);
-  border-bottom: 1px solid color-mix(in srgb, var(--app-border), transparent 8%);
-  box-shadow: 0 10px 24px color-mix(in srgb, #000, transparent 95%);
-  backdrop-filter: blur(18px) saturate(160%);
+  --min-height: var(--app-toolbar-height);
+  --padding-start: 12px;
+  --padding-end: 12px;
+  --background: color-mix(in srgb, var(--ion-toolbar-background), transparent 2%);
+  box-shadow: none;
+  backdrop-filter: blur(14px) saturate(140%);
 }
 
 ion-title {
-  max-width: min(44vw, 560px);
+  max-width: min(46vw, 540px);
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -18,34 +16,35 @@ ion-title {
 
 .title-mark {
   display: inline-block;
-  width: 10px;
-  height: 10px;
-  border-radius: 999px;
+  width: 8px;
+  height: 16px;
   margin-right: 10px;
-  background: linear-gradient(140deg, var(--ion-color-primary) 0%, var(--ion-color-secondary) 100%);
-  box-shadow: 0 0 0 6px color-mix(in srgb, var(--ion-color-primary), transparent 85%);
+  border-radius: 3px;
+  background: var(--app-accent-strong);
   vertical-align: middle;
 }
 
 .toolbar-actions {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   flex-wrap: nowrap;
 }
 
 .toolbar-actions ion-button {
   --padding-start: 12px;
   --padding-end: 12px;
-  --color: var(--ion-text-color);
   --background: transparent;
+  --color: var(--app-text-secondary);
+  --border-radius: 12px;
+  min-width: 40px;
+  overflow: hidden;
+  border-radius: 12px;
   font-size: 0.9rem;
-  min-width: 42px;
-  transition: transform 160ms ease, opacity 160ms ease;
 }
 
-.toolbar-actions ion-button:hover {
-  transform: translateY(-1px);
+.toolbar-actions ion-button::part(native) {
+  border-radius: inherit;
 }
 
 .desktop-actions {
@@ -58,11 +57,9 @@ ion-title {
 }
 
 .toolbar-role-chip {
-  margin: 0 6px 0 2px;
-  border-radius: 999px;
-  padding: 8px 12px;
+  margin: 0 4px 0 0;
   font-size: 0.72rem;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
@@ -70,27 +67,18 @@ ion-title {
   display: none;
 }
 
-.mobile-actions ion-button {
-  --padding-start: 10px;
-  --padding-end: 10px;
-  --background: color-mix(in srgb, var(--app-surface-strong), transparent 2%);
-  --border-radius: 999px;
-  --color: var(--ion-text-color);
-  border: 1px solid color-mix(in srgb, var(--app-border), transparent 6%);
-}
-
 .menu-toggle-icon {
   display: block;
   width: 18px;
   height: 18px;
-  color: var(--ion-text-color);
-  font-size: 1.1rem;
+  font-size: 1.08rem;
+  color: currentColor;
 }
 
 .menu-caret-icon {
   width: 14px;
   height: 14px;
-  opacity: 0.9;
+  opacity: 0.76;
 }
 
 .menu-button-label {
@@ -99,34 +87,26 @@ ion-title {
 }
 
 .active-nav {
-  --background: color-mix(in srgb, var(--ion-color-primary), transparent 84%) !important;
+  --background: color-mix(in srgb, var(--ion-color-primary), transparent 88%) !important;
   --color: var(--ion-color-primary) !important;
-  border-radius: 999px;
-}
-
-.theme-toggle {
-  --background: color-mix(in srgb, var(--ion-color-secondary), transparent 85%);
-  --color: var(--ion-text-color);
-  --border-radius: 999px;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ion-color-primary), transparent 72%);
 }
 
 .header-menu-list {
   min-width: 272px;
-  max-width: min(92vw, 352px);
+  max-width: min(92vw, 344px);
   padding: 8px;
   margin: 0;
-  border-radius: 16px;
-  border: 1px solid color-mix(in srgb, var(--app-border), transparent 10%);
-  background: color-mix(in srgb, var(--app-surface-strong), transparent 2%);
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, #fff, transparent 82%),
-    0 20px 40px color-mix(in srgb, #000, transparent 88%);
+  background: transparent;
+  box-shadow: none;
 }
 
 .header-menu-list ion-item {
+  --app-item-radius: 12px;
   --background: transparent;
   --inner-border-width: 0;
   border: 0;
+  box-shadow: none;
   border-radius: 12px;
   margin-bottom: 4px;
 }
@@ -144,28 +124,19 @@ ion-title {
 }
 
 .menu-language ion-label {
-  font-size: 0.84rem;
-  font-weight: 600;
-  color: var(--app-ink-muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--app-text-tertiary);
 }
 
 .menu-language-select {
   min-width: 132px;
   max-width: 174px;
-  --padding-start: 10px;
-  --padding-end: 8px;
-  --highlight-color-focused: var(--ion-color-primary);
-  border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--app-border), transparent 6%);
-  background: color-mix(in srgb, var(--app-surface), transparent 8%);
-  color: var(--ion-text-color);
-  padding: 2px 8px;
 }
 
 .header-menu-list .menu-user {
-  --color: var(--app-ink-soft);
-  opacity: 0.95;
   --align-items: center;
+  --color: var(--app-text-secondary);
 }
 
 .header-menu-list .menu-user ion-label {
@@ -174,7 +145,7 @@ ion-title {
 }
 
 .header-menu-list .menu-scope {
-  --color: var(--app-ink-muted);
+  --color: var(--app-text-tertiary);
   font-size: 0.84rem;
 }
 
@@ -191,7 +162,6 @@ ion-title {
 
 .menu-profile-card ion-label ion-note {
   display: block;
-  color: var(--app-ink-muted);
   white-space: normal;
 }
 
@@ -210,71 +180,90 @@ ion-title {
 }
 
 .header-menu-list .active-item {
-  --background: color-mix(in srgb, var(--ion-color-primary), transparent 86%);
+  --background: color-mix(in srgb, var(--ion-color-primary), transparent 88%);
   --color: var(--ion-color-primary);
 }
 
-.more-button {
-  --padding-start: 10px;
-  --padding-end: 10px;
-  --background: color-mix(in srgb, var(--app-surface), transparent 2%);
-  --color: var(--ion-text-color);
-  --border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--app-border), transparent 6%);
-}
-
+.more-button,
 .mobile-menu-button {
-  --padding-start: 10px;
-  --padding-end: 10px;
-  --background: color-mix(in srgb, var(--app-surface-strong), transparent 2%);
-  --border-radius: 999px;
-  --color: var(--ion-text-color);
-  border: 1px solid color-mix(in srgb, var(--app-border), transparent 6%);
+  --background: var(--app-surface-1);
+  --color: var(--app-text-primary);
+  --border-color: var(--app-border-subtle);
+  --border-width: 1px;
+  --border-style: solid;
 }
 
 .header-menu-popover {
-  --width: min(92vw, 352px);
-  --max-width: 352px;
-  --background: transparent;
-  --box-shadow: 0 18px 36px color-mix(in srgb, #000, transparent 64%);
+  --width: min(92vw, 344px);
+  --max-width: 344px;
 }
 
 .page-shell {
-  padding: 92px 16px 28px;
-  max-width: 1220px;
+  padding: calc(var(--app-toolbar-height) + 24px) var(--app-page-padding) 32px;
+  max-width: var(--app-page-max-width);
   margin: 0 auto;
 }
 
-.notifications-list .notification-item {
-  transition: background 160ms ease, transform 160ms ease;
+.notification-button {
+  position: relative;
+  --padding-start: 10px;
+  --padding-end: 10px;
+  min-width: 40px;
 }
 
-.notifications-list .notification-item:hover {
-  transform: translateY(-1px);
+.notification-button ion-icon {
+  font-size: 1.18rem;
+  color: currentColor;
+}
+
+.notification-button .notification-badge {
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  transform: translate(22%, -22%);
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.66rem;
+  line-height: 1;
+  border-radius: var(--app-radius-pill);
+  border: 1.5px solid var(--ion-toolbar-background);
+  pointer-events: none;
+}
+
+.notifications-header {
+  --min-height: 48px;
+}
+
+.notifications-header ion-label {
+  font-weight: 700;
+}
+
+.notification-item {
+  --align-items: start;
+}
+
+.notification-item ion-label {
+  padding-top: 2px;
+  padding-bottom: 2px;
+}
+
+.unread-item {
   --background: color-mix(in srgb, var(--ion-color-primary), transparent 92%);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ion-color-primary), transparent 74%);
 }
 
-@media (max-width: 900px) {
-  .toolbar-actions {
-    gap: 0;
+@media (hover: hover) and (pointer: fine) {
+  .toolbar-actions ion-button:hover {
+    --background: var(--app-surface-2);
+    --color: var(--app-text-primary);
   }
 
-  .toolbar-actions ion-button {
-    --padding-start: 8px;
-    --padding-end: 8px;
-    font-size: 0.78rem;
-  }
-
-  .menu-button-label {
-    display: none;
-  }
-
-  .menu-caret-icon {
-    display: none;
-  }
-
-  .toolbar-role-chip {
-    display: none;
+  .notification-item:hover {
+    --background: color-mix(in srgb, var(--ion-color-primary), transparent 94%);
   }
 }
 
@@ -288,16 +277,34 @@ ion-title {
   }
 }
 
+@media (max-width: 900px) {
+  .toolbar-actions {
+    gap: 0;
+  }
+
+  .toolbar-actions ion-button {
+    --padding-start: 8px;
+    --padding-end: 8px;
+    font-size: 0.8rem;
+  }
+
+  .menu-button-label,
+  .menu-caret-icon,
+  .toolbar-role-chip {
+    display: none;
+  }
+}
+
 @media (max-width: 767px) {
   ion-title {
-    max-width: calc(100vw - 104px);
+    max-width: calc(100vw - 108px);
   }
 
   .header-menu-popover {
-    --width: min(94vw, 340px);
+    --width: min(94vw, 336px);
   }
 
   .page-shell {
-    padding-top: 76px;
+    padding-top: calc(var(--app-toolbar-height) + 16px);
   }
 }

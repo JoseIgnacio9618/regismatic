@@ -28,7 +28,7 @@
             </section>
 
             <div class="accounts-grid" *ngIf="!loading && history?.stripeConfigured && accounts.length > 0">
-              <article class="account-card" *ngFor="let account of accounts">
+              <article class="account-card app-inline-panel" *ngFor="let account of accounts">
                 <div class="account-head">
                   <div>
                     <strong>{{ account.admin.fullName }}</strong>
@@ -40,26 +40,26 @@
                 </div>
 
                 <div class="account-metrics">
-                  <article class="metric-chip">
+                  <article class="metric-chip app-inline-panel">
                     <strong>{{ planLabel(account) }}</strong>
                     <span>{{ "billing.seats" | t: { count: account.subscription.seatLimit } }}</span>
                   </article>
-                  <article class="metric-chip">
+                  <article class="metric-chip app-inline-panel">
                     <strong>{{ account.paymentStats.paidInvoicesCount }}</strong>
                     <span>{{ "billing_history.paid_count" | t }}</span>
                   </article>
-                  <article class="metric-chip">
+                  <article class="metric-chip app-inline-panel">
                     <strong>{{ formatMoney(account.paymentStats.totalPaidEur) }}</strong>
                     <span>{{ "billing_history.total_paid" | t }}</span>
                   </article>
-                  <article class="metric-chip">
+                  <article class="metric-chip app-inline-panel">
                     <strong>{{ formatDate(account.paymentStats.lastPaymentAt) }}</strong>
                     <span>{{ "billing_history.last_payment" | t }}</span>
                   </article>
                 </div>
 
-                <ion-list lines="none" class="account-info-list">
-                  <ion-item>
+                <ion-list lines="none" class="account-info-list app-attached-list">
+                  <ion-item [class.app-attached-item]="account.payments.length > 0">
                     <ion-label>
                       <h3>{{ "billing_history.trial_or_period" | t }}</h3>
                       <ion-note>
@@ -73,8 +73,8 @@
                   </ion-item>
                 </ion-list>
 
-                <div class="payments-table-shell" *ngIf="account.payments.length > 0; else noPaymentsState">
-                  <table class="payments-table">
+                <div class="payments-table-shell app-table-shell app-attached-panel" *ngIf="account.payments.length > 0; else noPaymentsState">
+                  <table class="payments-table app-data-table">
                     <thead>
                       <tr>
                         <th>{{ "billing_history.table_date" | t }}</th>

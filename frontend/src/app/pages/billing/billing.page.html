@@ -15,12 +15,19 @@
             </section>
 
             <ng-container *ngIf="!billing.isBypassed">
-              <div class="billing-status-card">
-                <div>
+              <div class="billing-status-card app-inline-panel">
+                <div class="billing-status-copy">
+                  <span class="billing-status-kicker">{{ "common.current" | t }}</span>
                   <strong>{{ billing.plan.name }}</strong>
                   <p>{{ formatCurrentPrice(billing) }}</p>
                 </div>
-                <ion-badge [color]="billing.isTrial ? 'warning' : 'success'">{{ planStatusLabel() }}</ion-badge>
+                <div class="billing-status-side">
+                  <ion-badge [color]="billing.isTrial ? 'warning' : 'success'">{{ planStatusLabel() }}</ion-badge>
+                  <div class="billing-status-cycle">
+                    <span>{{ "billing.current_cycle" | t }}</span>
+                    <strong>{{ currentCycleLabel(billing) }}</strong>
+                  </div>
+                </div>
               </div>
 
               <ion-list lines="none" class="data-list">
@@ -69,41 +76,74 @@
             <p class="microcopy">{{ "billing.plans_desc" | t }}</p>
           </ion-card-header>
           <ion-card-content>
+            <div class="plans-toolbar app-inline-panel">
+              <div class="plans-toolbar-copy">
+                <strong>{{ "billing.compare_cycle_title" | t }}</strong>
+                <p>{{ "billing.compare_cycle_desc" | t }}</p>
+              </div>
+
+              <ion-segment class="billing-cycle-switch" [value]="selectedInterval" (ionChange)="setSelectedInterval($event.detail.value)">
+                <ion-segment-button value="month">
+                  <ion-label>{{ "billing.monthly" | t }}</ion-label>
+                </ion-segment-button>
+                <ion-segment-button value="year">
+                  <ion-label>{{ "billing.yearly" | t }}</ion-label>
+                </ion-segment-button>
+              </ion-segment>
+            </div>
+
             <div class="plans-grid">
-              <article class="plan-card" *ngFor="let plan of paidPlans" [class.plan-card-active]="summary?.plan?.code === plan.code">
+              <article class="plan-card app-inline-panel" *ngFor="let plan of paidPlans" [class.plan-card-active]="summary?.plan?.code === plan.code">
                 <div class="plan-card-head">
-                  <div>
+                  <div class="plan-card-copy">
+                    <span class="plan-card-kicker">{{ "billing.seats" | t: { count: plan.seatLimit } }}</span>
                     <strong>{{ plan.name }}</strong>
-                    <p>{{ "billing.seats" | t: { count: plan.seatLimit } }}</p>
+                    <p>{{ formatCycleLabel(selectedInterval) }}</p>
                   </div>
-                  <ion-badge color="primary">{{ "billing.seats" | t: { count: plan.seatLimit } }}</ion-badge>
+                  <div class="plan-card-badges">
+                    <ion-badge color="primary" *ngIf="isCurrentPlan(plan)">{{ "billing.current_plan" | t }}</ion-badge>
+                  </div>
                 </div>
 
-                <div class="price-options">
-                  <article class="price-option" *ngFor="let price of plan.pricingOptions; trackBy: trackPlanPrice">
-                    <div class="price-option-head">
-                      <div>
-                        <strong>{{ formatPriceOption(price) }}</strong>
-                        <p>{{ formatPriceHint(price) }}</p>
-                      </div>
-                      <ion-badge color="tertiary">
-                        {{ price.interval === "year" ? ("billing.yearly" | t) : ("billing.monthly" | t) }}
-                      </ion-badge>
-                    </div>
+                <ng-container *ngIf="selectedPriceFor(plan) as selectedPrice; else unavailableCycle">
+                  <ion-badge color="success" *ngIf="selectedPrice.interval === 'year' && selectedPrice.savingsVsMonthlyPercent">
+                    {{ "billing.save_percent" | t: { percent: selectedPrice.savingsVsMonthlyPercent } }}
+                  </ion-badge>
 
-                    <ion-badge color="success" *ngIf="price.interval === 'year' && price.savingsVsMonthlyPercent">
-                      {{ "billing.save_percent" | t: { percent: price.savingsVsMonthlyPercent } }}
-                    </ion-badge>
+                  <section class="price-callout app-inline-panel" [class.price-callout-current]="isCurrentPrice(selectedPrice)">
+                    <span class="price-callout-kicker">{{ formatCycleLabel(selectedPrice.interval) }}</span>
+                    <strong class="price-figure">{{ formatPriceOption(selectedPrice) }}</strong>
+                    <p>{{ formatPriceHint(selectedPrice) }}</p>
+                  </section>
 
-                    <ion-button
-                      expand="block"
-                      [disabled]="actionLoading || !isAdminBilling || !price.checkoutEnabled"
-                      (click)="startCheckout(price)"
-                    >
-                      {{ summary?.currentPrice?.priceId === price.priceId ? ("billing.change_plan" | t) : ("billing.choose_plan" | t) }}
-                    </ion-button>
-                  </article>
-                </div>
+                  <ion-button
+                    expand="block"
+                    [fill]="isCurrentPrice(selectedPrice) ? 'outline' : 'solid'"
+                    [disabled]="actionLoading || !isAdminBilling || !selectedPrice.checkoutEnabled || !selectedPrice.priceId || isCurrentPrice(selectedPrice)"
+                    (click)="startCheckout(selectedPrice)"
+                  >
+                    {{ planActionLabel(plan, selectedPrice) }}
+                  </ion-button>
+
+                  <p class="plan-action-note" *ngIf="isCurrentPrice(selectedPrice)">
+                    {{ "common.selected" | t }}
+                  </p>
+                  <p class="plan-action-note" *ngIf="!isCurrentPrice(selectedPrice) && (!selectedPrice.checkoutEnabled || !selectedPrice.priceId)">
+                    {{ "billing.plan_cycle_unavailable" | t }}
+                  </p>
+                </ng-container>
+
+                <ng-template #unavailableCycle>
+                  <section class="price-callout app-inline-panel price-callout-unavailable">
+                    <span class="price-callout-kicker">{{ formatCycleLabel(selectedInterval) }}</span>
+                    <strong class="price-figure">{{ "billing.not_available" | t }}</strong>
+                    <p>{{ "billing.plan_cycle_unavailable" | t }}</p>
+                  </section>
+
+                  <ion-button expand="block" fill="outline" disabled>
+                    {{ "billing.not_available" | t }}
+                  </ion-button>
+                </ng-template>
               </article>
             </div>
 

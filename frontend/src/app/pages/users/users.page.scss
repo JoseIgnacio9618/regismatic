@@ -2,6 +2,13 @@
   row-gap: 16px;
 }
 
+.scope-panel,
+.form-panel,
+.team-panel,
+.workspace-panel {
+  position: relative;
+}
+
 .scope-panel::before,
 .form-panel::before,
 .team-panel::before,
@@ -12,63 +19,28 @@
   pointer-events: none;
 }
 
-.scope-panel {
-  position: relative;
-}
-
 .scope-panel::before {
   background:
-    radial-gradient(circle at 12% 18%, color-mix(in srgb, var(--ion-color-primary), transparent 82%) 0%, transparent 38%),
-    radial-gradient(circle at 88% 24%, color-mix(in srgb, var(--ion-color-secondary), transparent 84%) 0%, transparent 42%);
+    radial-gradient(circle at 12% 18%, color-mix(in srgb, var(--ion-color-primary), transparent 84%) 0%, transparent 38%),
+    radial-gradient(circle at 88% 24%, color-mix(in srgb, var(--ion-color-secondary), transparent 88%) 0%, transparent 42%);
 }
 
 .form-panel::before {
-  background: radial-gradient(circle at 6% 8%, color-mix(in srgb, var(--ion-color-primary), transparent 84%) 0%, transparent 45%);
+  background: radial-gradient(circle at 6% 8%, color-mix(in srgb, var(--ion-color-primary), transparent 88%) 0%, transparent 45%);
 }
 
 .team-panel::before {
-  background: radial-gradient(circle at 92% 6%, color-mix(in srgb, var(--ion-color-secondary), transparent 84%) 0%, transparent 48%);
+  background: radial-gradient(circle at 92% 6%, color-mix(in srgb, var(--ion-color-secondary), transparent 88%) 0%, transparent 48%);
 }
 
 .workspace-panel::before {
   background:
-    radial-gradient(circle at 10% 20%, color-mix(in srgb, var(--ion-color-primary), transparent 88%) 0%, transparent 38%),
-    radial-gradient(circle at 92% 18%, color-mix(in srgb, var(--ion-color-tertiary), transparent 88%) 0%, transparent 40%);
-}
-
-.mt-16 {
-  margin-top: 16px;
+    radial-gradient(circle at 10% 20%, color-mix(in srgb, var(--ion-color-primary), transparent 90%) 0%, transparent 38%),
+    radial-gradient(circle at 92% 18%, color-mix(in srgb, var(--ion-color-tertiary), transparent 90%) 0%, transparent 40%);
 }
 
 .workspace-switch {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.workspace-card {
-  appearance: none;
-  width: 100%;
-  padding: 16px 18px;
-  border: 1px solid color-mix(in srgb, var(--app-border), transparent 6%);
-  border-radius: 18px;
-  background: color-mix(in srgb, var(--app-surface), transparent 3%);
-  color: var(--ion-text-color);
-  text-align: left;
-  cursor: pointer;
-  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
-}
-
-.workspace-card strong {
-  display: block;
-  font-size: 1rem;
-}
-
-.workspace-card.active-workspace {
-  transform: translateY(-1px);
-  border-color: color-mix(in srgb, var(--ion-color-primary), transparent 28%);
-  background: color-mix(in srgb, var(--app-surface-strong), var(--ion-color-primary) 8%);
-  box-shadow: 0 18px 34px color-mix(in srgb, #000, transparent 92%);
+  max-width: 420px;
 }
 
 .scope-hero {
@@ -80,13 +52,19 @@
 
 .scope-copy h2 {
   margin: 10px 0 8px;
-  font-size: clamp(1.4rem, 3.2vw, 2rem);
 }
 
 .scope-copy p {
-  margin: 0;
   max-width: 72ch;
-  color: var(--app-ink-muted);
+  color: var(--app-text-secondary);
+}
+
+.billing-notice,
+.scope-metric,
+.fixed-role-summary,
+.invite-code-panel,
+.join-request-card {
+  padding: 14px 16px;
 }
 
 .billing-notice {
@@ -94,10 +72,6 @@
   flex-direction: column;
   gap: 4px;
   margin-top: 16px;
-  padding: 14px 16px;
-  border-radius: 18px;
-  border: 1px solid color-mix(in srgb, var(--ion-color-primary), transparent 48%);
-  background: color-mix(in srgb, var(--ion-color-primary), transparent 93%);
 }
 
 .scope-metrics {
@@ -106,34 +80,17 @@
   gap: 10px;
 }
 
-.scope-metric {
-  padding: 14px 16px;
-  border-radius: 20px;
-  border: 1px solid color-mix(in srgb, var(--app-border), transparent 10%);
-  background: color-mix(in srgb, var(--app-surface-strong), transparent 6%);
-  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff, transparent 82%);
-  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
-}
-
-.scope-metric:hover {
-  transform: translateY(-1px);
-  border-color: color-mix(in srgb, var(--ion-color-primary), var(--app-border) 54%);
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, #fff, transparent 82%),
-    0 16px 30px color-mix(in srgb, #000, transparent 92%);
-}
-
 .scope-metric strong {
   display: block;
-  font-size: 1.6rem;
-  line-height: 1.1;
+  font-size: 1.5rem;
+  line-height: 1.08;
 }
 
 .scope-metric span {
   display: block;
   margin-top: 6px;
   font-size: 0.88rem;
-  color: var(--app-ink-muted);
+  color: var(--app-text-secondary);
 }
 
 .role-picker {
@@ -153,22 +110,12 @@
 }
 
 .role-picker-head ion-note {
-  color: var(--app-ink-muted);
+  color: var(--app-text-tertiary);
   text-align: right;
 }
 
 .role-card {
-  appearance: none;
-  cursor: pointer;
-  width: 100%;
   margin: 0 0 10px;
-  padding: 14px 16px;
-  border: 1px solid color-mix(in srgb, var(--app-border), transparent 6%);
-  border-radius: 18px;
-  background: color-mix(in srgb, var(--app-surface), transparent 6%);
-  text-align: left;
-  color: var(--ion-text-color);
-  transition: transform 140ms ease, border-color 140ms ease, background 140ms ease, box-shadow 140ms ease;
 }
 
 .role-card-top {
@@ -182,23 +129,14 @@
 .role-card span {
   display: block;
   font-size: 0.9rem;
-  color: var(--app-ink-muted);
   line-height: 1.42;
+  color: var(--app-text-secondary);
 }
 
 .role-card.active-role {
-  border-color: color-mix(in srgb, var(--ion-color-primary), transparent 24%);
-  background: color-mix(in srgb, var(--ion-color-primary), transparent 91%);
-  box-shadow: 0 16px 34px color-mix(in srgb, var(--ion-color-primary), transparent 88%);
-  transform: translateY(-1px);
-}
-
-.fixed-role-summary {
-  margin-top: 16px;
-  padding: 14px 16px;
-  border-radius: 18px;
-  border: 1px solid color-mix(in srgb, var(--app-border), transparent 10%);
-  background: color-mix(in srgb, var(--ion-color-primary), transparent 92%);
+  border-color: color-mix(in srgb, var(--ion-color-primary), transparent 46%);
+  background: color-mix(in srgb, var(--app-surface-2), var(--app-accent-subtle) 48%);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ion-color-primary), transparent 72%);
 }
 
 .fixed-role-top {
@@ -209,54 +147,7 @@
 }
 
 .fixed-role-summary p {
-  margin: 8px 0 0;
-  color: var(--app-ink-muted);
-}
-
-.create-photo-panel {
-  margin-top: 16px;
-  padding: 14px 16px;
-  border-radius: 18px;
-  border: 1px solid color-mix(in srgb, var(--app-border), transparent 10%);
-  background: color-mix(in srgb, var(--app-surface-strong), transparent 6%);
-}
-
-.create-photo-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-}
-
-.create-photo-head strong {
-  display: block;
-  margin-bottom: 4px;
-}
-
-.create-photo-head p {
-  margin: 0;
-  color: var(--app-ink-muted);
-  font-size: 0.9rem;
-}
-
-.create-photo-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: 12px;
-  flex-wrap: wrap;
-}
-
-.create-photo-actions ion-button::part(native),
-.table-actions ion-button::part(native) {
-  justify-content: flex-start;
-  gap: 8px;
-}
-
-.create-photo-actions ion-button ion-icon,
-.table-actions ion-button ion-icon {
-  flex-shrink: 0;
-  font-size: 1rem;
+  margin-top: 8px;
 }
 
 .create-side-panel {
@@ -269,10 +160,6 @@
 
 .invite-code-panel {
   margin-bottom: 16px;
-  padding: 16px;
-  border-radius: 18px;
-  border: 1px solid color-mix(in srgb, var(--app-border), transparent 10%);
-  background: color-mix(in srgb, var(--app-surface-strong), transparent 5%);
 }
 
 .invite-code-panel strong {
@@ -281,35 +168,39 @@
 }
 
 .invite-code-panel p {
-  margin: 0;
-  color: var(--app-ink-muted);
   font-size: 0.9rem;
 }
 
-.invite-code-chip {
+.invite-code-chip,
+.team-user-code,
+.team-results-summary,
+.manager-picker-trigger,
+.manager-name,
+.created-at {
   display: inline-flex;
   align-items: center;
-  margin-top: 12px;
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid var(--app-border-subtle);
+  border-radius: var(--app-radius-pill);
+  background: color-mix(in srgb, var(--app-surface-1), var(--app-accent-subtle) 18%);
+  color: var(--app-text-primary);
+}
+
+.invite-code-chip {
   min-height: 40px;
+  margin-top: 12px;
   padding: 0 14px;
-  border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--ion-color-primary), transparent 46%);
-  background: color-mix(in srgb, var(--ion-color-primary), transparent 90%);
-  font-size: 0.95rem;
+  font-size: 0.94rem;
   font-weight: 800;
   letter-spacing: 0.08em;
 }
 
 .team-user-code {
-  display: inline-flex;
-  align-items: center;
   width: fit-content;
   margin-top: 2px;
   padding: 4px 10px;
-  border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--ion-color-primary), transparent 48%);
-  background: color-mix(in srgb, var(--ion-color-primary), transparent 92%);
-  color: var(--ion-text-color);
+  min-height: 0;
   font-size: 0.78rem;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -328,10 +219,6 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 14px;
-  padding: 14px 16px;
-  border-radius: 18px;
-  border: 1px solid color-mix(in srgb, var(--app-border), transparent 10%);
-  background: color-mix(in srgb, var(--app-surface-strong), transparent 4%);
 }
 
 .join-request-copy {
@@ -345,7 +232,7 @@
 }
 
 .join-request-copy span {
-  color: var(--app-ink-muted);
+  color: var(--app-text-secondary);
   font-size: 0.88rem;
   line-height: 1.4;
 }
@@ -369,43 +256,23 @@
   margin-bottom: 14px;
 }
 
-.team-search-item,
+.team-searchbar,
 .team-filter-item {
-  margin-bottom: 0;
+  margin: 0;
 }
 
 .team-results-summary {
-  display: inline-flex;
-  align-items: baseline;
   gap: 8px;
   margin-bottom: 14px;
-  padding: 10px 14px;
-  border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--app-border), transparent 12%);
-  background: color-mix(in srgb, var(--app-surface-strong), transparent 6%);
 }
 
 .team-results-summary strong {
-  font-size: 1.05rem;
+  font-size: 1.04rem;
 }
 
 .team-results-summary span {
-  color: var(--app-ink-muted);
+  color: var(--app-text-secondary);
   font-size: 0.88rem;
-}
-
-.report-pagination {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 16px;
-  flex-wrap: wrap;
-}
-
-.report-pagination span {
-  color: var(--app-ink-muted);
-  font-size: 0.9rem;
 }
 
 .team-section-head {
@@ -422,21 +289,12 @@
 }
 
 .team-section-head p {
-  margin: 4px 0 0;
-  color: var(--app-ink-muted);
+  margin-top: 4px;
   font-size: 0.9rem;
-}
-
-.team-table-shell {
-  overflow-x: auto;
-  border: 1px solid color-mix(in srgb, var(--app-border), transparent 12%);
-  border-radius: 18px;
-  background: color-mix(in srgb, var(--app-surface-strong), transparent 6%);
+  color: var(--app-text-secondary);
 }
 
 .team-table {
-  width: 100%;
-  border-collapse: collapse;
   min-width: 860px;
   table-layout: fixed;
 }
@@ -461,37 +319,16 @@
   width: 14%;
 }
 
-.team-table thead th {
-  padding: 14px 16px;
-  text-align: left;
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--app-ink-muted);
-  border-bottom: 1px solid color-mix(in srgb, var(--app-border), transparent 8%);
-  background: color-mix(in srgb, var(--app-surface), transparent 2%);
-}
-
 .team-table thead th:last-child {
   text-align: right;
 }
 
 .team-table tbody td {
-  padding: 14px 16px;
   vertical-align: middle;
-  border-bottom: 1px solid color-mix(in srgb, var(--app-border), transparent 14%);
-}
-
-.team-table tbody tr:last-child td {
-  border-bottom: 0;
 }
 
 .team-table tbody tr {
-  transition: background 160ms ease;
-}
-
-.team-table tbody tr:hover {
-  background: color-mix(in srgb, var(--app-surface), var(--ion-color-primary) 4%);
+  transition: background var(--app-transition-fast);
 }
 
 .team-name-col {
@@ -501,10 +338,6 @@
 .team-role-col,
 .team-created-col {
   white-space: nowrap;
-}
-
-.team-role-col {
-  text-align: left;
 }
 
 .team-actions-col {
@@ -531,7 +364,7 @@
 }
 
 .team-user-copy span {
-  color: var(--app-ink-muted);
+  color: var(--app-text-secondary);
   font-size: 0.86rem;
   line-height: 1.35;
   overflow-wrap: anywhere;
@@ -545,25 +378,14 @@
 }
 
 .manager-picker-trigger {
-  display: inline-flex;
-  align-items: center;
   justify-content: space-between;
   gap: 12px;
   width: 100%;
-  min-height: 38px;
-  padding: 0 12px;
-  border: 1px solid color-mix(in srgb, var(--app-border), transparent 8%);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--app-surface), transparent 3%);
-  color: var(--ion-text-color);
   cursor: pointer;
-  transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
-}
-
-.manager-picker-trigger:hover {
-  transform: translateY(-1px);
-  border-color: color-mix(in srgb, var(--ion-color-primary), transparent 40%);
-  background: color-mix(in srgb, var(--ion-color-primary), transparent 94%);
+  transition:
+    background var(--app-transition-fast),
+    border-color var(--app-transition-fast),
+    box-shadow var(--app-transition-fast);
 }
 
 .manager-picker-trigger span {
@@ -575,47 +397,13 @@
 .manager-picker-trigger ion-icon {
   font-size: 1rem;
   flex-shrink: 0;
-  color: var(--app-ink-muted);
+  color: var(--app-text-tertiary);
 }
 
 .manager-name,
 .created-at {
-  display: inline-flex;
-  align-items: center;
-  min-height: 34px;
-  padding: 0 12px;
-  border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--app-border), transparent 8%);
-  background: color-mix(in srgb, var(--app-surface), transparent 3%);
-  color: var(--ion-text-color);
-  font-size: 0.86rem;
-}
-
-.manager-name {
-  width: fit-content;
   max-width: 100%;
-}
-
-.manager-inline-edit {
-  display: flex;
-  align-items: end;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.manager-inline-edit ion-select {
-  flex: 1;
-  min-width: 180px;
-}
-
-.manager-inline-edit-simple ion-select {
-  width: 100%;
-  --min-height: 34px;
-  --padding-start: 12px;
-  --padding-end: 12px;
-  border: 1px solid color-mix(in srgb, var(--app-border), transparent 8%);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--app-surface), transparent 3%);
+  font-size: 0.86rem;
 }
 
 .table-actions {
@@ -624,20 +412,13 @@
   align-items: stretch;
   gap: 8px;
   min-width: 0;
-  margin-left: auto;
   max-width: 220px;
+  margin-left: auto;
 }
 
 .table-actions ion-button {
   width: 100%;
   margin: 0;
-}
-
-.user-row-top {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
 }
 
 .avatar-preview-trigger {
@@ -650,220 +431,51 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 999px;
-  transition: transform 160ms ease, box-shadow 160ms ease;
-}
-
-.avatar-preview-trigger:hover {
-  transform: scale(1.04);
-  box-shadow: 0 0 0 8px color-mix(in srgb, var(--ion-color-primary), transparent 92%);
+  border-radius: var(--app-radius-pill);
+  transition: box-shadow var(--app-transition-fast);
 }
 
 .avatar-preview-disabled {
   cursor: default;
 }
 
-.data-item ion-button[color="danger"] {
-  --background: color-mix(in srgb, var(--ion-color-danger), transparent 88%);
-  --border-color: color-mix(in srgb, var(--ion-color-danger), transparent 44%);
-  --color: var(--ion-color-danger);
-}
+@media (hover: hover) and (pointer: fine) {
+  .team-table tbody tr:hover {
+    background: color-mix(in srgb, var(--ion-color-primary), transparent 96%);
+  }
 
-.user-photo-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  padding: 8px 4px 2px;
-  flex-wrap: wrap;
-}
+  .manager-picker-trigger:hover {
+    border-color: color-mix(in srgb, var(--ion-color-primary), transparent 54%);
+    background: color-mix(in srgb, var(--app-surface-1), var(--app-accent-subtle) 28%);
+    box-shadow: var(--app-shadow-xs);
+  }
 
-.user-assignment {
-  margin: 8px 0 18px;
-  padding: 12px;
-  border: 1px solid color-mix(in srgb, var(--app-border), transparent 10%);
-  border-radius: 18px;
-  background: color-mix(in srgb, var(--app-surface-strong), transparent 5%);
-}
-
-.assignment-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 12px;
-  margin-bottom: 8px;
-}
-
-.assignment-head ion-note {
-  color: var(--app-ink-muted);
-}
-
-.assignment-actions {
-  display: flex;
-  justify-content: flex-end;
-  padding: 10px 4px 0;
-}
-
-.profile-photo-viewer-content {
-  --background:
-    radial-gradient(circle at top, color-mix(in srgb, var(--ion-color-primary), transparent 86%) 0%, transparent 38%),
-    linear-gradient(180deg, color-mix(in srgb, var(--app-surface-strong), transparent 1%) 0%, var(--app-surface) 100%);
-  --padding-bottom: 0;
-}
-
-.profile-photo-viewer-shell {
-  min-height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 18px;
-  padding: 24px;
-}
-
-.profile-photo-viewer-shell img {
-  width: min(100%, 380px);
-  max-height: min(70vh, 540px);
-  object-fit: cover;
-  border-radius: 32px;
-  border: 1px solid color-mix(in srgb, var(--app-border), transparent 4%);
-  box-shadow:
-    0 28px 56px color-mix(in srgb, #000, transparent 80%),
-    inset 0 1px 0 color-mix(in srgb, #fff, transparent 72%);
-}
-
-.profile-photo-viewer-meta {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  text-align: center;
-}
-
-.profile-photo-viewer-meta strong {
-  font-size: 1.05rem;
-}
-
-.profile-photo-viewer-meta span {
-  color: var(--app-ink-muted);
-  font-size: 0.92rem;
-}
-
-.manager-picker-content {
-  --background:
-    radial-gradient(circle at top, color-mix(in srgb, var(--ion-color-primary), transparent 88%) 0%, transparent 40%),
-    linear-gradient(180deg, color-mix(in srgb, var(--app-surface-strong), transparent 2%) 0%, var(--app-surface) 100%);
-}
-
-.manager-picker-shell {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding: 18px;
-}
-
-.manager-picker-head {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.manager-picker-head strong {
-  font-size: 1rem;
-}
-
-.manager-picker-head span {
-  color: var(--app-ink-muted);
-  font-size: 0.9rem;
-}
-
-.manager-picker-search {
-  margin: 0;
-}
-
-.manager-picker-list {
-  display: grid;
-  gap: 10px;
-}
-
-.manager-picker-option {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  width: 100%;
-  padding: 14px 16px;
-  border: 1px solid color-mix(in srgb, var(--app-border), transparent 8%);
-  border-radius: 18px;
-  background: color-mix(in srgb, var(--app-surface-strong), transparent 5%);
-  color: var(--ion-text-color);
-  text-align: left;
-  cursor: pointer;
-  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
-}
-
-.manager-picker-option:hover {
-  transform: translateY(-1px);
-  border-color: color-mix(in srgb, var(--ion-color-primary), transparent 40%);
-}
-
-.manager-picker-option-active {
-  border-color: color-mix(in srgb, var(--ion-color-primary), transparent 28%);
-  background: color-mix(in srgb, var(--ion-color-primary), transparent 92%);
-}
-
-.manager-picker-option-copy {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-}
-
-.manager-picker-option-copy strong {
-  font-size: 0.94rem;
-}
-
-.manager-picker-option-copy span {
-  color: var(--app-ink-muted);
-  font-size: 0.86rem;
-  overflow-wrap: anywhere;
-}
-
-.manager-picker-empty {
-  margin: 0;
+  .avatar-preview-trigger:hover {
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--ion-color-primary), transparent 92%);
+  }
 }
 
 @media (max-width: 900px) {
-  .scope-hero {
-    grid-template-columns: 1fr;
-  }
-
-  .scope-points {
-    grid-template-columns: 1fr;
-  }
-
+  .scope-hero,
   .team-toolbar {
     grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 767px) {
-  .workspace-switch {
-    grid-template-columns: 1fr;
-  }
-
   .scope-metrics {
     grid-template-columns: 1fr 1fr;
   }
 
   .role-picker-head,
-  .assignment-head,
   .team-section-head {
     display: block;
   }
 
-  .create-photo-head,
-  .create-photo-actions {
+  .role-picker-head ion-note {
     display: block;
+    margin-top: 4px;
+    text-align: left;
   }
 
   .join-request-card {
@@ -872,32 +484,6 @@
 
   .join-request-actions {
     min-width: 0;
-  }
-
-  .create-photo-actions ion-button:first-child {
-    margin-bottom: 8px;
-  }
-
-  .user-photo-actions {
-    justify-content: stretch;
-    flex-direction: column;
-  }
-
-  .role-picker-head ion-note,
-  .assignment-head ion-note {
-    display: block;
-    margin-top: 4px;
-    text-align: left;
-  }
-
-  .profile-photo-viewer-shell {
-    padding: 18px 14px 24px;
-  }
-
-  .profile-photo-viewer-shell img {
-    width: min(100%, 320px);
-    max-height: 58vh;
-    border-radius: 24px;
   }
 
   .team-table-shell {
@@ -927,9 +513,9 @@
   .team-table tbody tr {
     padding: 14px;
     margin-bottom: 12px;
-    border: 1px solid color-mix(in srgb, var(--app-border), transparent 10%);
-    border-radius: 18px;
-    background: color-mix(in srgb, var(--app-surface-strong), transparent 5%);
+    border: 1px solid var(--app-border-subtle);
+    border-radius: var(--app-radius-md);
+    background: var(--app-surface-1);
   }
 
   .team-table tbody td {
@@ -949,23 +535,7 @@
     font-weight: 700;
     letter-spacing: 0.04em;
     text-transform: uppercase;
-    color: var(--app-ink-muted);
-  }
-
-  .team-user-cell {
-    min-width: 0;
-  }
-
-  .manager-inline-edit,
-  .table-actions {
-    flex-direction: column;
-    align-items: stretch;
-    min-width: 0;
-  }
-
-  .manager-picker-option {
-    align-items: start;
-    flex-direction: column;
+    color: var(--app-text-tertiary);
   }
 
   .team-actions-col {

@@ -23,24 +23,24 @@
 
 .scope-panel::before {
   background:
-    radial-gradient(circle at 14% 18%, color-mix(in srgb, var(--ion-color-primary), transparent 82%) 0%, transparent 40%),
-    radial-gradient(circle at 88% 20%, color-mix(in srgb, var(--ion-color-warning), transparent 86%) 0%, transparent 42%);
+    radial-gradient(circle at 14% 18%, color-mix(in srgb, var(--ion-color-primary), transparent 84%) 0%, transparent 40%),
+    radial-gradient(circle at 88% 20%, color-mix(in srgb, var(--ion-color-warning), transparent 88%) 0%, transparent 42%);
 }
 
 .filter-panel::before {
-  background: radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--ion-color-primary), transparent 82%) 0%, transparent 45%);
+  background: radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--ion-color-primary), transparent 86%) 0%, transparent 45%);
 }
 
 .result-panel::before {
-  background: radial-gradient(circle at 0% 100%, color-mix(in srgb, var(--ion-color-secondary), transparent 86%) 0%, transparent 46%);
+  background: radial-gradient(circle at 0% 100%, color-mix(in srgb, var(--ion-color-secondary), transparent 88%) 0%, transparent 46%);
 }
 
 .detail-panel::before {
-  background: radial-gradient(circle at 4% 8%, color-mix(in srgb, var(--ion-color-tertiary), transparent 84%) 0%, transparent 48%);
+  background: radial-gradient(circle at 4% 8%, color-mix(in srgb, var(--ion-color-tertiary), transparent 86%) 0%, transparent 48%);
 }
 
 .requests-panel::before {
-  background: radial-gradient(circle at 94% 10%, color-mix(in srgb, var(--ion-color-success), transparent 85%) 0%, transparent 48%);
+  background: radial-gradient(circle at 94% 10%, color-mix(in srgb, var(--ion-color-success), transparent 88%) 0%, transparent 48%);
 }
 
 .actions-col {
@@ -59,28 +59,23 @@
 
 .reports-scope-shell h2 {
   margin: 10px 0 8px;
-  font-size: clamp(1.35rem, 3vw, 1.9rem);
 }
 
 .reports-scope-shell p {
-  margin: 0;
-  color: var(--app-ink-muted);
+  color: var(--app-text-secondary);
 }
 
 .scope-selection-card {
   padding: 16px 18px;
-  border-radius: 18px;
-  border: 1px solid color-mix(in srgb, var(--app-border), transparent 10%);
-  background: color-mix(in srgb, var(--app-surface-strong), transparent 5%);
-  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff, transparent 86%);
 }
 
 .scope-selection-card strong {
   display: block;
-  font-size: 0.84rem;
-  color: var(--app-ink-muted);
+  font-size: 0.82rem;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  color: var(--app-text-tertiary);
 }
 
 .scope-selection-card span {
@@ -91,22 +86,22 @@
 }
 
 .inline-help {
-  margin: 8px 0 0;
-  color: var(--app-ink-muted);
+  margin-top: 8px;
   font-size: 0.88rem;
+  color: var(--app-text-tertiary);
 }
 
 .event-user {
   font-size: 0.85rem;
   font-weight: 600;
-  color: var(--app-ink-muted);
+  color: var(--app-text-tertiary);
 }
 
 .request-chips {
-  margin-top: 8px;
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+  margin-top: 8px;
 }
 
 .request-chips ion-badge {
@@ -115,11 +110,14 @@
 
 .event-editor,
 .review-box {
-  margin: -2px 2px 10px;
-  padding: 12px;
-  border: 1px dashed color-mix(in srgb, var(--app-border), transparent 6%);
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--app-surface), transparent 8%);
+  margin: 8px 0 12px;
+  padding: 12px 14px;
+  overflow: hidden;
+}
+
+.event-editor ion-item:last-of-type,
+.review-box ion-item:last-of-type {
+  margin-bottom: 0;
 }
 
 .editor-actions {
@@ -130,24 +128,10 @@
   flex-wrap: wrap;
 }
 
-.report-pagination {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 16px;
-  flex-wrap: wrap;
-}
-
-.report-pagination span {
-  color: var(--app-ink-muted);
-  font-size: 0.9rem;
-}
-
 .rejection-reason {
   display: block;
   margin-top: 6px;
-  color: color-mix(in srgb, var(--ion-color-danger), var(--app-ink) 28%);
+  color: color-mix(in srgb, var(--ion-color-danger), var(--app-text-secondary) 18%);
 }
 
 @media (max-width: 767px) {
@@ -155,17 +139,13 @@
     grid-template-columns: 1fr;
   }
 
-  .actions-col {
-    flex-direction: column;
+  .actions-col,
+  .editor-actions {
     align-items: stretch;
+    flex-direction: column;
   }
 
   .editor-actions {
-    justify-content: stretch;
-    flex-direction: column;
-  }
-
-  .report-pagination {
     justify-content: stretch;
   }
 }

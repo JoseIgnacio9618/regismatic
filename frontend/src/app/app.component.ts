@@ -1,6 +1,8 @@
 import { Component, OnInit } from "@angular/core";
 import { addIcons } from "ionicons";
 import {
+  addOutline,
+  alertCircleOutline,
   barChartOutline,
   cardOutline,
   cameraOutline,
@@ -9,12 +11,14 @@ import {
   chevronUpOutline,
   cloudOfflineOutline,
   closeOutline,
+  documentTextOutline,
   informationCircleOutline,
   lockClosedOutline,
   menuOutline,
   moonOutline,
   notificationsOutline,
   peopleOutline,
+  removeOutline,
   searchOutline,
   shieldCheckmarkOutline,
   sunnyOutline,
@@ -47,6 +51,8 @@ export class AppComponent implements OnInit {
   ) {
     if (!AppComponent.iconsRegistered) {
       addIcons({
+        "add-outline": addOutline,
+        "alert-circle-outline": alertCircleOutline,
         "bar-chart-outline": barChartOutline,
         "card-outline": cardOutline,
         "camera-outline": cameraOutline,
@@ -55,12 +61,14 @@ export class AppComponent implements OnInit {
         "chevron-up-outline": chevronUpOutline,
         "cloud-offline-outline": cloudOfflineOutline,
         "close-outline": closeOutline,
+        "document-text-outline": documentTextOutline,
         "information-circle-outline": informationCircleOutline,
         "lock-closed-outline": lockClosedOutline,
         "menu-outline": menuOutline,
         "moon-outline": moonOutline,
         "notifications-outline": notificationsOutline,
         "people-outline": peopleOutline,
+        "remove-outline": removeOutline,
         "search-outline": searchOutline,
         "shield-checkmark-outline": shieldCheckmarkOutline,
         "sunny-outline": sunnyOutline,

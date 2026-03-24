@@ -1,158 +1,38 @@
-.login-screen {
-  --background: transparent;
-}
-
-.login-wrap {
-  min-height: 100vh;
-  display: grid;
-  place-items: center;
-  padding: 26px;
-  position: relative;
-  isolation: isolate;
-}
-
 .register-wrap::before,
 .register-wrap::after {
-  content: "";
-  position: absolute;
-  border-radius: 999px;
-  pointer-events: none;
-  filter: blur(24px);
-  opacity: 0.55;
-  z-index: -1;
+  border-radius: 50%;
+  opacity: 0.92;
 }
 
 .register-wrap::before {
-  width: 340px;
-  height: 340px;
-  top: 6%;
-  left: max(4%, 14px);
-  background: radial-gradient(circle, color-mix(in srgb, var(--ion-color-tertiary), transparent 32%) 0%, transparent 72%);
+  width: 300px;
+  height: 300px;
+  top: 7%;
+  left: max(3%, 14px);
+  background: radial-gradient(circle, color-mix(in srgb, var(--ion-color-tertiary), transparent 78%) 0%, transparent 70%);
 }
 
 .register-wrap::after {
-  width: 300px;
-  height: 300px;
+  width: 250px;
+  height: 250px;
+  right: max(3%, 14px);
   bottom: 5%;
-  right: max(4%, 14px);
-  background: radial-gradient(circle, color-mix(in srgb, var(--ion-color-primary), transparent 34%) 0%, transparent 72%);
+  background: radial-gradient(circle, color-mix(in srgb, var(--app-brand-base), transparent 80%) 0%, transparent 70%);
 }
 
-.login-top-actions {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.theme-toggle {
-  --background: color-mix(in srgb, var(--ion-color-secondary), transparent 84%);
-  --color: var(--ion-text-color);
-  --border-radius: 999px;
-}
-
-.lang-select {
-  min-width: 108px;
-  --padding-start: 10px;
-  --padding-end: 8px;
-  --highlight-color-focused: var(--ion-color-primary);
-  border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--app-border), transparent 6%);
-  background: color-mix(in srgb, var(--app-surface), transparent 12%);
-  color: var(--ion-text-color);
-  padding: 2px 8px;
-}
-
-ion-card {
-  width: min(560px, 100%);
-  position: relative;
-  z-index: 1;
-  overflow: hidden;
-}
-
-ion-card-content {
-  padding: 30px;
-}
-
-ion-card::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background:
-    radial-gradient(circle at 88% 14%, color-mix(in srgb, var(--ion-color-tertiary), transparent 84%) 0%, transparent 40%),
-    linear-gradient(180deg, color-mix(in srgb, #fff, transparent 88%) 0%, transparent 24%);
-}
-
-h1 {
-  font-size: clamp(2rem, 5vw, 2.6rem);
-}
-
-p {
-  margin-top: 8px;
-}
-
-.register-photo-panel {
-  margin-top: 18px;
-  padding: 14px 16px;
-  border-radius: 18px;
-  border: 1px solid color-mix(in srgb, var(--app-border), transparent 10%);
-  background: color-mix(in srgb, var(--app-surface-strong), transparent 6%);
-}
-
-.register-photo-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+.app-auth-card ion-card-content {
+  display: grid;
   gap: 14px;
 }
 
-.register-photo-head strong {
-  display: block;
-  margin-bottom: 4px;
+.app-auth-card p {
+  max-width: 44ch;
 }
 
-.register-photo-head p {
-  margin: 0;
-  color: var(--app-ink-muted);
-  font-size: 0.9rem;
-}
-
-.register-photo-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: 12px;
+.register-photo-panel {
+  margin-top: 4px;
 }
 
 .mt-16 {
   margin-top: 18px;
-}
-
-@media (max-width: 767px) {
-  .login-wrap {
-    align-content: center;
-    padding-top: 74px;
-  }
-
-  .login-top-actions {
-    top: 12px;
-    right: 10px;
-  }
-
-  ion-card-content {
-    padding: 22px;
-  }
-
-  .register-photo-head,
-  .register-photo-actions {
-    display: block;
-  }
-
-  .register-photo-actions ion-button:first-child {
-    margin-bottom: 8px;
-  }
 }

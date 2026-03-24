@@ -2,6 +2,18 @@
   row-gap: 16px;
 }
 
+.dashboard-grid > ion-row {
+  align-items: flex-start;
+}
+
+.dashboard-grid > ion-row > ion-col {
+  align-self: flex-start;
+}
+
+.dashboard-grid ion-col > ion-card + ion-card {
+  margin-top: 16px;
+}
+
 .panel {
   position: relative;
 }
@@ -14,64 +26,40 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
-  opacity: 0.65;
+  opacity: 0.72;
 }
 
 .status-panel::before {
-  background: radial-gradient(circle at 88% 8%, color-mix(in srgb, var(--ion-color-primary), transparent 80%) 0%, transparent 42%);
+  background: radial-gradient(circle at 88% 10%, color-mix(in srgb, var(--ion-color-primary), transparent 84%) 0%, transparent 42%);
 }
 
 .join-team-panel::before {
-  background: radial-gradient(circle at 90% 14%, color-mix(in srgb, var(--ion-color-success), transparent 84%) 0%, transparent 42%);
+  background: radial-gradient(circle at 90% 14%, color-mix(in srgb, var(--ion-color-success), transparent 86%) 0%, transparent 42%);
 }
 
 .summary-panel::before {
-  background: radial-gradient(circle at 0% 8%, color-mix(in srgb, var(--ion-color-secondary), transparent 84%) 0%, transparent 45%);
+  background: radial-gradient(circle at 8% 12%, color-mix(in srgb, var(--ion-color-secondary), transparent 88%) 0%, transparent 44%);
 }
 
 .events-panel::before {
-  background: radial-gradient(circle at 92% 92%, color-mix(in srgb, var(--ion-color-tertiary), transparent 82%) 0%, transparent 48%);
-}
-
-.metrics-grid ion-row {
-  row-gap: 10px;
-}
-
-.mt-16 {
-  margin-top: 16px;
+  background: radial-gradient(circle at 92% 92%, color-mix(in srgb, var(--ion-color-tertiary), transparent 86%) 0%, transparent 48%);
 }
 
 .role-hint {
   margin-bottom: 14px;
   padding: 12px 14px;
-  border-radius: 16px;
-  border: 1px solid color-mix(in srgb, var(--app-border), transparent 10%);
-  background: color-mix(in srgb, var(--ion-color-primary), transparent 92%);
 }
 
-.status-panel,
-.join-team-panel,
-.summary-panel,
-.events-panel {
-  min-height: 100%;
+.role-hint p {
+  margin-top: 8px;
 }
 
 .metrics-grid {
   margin-top: 2px;
 }
 
-.metrics-grid .metric-tile {
-  min-height: 100%;
-}
-
-.role-hint p {
-  margin: 8px 0 0;
-  color: var(--app-ink-muted);
-  font-size: 0.92rem;
-}
-
-ion-button + ion-button {
-  margin-top: 8px;
+.metrics-grid ion-row {
+  row-gap: 10px;
 }
 
 .status-error {
@@ -79,9 +67,9 @@ ion-button + ion-button {
 }
 
 .pending-join-list {
-  margin-top: 16px;
   display: grid;
   gap: 10px;
+  margin-top: 16px;
 }
 
 .pending-join-list strong {
@@ -92,15 +80,36 @@ ion-button + ion-button {
   display: grid;
   gap: 4px;
   padding: 12px 14px;
-  border-radius: 16px;
-  border: 1px solid color-mix(in srgb, var(--app-border), transparent 10%);
-  background: color-mix(in srgb, var(--app-surface-strong), transparent 5%);
 }
 
 .pending-join-card span {
-  color: var(--app-ink-muted);
+  color: var(--app-text-secondary);
   font-size: 0.88rem;
-  line-height: 1.35;
+  line-height: 1.4;
+}
+
+.attendance-action--clock-in {
+  --background: var(--app-attendance-clock-in-bg);
+  --color: var(--app-attendance-clock-in-color);
+}
+
+.attendance-action--break-start {
+  --background: var(--app-attendance-break-start-bg);
+  --color: var(--app-attendance-break-start-color);
+}
+
+.attendance-action--clock-out {
+  --background: var(--app-attendance-clock-out-bg);
+  --color: var(--app-attendance-clock-out-color);
+}
+
+.attendance-action--break-end {
+  --background: var(--app-attendance-break-end-bg);
+  --color: var(--app-attendance-break-end-color);
+}
+
+ion-button + ion-button {
+  margin-top: 8px;
 }
 
 @media (min-width: 768px) {

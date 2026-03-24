@@ -1,8 +1,8 @@
-<ion-content class="login-screen" [fullscreen]="true">
-  <div class="login-wrap">
-    <div class="login-top-actions">
+<ion-content class="login-screen app-auth-screen" [fullscreen]="true">
+  <div class="login-wrap app-auth-wrap">
+    <div class="login-top-actions app-auth-top-actions">
       <ion-select
-        class="lang-select"
+        class="lang-select app-compact-select"
         interface="popover"
         [value]="i18nService.language"
         (ionChange)="setLanguage($event.detail.value)"
@@ -12,13 +12,13 @@
         <ion-select-option value="fr">{{ "lang.fr" | t }}</ion-select-option>
       </ion-select>
 
-      <ion-button fill="clear" class="theme-toggle" (click)="toggleTheme()">
+      <ion-button fill="clear" class="theme-toggle app-theme-toggle" (click)="toggleTheme()">
         <ion-icon slot="start" [name]="themeService.isDark ? 'sunny-outline' : 'moon-outline'"></ion-icon>
         {{ themeService.isDark ? ("theme.to_light" | t) : ("theme.to_dark" | t) }}
       </ion-button>
     </div>
 
-    <ion-card class="glass-card">
+    <ion-card class="glass-card app-auth-card">
       <ion-card-content>
         <h1>{{ "app.name" | t }}</h1>
         <p>{{ "login.tagline" | t }}</p>

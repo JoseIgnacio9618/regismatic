@@ -13,7 +13,7 @@
                 <p>{{ scopeDescription }}</p>
               </div>
 
-              <div class="scope-selection-card" *ngIf="authService.isAdmin">
+              <div class="scope-selection-card app-inline-panel" *ngIf="authService.isAdmin">
                 <strong>{{ "reports.scope_current_label" | t }}</strong>
                 <span>{{ selectedScopeLabel }}</span>
               </div>
@@ -81,7 +81,7 @@
           <ion-card-content>
             <ion-list lines="none" class="data-list" *ngIf="pendingRequests.length > 0">
               <ng-container *ngFor="let request of pendingRequests">
-                <ion-item class="data-item">
+                <ion-item class="data-item app-attached-item">
                   <app-avatar slot="start" [fullName]="request.workEvent.user.fullName" [photoUrl]="request.workEvent.user.profilePhotoUrl" size="md"></app-avatar>
                   <ion-label>
                     <h3 class="item-title">{{ request.workEvent.user.fullName }} | {{ eventTypeLabel(request.workEvent.type) }}</h3>
@@ -92,7 +92,7 @@
                   </ion-label>
                 </ion-item>
 
-                <section class="review-box">
+                <section class="review-box app-inline-panel app-attached-panel">
                   <ion-item>
                     <ion-label position="stacked">{{ "reports.review_comment_optional" | t }}</ion-label>
                     <ion-textarea rows="2" [(ngModel)]="reviewCommentByRequestId[request.id]"></ion-textarea>
@@ -197,7 +197,10 @@
           <ion-card-content>
             <ion-list lines="none" class="data-list" *ngIf="events.length > 0">
               <ng-container *ngFor="let event of events">
-                <ion-item class="data-item event-item">
+                <ion-item
+                  class="data-item event-item"
+                  [class.app-attached-item]="editingEventId === event.id || requestingEventId === event.id"
+                >
                   <app-avatar *ngIf="authService.isAdmin" slot="start" [fullName]="event.user.fullName" [photoUrl]="event.user.profilePhotoUrl" size="md"></app-avatar>
                   <ion-label>
                     <h3 class="item-title">
@@ -244,7 +247,7 @@
                   </ion-button>
                 </ion-item>
 
-                <section class="event-editor" *ngIf="editingEventId === event.id">
+                <section class="event-editor app-inline-panel app-attached-panel" *ngIf="editingEventId === event.id">
                   <ion-item>
                     <ion-label position="stacked">{{ "reports.new_datetime" | t }}</ion-label>
                     <ion-input type="datetime-local" step="1" [(ngModel)]="adminEditModel.eventAt"></ion-input>
@@ -266,7 +269,7 @@
                   </div>
                 </section>
 
-                <section class="event-editor" *ngIf="requestingEventId === event.id">
+                <section class="event-editor app-inline-panel app-attached-panel" *ngIf="requestingEventId === event.id">
                   <ion-item>
                     <ion-label position="stacked">{{ "reports.requested_datetime" | t }}</ion-label>
                     <ion-input type="datetime-local" step="1" [(ngModel)]="requestModel.requestedEventAt"></ion-input>

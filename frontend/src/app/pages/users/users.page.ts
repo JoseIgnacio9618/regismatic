@@ -302,7 +302,11 @@ export class UsersPage implements OnInit, OnDestroy {
     this.onRoleChange();
   }
 
-  selectWorkspace(workspace: UserWorkspace): void {
+  selectWorkspace(workspace: unknown): void {
+    if (workspace !== "directory" && workspace !== "create") {
+      return;
+    }
+
     this.activeWorkspace = workspace;
   }
 

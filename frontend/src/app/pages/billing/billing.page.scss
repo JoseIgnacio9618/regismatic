@@ -4,48 +4,117 @@
 
 .billing-status-card {
   display: flex;
-  align-items: center;
+  align-items: start;
   justify-content: space-between;
   gap: 16px;
-  padding: 18px;
-  border: 1px solid color-mix(in srgb, var(--app-border), transparent 10%);
-  border-radius: 22px;
-  background: color-mix(in srgb, var(--app-surface-strong), transparent 8%);
+  padding: 16px;
   margin-bottom: 18px;
 }
 
-.billing-status-card strong {
+.billing-status-card strong,
+.plan-card-head strong {
   font-size: 1rem;
 }
 
-.billing-status-card p {
-  margin: 6px 0 0;
-  color: var(--app-ink-muted);
+.billing-status-copy {
+  min-width: 0;
+}
+
+.billing-status-kicker,
+.plan-card-kicker,
+.price-callout-kicker,
+.plans-toolbar-copy strong {
+  display: block;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--app-text-tertiary);
+}
+
+.billing-status-card p,
+.plan-card-head p,
+.price-callout p,
+.plans-toolbar-copy p {
+  margin-top: 6px;
+  color: var(--app-text-secondary);
+}
+
+.billing-status-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.billing-status-cycle {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.billing-status-cycle span {
+  font-size: 0.76rem;
+  color: var(--app-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.billing-status-cycle strong {
+  font-size: 0.92rem;
 }
 
 .billing-actions {
   margin-top: 18px;
 }
 
+.plans-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(248px, 272px);
+  align-items: center;
+  gap: 14px 18px;
+  padding: 14px 16px;
+  margin-bottom: 18px;
+}
+
+.plans-toolbar-copy {
+  min-width: 0;
+  max-width: 48ch;
+}
+
+.plans-toolbar-copy strong {
+  margin-bottom: 2px;
+}
+
+.plans-toolbar-copy p {
+  max-width: 42ch;
+}
+
+.billing-cycle-switch {
+  width: 100%;
+  min-width: 0;
+  justify-self: end;
+}
+
 .plans-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 16px;
 }
 
 .plan-card {
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  padding: 18px;
-  border: 1px solid color-mix(in srgb, var(--app-border), transparent 8%);
-  border-radius: 22px;
-  background: color-mix(in srgb, var(--app-surface), transparent 4%);
+  gap: 14px;
+  padding: 16px;
 }
 
 .plan-card-active {
-  border-color: color-mix(in srgb, var(--ion-color-primary), transparent 32%);
-  background: color-mix(in srgb, var(--ion-color-primary), transparent 93%);
+  border-color: color-mix(in srgb, var(--ion-color-primary), transparent 46%);
+  background: color-mix(in srgb, var(--app-surface-2), var(--app-accent-subtle) 38%);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ion-color-primary), transparent 72%), var(--app-shadow-xs);
 }
 
 .plan-card-head {
@@ -55,52 +124,77 @@
   gap: 12px;
 }
 
-.plan-card-head strong {
-  font-size: 1rem;
+.plan-card-copy {
+  min-width: 0;
 }
 
-.plan-card-head p {
-  margin: 6px 0 0;
-  color: var(--app-ink-muted);
-}
-
-.price-options {
+.plan-card-badges {
   display: flex;
-  flex-direction: column;
-  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
 }
 
-.price-option {
+.price-callout {
+  padding: 14px 16px;
+}
+
+.price-callout-current {
+  border-color: color-mix(in srgb, var(--ion-color-primary), transparent 62%);
+  background: color-mix(in srgb, var(--app-surface-2), var(--app-accent-subtle) 42%);
+}
+
+.price-callout-unavailable {
+  opacity: 0.8;
+}
+
+.price-figure {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 14px;
-  border: 1px solid color-mix(in srgb, var(--app-border), transparent 10%);
-  border-radius: 18px;
-  background: color-mix(in srgb, var(--app-surface-strong), transparent 12%);
+  margin-top: 8px;
+  font-size: 1.2rem;
+  line-height: 1.15;
 }
 
-.price-option-head {
-  display: flex;
-  align-items: start;
-  justify-content: space-between;
-  gap: 12px;
+.plan-action-note {
+  margin-top: -4px;
+  font-size: 0.84rem;
+  color: var(--app-text-tertiary);
 }
 
-.price-option-head strong {
-  font-size: 0.98rem;
-}
+@media (max-width: 980px) {
+  .plans-toolbar {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
 
-.price-option-head p {
-  margin: 6px 0 0;
-  color: var(--app-ink-muted);
+  .plans-toolbar-copy,
+  .plans-toolbar-copy p {
+    max-width: none;
+  }
+
+  .billing-cycle-switch {
+    justify-self: stretch;
+  }
 }
 
 @media (max-width: 767px) {
   .billing-status-card,
-  .plan-card-head,
-  .price-option-head {
+  .plan-card-head {
     flex-direction: column;
     align-items: start;
+  }
+
+  .billing-status-side,
+  .billing-status-cycle {
+    align-items: start;
+  }
+
+  .plans-toolbar {
+    padding: 14px;
+    gap: 12px;
+  }
+
+  .billing-cycle-switch {
+    width: 100%;
   }
 }

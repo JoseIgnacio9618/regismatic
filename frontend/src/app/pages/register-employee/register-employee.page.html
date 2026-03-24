@@ -1,4 +1,4 @@
-<ion-content class="login-screen" [fullscreen]="true">
+<ion-content class="login-screen app-auth-screen" [fullscreen]="true">
   <input #registerPhotoInput type="file" accept="image/png,image/jpeg,image/webp,image/gif" class="hidden-file-input" (change)="onProfilePhotoSelected($event)" />
   <app-photo-cropper
     [isOpen]="photoCropperOpen"
@@ -7,21 +7,21 @@
     (cancel)="cancelPhotoCrop()"
     (confirmCrop)="applyPhotoCrop($event)"
   ></app-photo-cropper>
-  <div class="login-wrap register-wrap">
-    <div class="login-top-actions">
-      <ion-select class="lang-select" interface="popover" [value]="i18nService.language" (ionChange)="setLanguage($event.detail.value)">
+  <div class="login-wrap register-wrap app-auth-wrap">
+    <div class="login-top-actions app-auth-top-actions">
+      <ion-select class="lang-select app-compact-select" interface="popover" [value]="i18nService.language" (ionChange)="setLanguage($event.detail.value)">
         <ion-select-option value="es">{{ "lang.es" | t }}</ion-select-option>
         <ion-select-option value="en">{{ "lang.en" | t }}</ion-select-option>
         <ion-select-option value="fr">{{ "lang.fr" | t }}</ion-select-option>
       </ion-select>
 
-      <ion-button fill="clear" class="theme-toggle" (click)="toggleTheme()">
+      <ion-button fill="clear" class="theme-toggle app-theme-toggle" (click)="toggleTheme()">
         <ion-icon slot="start" [name]="themeService.isDark ? 'sunny-outline' : 'moon-outline'"></ion-icon>
         {{ themeService.isDark ? ("theme.to_light" | t) : ("theme.to_dark" | t) }}
       </ion-button>
     </div>
 
-    <ion-card class="glass-card">
+    <ion-card class="glass-card app-auth-card">
       <ion-card-content>
         <h1>{{ "register_employee.title" | t }}</h1>
         <p>{{ "register_employee.tagline" | t }}</p>
@@ -51,13 +51,13 @@
           <ion-input [(ngModel)]="inviteCode"></ion-input>
         </ion-item>
 
-        <ion-item lines="full">
+        <ion-item lines="full" class="app-attached-item">
           <ion-label position="stacked">{{ "register_employee.request_message" | t }}</ion-label>
           <ion-textarea [(ngModel)]="requestMessage" autoGrow="true"></ion-textarea>
         </ion-item>
 
-        <section class="register-photo-panel">
-          <div class="register-photo-head">
+        <section class="register-photo-panel app-inline-panel app-photo-panel app-attached-panel">
+          <div class="register-photo-head app-photo-panel-head">
             <div>
               <strong>{{ "profile.photo_title" | t }}</strong>
               <p>{{ "register_employee.photo_hint" | t }}</p>
@@ -65,7 +65,7 @@
             <app-avatar [fullName]="fullName || email || 'Empleado'" [photoUrl]="profilePhotoPreviewUrl" size="lg"></app-avatar>
           </div>
 
-          <div class="register-photo-actions">
+          <div class="register-photo-actions app-photo-panel-actions">
             <ion-button size="small" fill="outline" (click)="openProfilePhotoPicker()">
               {{ profilePhotoFile ? ("profile.photo_change" | t) : ("profile.photo_add" | t) }}
             </ion-button>

@@ -48,15 +48,17 @@
             <span>{{ "users.manager_picker_current" | t }}: {{ managerLabelFor(managerPickerUser) }}</span>
           </div>
 
-          <ion-item class="manager-picker-search">
-            <ion-label position="stacked">{{ "users.manager_picker_search_label" | t }}</ion-label>
-            <ion-input [(ngModel)]="managerSearchTerm"></ion-input>
-          </ion-item>
+          <ion-searchbar
+            class="manager-picker-search"
+            [placeholder]="'users.manager_picker_search_label' | t"
+            [(ngModel)]="managerSearchTerm"
+            showClearButton="focus"
+          ></ion-searchbar>
 
           <div class="manager-picker-list" *ngIf="filteredManagerUsers.length > 0; else emptyManagerResults">
             <button
               type="button"
-              class="manager-picker-option"
+              class="manager-picker-option app-choice-card"
               *ngFor="let manager of filteredManagerUsers; trackBy: trackUser"
               [class.manager-picker-option-active]="isSelectedManager(managerPickerUser, manager)"
               [disabled]="savingManagerUserId === managerPickerUser.id"
@@ -94,7 +96,7 @@
                 <h2>{{ scopeTitle }}</h2>
                 <p>{{ scopeDescription }}</p>
 
-                <section class="billing-notice" *ngIf="showAdminBillingNotice && adminBilling as billing">
+                <section class="billing-notice app-inline-panel app-inline-panel--accent" *ngIf="showAdminBillingNotice && adminBilling as billing">
                   <strong>{{ billing.plan.name }}</strong>
                   <span>{{ "billing.seat_usage_value" | t: { used: billing.seatUsage.used, limit: billing.seatUsage.limit, remaining: billing.seatUsage.remaining } }}</span>
                   <span *ngIf="billing.isTrial">{{ "billing.trial_ends" | t }}: {{ formatBillingDate(billing.trialEndsAt) }}</span>
@@ -103,23 +105,23 @@
               </div>
 
               <div class="scope-metrics">
-                <article class="scope-metric">
+                <article class="scope-metric app-inline-panel">
                   <strong>{{ usersTotal }}</strong>
                   <span>{{ "users.metric_visible" | t }}</span>
                 </article>
-                <article class="scope-metric" *ngIf="isSuperadmin">
+                <article class="scope-metric app-inline-panel" *ngIf="isSuperadmin">
                   <strong>{{ visibleSuperadminsCount }}</strong>
                   <span>{{ "users.metric_superadmins" | t }}</span>
                 </article>
-                <article class="scope-metric" *ngIf="isSuperadmin">
+                <article class="scope-metric app-inline-panel" *ngIf="isSuperadmin">
                   <strong>{{ visibleAdminsCount }}</strong>
                   <span>{{ "users.metric_admins" | t }}</span>
                 </article>
-                <article class="scope-metric">
+                <article class="scope-metric app-inline-panel">
                   <strong>{{ visibleEmployeesCount }}</strong>
                   <span>{{ "users.metric_employees" | t }}</span>
                 </article>
-                <article class="scope-metric" *ngIf="!isSuperadmin">
+                <article class="scope-metric app-inline-panel" *ngIf="!isSuperadmin">
                   <strong>1</strong>
                   <span>{{ "users.metric_self" | t }}</span>
                 </article>
@@ -135,24 +137,14 @@
       <ion-col size="12">
         <ion-card class="glass-card panel workspace-panel">
           <ion-card-content>
-            <div class="workspace-switch">
-              <button
-                type="button"
-                class="workspace-card"
-                [class.active-workspace]="activeWorkspace === 'directory'"
-                (click)="selectWorkspace('directory')"
-              >
-                <strong>{{ "users.workspace_directory" | t }}</strong>
-              </button>
-              <button
-                type="button"
-                class="workspace-card"
-                [class.active-workspace]="activeWorkspace === 'create'"
-                (click)="selectWorkspace('create')"
-              >
-                <strong>{{ "users.workspace_create" | t }}</strong>
-              </button>
-            </div>
+            <ion-segment class="workspace-switch" [value]="activeWorkspace" (ionChange)="selectWorkspace($event.detail.value)">
+              <ion-segment-button value="directory">
+                <ion-label>{{ "users.workspace_directory" | t }}</ion-label>
+              </ion-segment-button>
+              <ion-segment-button value="create">
+                <ion-label>{{ "users.workspace_create" | t }}</ion-label>
+              </ion-segment-button>
+            </ion-segment>
           </ion-card-content>
         </ion-card>
       </ion-col>
@@ -176,13 +168,13 @@
               <ion-input type="email" [(ngModel)]="email"></ion-input>
             </ion-item>
 
-            <ion-item>
+            <ion-item class="app-attached-item">
               <ion-label position="stacked">{{ "common.password" | t }}</ion-label>
               <ion-input type="password" [(ngModel)]="password"></ion-input>
             </ion-item>
 
-            <section class="create-photo-panel">
-              <div class="create-photo-head">
+            <section class="create-photo-panel app-inline-panel app-photo-panel app-attached-panel">
+              <div class="create-photo-head app-photo-panel-head">
                 <div>
                   <strong>{{ "profile.photo_title" | t }}</strong>
                   <p>{{ "users.create_photo_hint" | t }}</p>
@@ -190,7 +182,7 @@
                 <app-avatar [fullName]="fullName || email || 'Nuevo usuario'" [photoUrl]="createPhotoPreviewUrl" size="lg"></app-avatar>
               </div>
 
-              <div class="create-photo-actions">
+              <div class="create-photo-actions app-photo-panel-actions">
                 <ion-button size="small" fill="outline" (click)="openCreatePhotoPicker()">
                   {{ createPhotoFile ? ("profile.photo_change" | t) : ("profile.photo_add" | t) }}
                 </ion-button>
@@ -207,7 +199,7 @@
               </div>
               <button
                 type="button"
-                class="role-card"
+                class="role-card app-choice-card"
                 *ngFor="let option of createRoleOptions"
                 [class.active-role]="selectedRoleOption.role === option.role"
                 (click)="selectRole(option.role)"
@@ -220,7 +212,7 @@
               </button>
             </div>
 
-            <section class="fixed-role-summary" *ngIf="!isSuperadmin">
+            <section class="fixed-role-summary app-inline-panel app-inline-panel--accent" *ngIf="!isSuperadmin">
               <div class="fixed-role-top">
                 <strong>{{ "users.fixed_role_title" | t }}</strong>
                 <ion-badge color="primary">{{ "role.EMPLOYEE" | t }}</ion-badge>
@@ -255,26 +247,26 @@
             <p class="microcopy">{{ "users.team_microcopy" | t }}</p>
           </ion-card-header>
           <ion-card-content>
-            <section class="invite-code-panel" *ngIf="adminInviteCode">
+            <section class="invite-code-panel app-inline-panel" *ngIf="adminInviteCode">
               <strong>{{ "users.invite_code_title" | t }}</strong>
               <p>{{ "users.invite_code_desc" | t }}</p>
               <div class="invite-code-chip">{{ adminInviteCode }}</div>
             </section>
 
             <div class="scope-metrics compact-metrics">
-              <article class="scope-metric">
+              <article class="scope-metric app-inline-panel">
                 <strong>{{ usersTotal }}</strong>
                 <span>{{ "users.metric_visible" | t }}</span>
               </article>
-              <article class="scope-metric">
+              <article class="scope-metric app-inline-panel">
                 <strong>{{ visibleEmployeesCount }}</strong>
                 <span>{{ "users.metric_employees" | t }}</span>
               </article>
-              <article class="scope-metric" *ngIf="isSuperadmin">
+              <article class="scope-metric app-inline-panel" *ngIf="isSuperadmin">
                 <strong>{{ visibleAdminsCount }}</strong>
                 <span>{{ "users.metric_admins" | t }}</span>
               </article>
-              <article class="scope-metric" *ngIf="isSuperadmin">
+              <article class="scope-metric app-inline-panel" *ngIf="isSuperadmin">
                 <strong>{{ visibleSuperadminsCount }}</strong>
                 <span>{{ "users.metric_superadmins" | t }}</span>
               </article>
@@ -305,7 +297,7 @@
               </div>
 
               <div class="join-request-list">
-                <article class="join-request-card" *ngFor="let request of pendingJoinRequests; trackBy: trackJoinRequest">
+                <article class="join-request-card app-inline-panel" *ngFor="let request of pendingJoinRequests; trackBy: trackJoinRequest">
                   <div class="join-request-copy">
                     <strong>{{ request.employee.fullName }}</strong>
                     <span>{{ request.employee.email }}</span>
@@ -351,10 +343,13 @@
             </section>
 
             <div class="team-toolbar">
-              <ion-item class="team-search-item">
-                <ion-label position="stacked">{{ "users.search_placeholder" | t }}</ion-label>
-                <ion-input [(ngModel)]="teamSearchTerm" (ngModelChange)="onTeamSearchChange()"></ion-input>
-              </ion-item>
+              <ion-searchbar
+                class="team-searchbar"
+                [placeholder]="'users.search_placeholder' | t"
+                [(ngModel)]="teamSearchTerm"
+                showClearButton="focus"
+                (ionInput)="onTeamSearchChange()"
+              ></ion-searchbar>
               <ion-item class="team-filter-item" *ngIf="showTeamRoleFilter">
                 <ion-label position="stacked">{{ "common.role" | t }}</ion-label>
                 <ion-select [(ngModel)]="teamRoleFilter" (ngModelChange)="onTeamRoleFilterChange()">
@@ -380,8 +375,8 @@
                   <ion-badge color="light">{{ section.users.length }}</ion-badge>
                 </div>
 
-                <div class="team-table-shell">
-                  <table class="team-table">
+                <div class="team-table-shell app-table-shell">
+                  <table class="team-table app-data-table">
                     <colgroup>
                       <col class="team-col-name" />
                       <col class="team-col-role" />

@@ -1,6 +1,6 @@
 import { Component, OnInit } from "@angular/core";
 import { ToastController } from "@ionic/angular";
-import { BillingPlan, BillingPriceOption, BillingSummary } from "src/app/core/models/types";
+import { BillingInterval, BillingPlan, BillingPriceOption, BillingSummary } from "src/app/core/models/types";
 import { AuthService } from "src/app/core/services/auth.service";
 import { BillingService } from "src/app/core/services/billing.service";
 import { I18nService } from "src/app/core/services/i18n.service";
@@ -16,6 +16,7 @@ export class BillingPage implements OnInit {
   summary: BillingSummary | null = null;
   loading = false;
   actionLoading = false;
+  selectedInterval: BillingInterval = "month";
 
   constructor(
     public readonly authService: AuthService,
@@ -44,6 +45,10 @@ export class BillingPage implements OnInit {
     return this.formatPriceOption(billing.currentPrice);
   }
 
+  formatCycleLabel(interval: BillingInterval): string {
+    return this.i18nService.t(interval === "year" ? "billing.yearly" : "billing.monthly");
+  }
+
   formatPriceOption(price: BillingPriceOption): string {
     if (!price.amountEur) {
       return this.i18nService.t("billing.not_available");
@@ -67,6 +72,53 @@ export class BillingPage implements OnInit {
     }
 
     return this.i18nService.t("billing.not_available");
+  }
+
+  setSelectedInterval(interval: string | number | null | undefined): void {
+    if (interval === "month" || interval === "year") {
+      this.selectedInterval = interval;
+    }
+  }
+
+  currentCycleLabel(billing: BillingSummary): string {
+    if (billing.isTrial || !billing.currentPrice) {
+      return this.i18nService.t("billing.free");
+    }
+
+    return this.formatCycleLabel(billing.currentPrice.interval);
+  }
+
+  selectedPriceFor(plan: BillingPlan): BillingPriceOption | null {
+    return plan.pricingOptions.find((price) => price.interval === this.selectedInterval) ?? null;
+  }
+
+  isCurrentPlan(plan: BillingPlan): boolean {
+    return this.summary?.plan.code === plan.code;
+  }
+
+  isCurrentPrice(price: BillingPriceOption | null | undefined): boolean {
+    return !!price?.priceId && this.summary?.currentPrice?.priceId === price.priceId;
+  }
+
+  isSelectedPlanUnavailable(plan: BillingPlan): boolean {
+    const price = this.selectedPriceFor(plan);
+    return !price?.priceId || !price.checkoutEnabled;
+  }
+
+  planActionLabel(plan: BillingPlan, price: BillingPriceOption | null | undefined): string {
+    if (!price?.priceId || !price.checkoutEnabled) {
+      return this.i18nService.t("billing.not_available");
+    }
+
+    if (this.isCurrentPrice(price)) {
+      return this.i18nService.t("common.current");
+    }
+
+    if (this.isCurrentPlan(plan)) {
+      return this.i18nService.t("billing.change_plan");
+    }
+
+    return this.i18nService.t("billing.choose_plan");
   }
 
   trackPlanPrice(_index: number, price: BillingPriceOption): string {
@@ -132,6 +184,7 @@ export class BillingPage implements OnInit {
       const overview = await this.billingService.getOverview();
       this.plans = overview.plans;
       this.summary = overview.summary;
+      this.selectedInterval = overview.summary?.currentPrice?.interval ?? "month";
     } catch (error) {
       await this.showToast(error instanceof Error ? error.message : this.i18nService.t("billing.load_failed"), "danger");
     } finally {

@@ -5,13 +5,11 @@
 .avatar-shell {
   width: 44px;
   height: 44px;
-  border-radius: 50%;
   overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--app-border), transparent 12%);
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, #fff, transparent 76%),
-    0 12px 24px color-mix(in srgb, #000, transparent 90%);
-  background: color-mix(in srgb, var(--app-surface-strong), transparent 4%);
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--app-border-strong), transparent 20%);
+  box-shadow: var(--app-shadow-xs);
+  background: color-mix(in srgb, var(--app-surface-2), var(--app-accent-subtle) 18%);
 }
 
 .avatar-shell img,
@@ -30,9 +28,9 @@
 
 .avatar-fallback {
   background:
-    radial-gradient(circle at 22% 20%, color-mix(in srgb, var(--ion-color-secondary), transparent 16%) 0%, transparent 34%),
-    linear-gradient(145deg, color-mix(in srgb, var(--ion-color-primary), #ffffff 14%) 0%, color-mix(in srgb, var(--ion-color-secondary), #13233b 18%) 100%);
-  color: #fff;
+    radial-gradient(circle at 24% 22%, color-mix(in srgb, var(--app-accent-base), transparent 24%) 0%, transparent 34%),
+    linear-gradient(145deg, color-mix(in srgb, var(--app-brand-base), #ffffff 16%) 0%, color-mix(in srgb, var(--app-accent-base), #203127 26%) 100%);
+  color: #ffffff;
   font-weight: 700;
   letter-spacing: 0.04em;
 }
@@ -56,5 +54,5 @@
 }
 
 .avatar-lg .avatar-fallback span {
-  font-size: 1.2rem;
+  font-size: 1.14rem;
 }

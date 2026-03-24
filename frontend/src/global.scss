@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap");
 
 @import "@ionic/angular/css/core.css";
 @import "@ionic/angular/css/normalize.css";
@@ -11,40 +11,32 @@
 @import "@ionic/angular/css/text-transformation.css";
 @import "@ionic/angular/css/flex-utils.css";
 
-* {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
 html,
 body,
 ion-app,
+ion-router-outlet,
 ion-content {
   min-height: 100%;
 }
 
+html {
+  background: var(--ion-background-color);
+}
+
 body {
   margin: 0;
-  color: var(--ion-text-color);
+  color: var(--app-text-primary);
   background:
-    radial-gradient(circle at 8% 14%, var(--app-bg-a) 0%, transparent 34%),
-    radial-gradient(circle at 92% 2%, var(--app-bg-b) 0%, transparent 30%),
-    radial-gradient(circle at 58% 98%, var(--app-bg-c) 0%, transparent 34%),
-    linear-gradient(180deg, var(--ion-background-color) 0%, color-mix(in srgb, var(--ion-background-color), #000 4%) 100%);
-  transition: background 0.45s ease, color 0.3s ease;
-}
-
-body,
-button,
-input,
-textarea,
-select {
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-::selection {
-  background: color-mix(in srgb, var(--ion-color-primary), transparent 72%);
-  color: var(--ion-text-color);
+    radial-gradient(circle at top left, color-mix(in srgb, var(--app-brand-base), transparent 93%) 0%, transparent 34%),
+    radial-gradient(circle at bottom right, color-mix(in srgb, var(--app-accent-base), transparent 94%) 0%, transparent 32%),
+    linear-gradient(180deg, var(--app-canvas) 0%, color-mix(in srgb, var(--app-canvas), var(--app-surface-2) 48%) 100%);
+  transition: background var(--app-transition-slow), color var(--app-transition-base);
 }
 
 body::before {
@@ -52,94 +44,438 @@ body::before {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  background-image: radial-gradient(circle at center, rgba(255, 255, 255, 0.045) 0.5px, transparent 0.5px);
-  background-size: 24px 24px;
-  opacity: 0.12;
-  mix-blend-mode: soft-light;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--app-text-primary), transparent 98%) 0%, transparent 20%),
+    radial-gradient(circle at 1px 1px, color-mix(in srgb, var(--app-text-primary), transparent 94%) 1px, transparent 0);
+  background-size: auto, 24px 24px;
+  opacity: 0.35;
   z-index: -1;
+}
+
+body,
+button,
+input,
+textarea,
+select {
+  font-family: var(--ion-font-family);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--ion-color-primary), transparent 70%);
+  color: var(--app-text-primary);
+}
+
+a {
+  color: var(--app-link);
+  text-decoration-color: color-mix(in srgb, currentColor, transparent 65%);
+  transition: color var(--app-transition-fast), text-decoration-color var(--app-transition-fast);
+}
+
+a:hover {
+  text-decoration-color: currentColor;
 }
 
 h1,
 h2,
 h3,
+h4,
 ion-title {
   margin: 0;
-  font-family: "Sora", "Manrope", sans-serif;
+  color: var(--app-text-primary);
+  font-weight: 700;
   letter-spacing: -0.02em;
 }
 
-p,
+h1 {
+  font-size: clamp(1.95rem, 3.8vw, 2.4rem);
+  line-height: 1.1;
+}
+
+h2 {
+  font-size: clamp(1.35rem, 2.8vw, 1.8rem);
+  line-height: 1.15;
+}
+
+h3 {
+  font-size: 1.05rem;
+  line-height: 1.2;
+}
+
+p {
+  margin: 0;
+  color: var(--app-text-secondary);
+  line-height: 1.58;
+}
+
+small,
 ion-label,
 ion-note {
-  color: var(--app-ink-soft);
+  color: var(--app-text-secondary);
 }
 
-.microcopy {
-  margin-top: 8px;
-  margin-bottom: 0;
-  font-size: 0.82rem;
-  color: var(--app-ink-muted);
+:where(button, a, input, textarea, select, [tabindex], .avatar-preview-trigger, .manager-picker-option):focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px var(--app-canvas),
+    0 0 0 4px var(--app-focus-ring);
 }
 
-.muted {
-  color: var(--app-ink-muted);
+ion-app {
+  background: transparent;
+  color: var(--app-text-primary);
 }
 
 ion-content {
   --background: transparent;
 }
 
-.hidden-file-input {
-  display: none !important;
+ion-header {
+  backdrop-filter: saturate(140%) blur(12px);
 }
 
-ion-modal.photo-cropper-modal {
-  --width: min(960px, 96vw);
-  --height: min(90vh, 760px);
-  --border-radius: 28px;
-  --box-shadow: 0 28px 72px color-mix(in srgb, #000, transparent 64%);
+ion-toolbar {
+  --min-height: 56px;
+  --padding-start: 12px;
+  --padding-end: 12px;
+  --background: var(--ion-toolbar-background);
+  --color: var(--ion-toolbar-color);
+  border-bottom: 1px solid var(--app-divider);
 }
 
-ion-header ion-toolbar {
-  --background: color-mix(in srgb, var(--app-surface-strong), transparent 2%);
-  --color: var(--ion-text-color);
-  border-bottom: 1px solid var(--app-border);
-  backdrop-filter: saturate(165%) blur(18px);
+ion-title {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+}
+
+ion-buttons {
+  gap: 4px;
+}
+
+ion-buttons ion-button {
+  margin-inline-start: 0;
+  margin-inline-end: 0;
+}
+
+ion-menu {
+  --background: var(--app-surface-0);
+  --color: var(--app-text-primary);
+}
+
+ion-menu::part(container) {
+  border-right: 1px solid var(--app-border-subtle);
+}
+
+ion-list {
+  --app-list-radius: var(--app-radius-md);
+  margin: 0;
+  padding: 8px;
+  border-radius: var(--app-list-radius);
+  background: color-mix(in srgb, var(--app-surface-1), transparent 6%);
+  overflow: hidden;
+  isolation: isolate;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--app-border-subtle), transparent 18%);
+}
+
+ion-item {
+  --app-item-radius: var(--app-radius-md);
+  --background: var(--app-field-background);
+  --color: var(--app-text-primary);
+  --border-color: transparent;
+  --highlight-color-focused: var(--app-focus-ring);
+  --highlight-color-invalid: var(--ion-color-danger);
+  --inner-border-width: 0;
+  --padding-start: 14px;
+  --padding-end: 14px;
+  --inner-padding-top: 10px;
+  --inner-padding-bottom: 10px;
+  --min-height: 56px;
+  margin-bottom: 12px;
+  border: 1px solid var(--app-field-border);
+  border-radius: var(--app-item-radius);
+  overflow: hidden;
+  isolation: isolate;
+  contain: paint;
+  clip-path: inset(0 round var(--app-item-radius));
+  box-shadow: var(--app-shadow-xs);
+  transition:
+    background var(--app-transition-fast),
+    border-color var(--app-transition-fast),
+    box-shadow var(--app-transition-fast);
+}
+
+ion-item::part(native) {
+  border-radius: inherit;
+  background: transparent;
+  overflow: hidden;
+  clip-path: inset(0 round var(--app-item-radius));
+}
+
+ion-item:last-child {
+  margin-bottom: 0;
+}
+
+ion-item ion-label[position="stacked"],
+ion-item ion-label[position="floating"] {
+  margin-bottom: 8px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--app-text-tertiary);
+}
+
+ion-item h3,
+ion-item p,
+ion-item ion-note {
+  color: inherit;
+}
+
+ion-item.item-has-focus,
+ion-item.ion-focused {
+  border-color: var(--app-focus-ring);
+  background: var(--app-field-background-focus);
+  box-shadow:
+    0 0 0 3px var(--app-focus-shadow),
+    var(--app-shadow-xs);
+}
+
+ion-item.ion-invalid.ion-touched {
+  border-color: var(--ion-color-danger);
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--ion-color-danger), transparent 78%),
+    var(--app-shadow-xs);
+}
+
+ion-item.item-interactive-disabled,
+ion-button[disabled],
+ion-toggle[disabled],
+ion-checkbox[disabled],
+ion-radio[disabled] {
+  opacity: 0.58;
+}
+
+ion-label {
+  color: var(--app-text-primary);
+}
+
+ion-note {
+  color: var(--app-text-secondary);
+}
+
+ion-input,
+ion-textarea,
+ion-select {
+  --color: var(--app-text-primary);
+  --placeholder-color: var(--app-text-tertiary);
+  --placeholder-opacity: 1;
+  --highlight-color-focused: var(--app-focus-ring);
+  --highlight-color-invalid: var(--ion-color-danger);
+}
+
+ion-input::part(native),
+ion-textarea::part(native),
+ion-select::part(text),
+ion-select::part(icon),
+ion-datetime::part(native) {
+  color: var(--app-text-primary);
+}
+
+ion-select::part(placeholder) {
+  color: var(--app-text-tertiary);
+  opacity: 1;
+}
+
+ion-searchbar {
+  --background: var(--app-field-background);
+  --border-radius: var(--app-radius-md);
+  --box-shadow: 0 0 0 1px var(--app-field-border);
+  --color: var(--app-text-primary);
+  --placeholder-color: var(--app-text-tertiary);
+  --icon-color: var(--app-text-tertiary);
+  --clear-button-color: var(--app-text-secondary);
+  padding: 0;
+  transition: filter var(--app-transition-fast);
+}
+
+ion-searchbar.searchbar-has-focus {
+  --box-shadow:
+    0 0 0 1px var(--app-focus-ring),
+    0 0 0 4px var(--app-focus-shadow);
+}
+
+ion-toggle {
+  --background: color-mix(in srgb, var(--app-surface-3), var(--app-border-subtle) 28%);
+  --background-checked: var(--ion-color-primary);
+  --handle-background: var(--app-surface-0);
+  --handle-background-checked: var(--ion-color-primary-contrast);
+}
+
+ion-checkbox {
+  --size: 20px;
+  --border-color: var(--app-border-strong);
+  --border-color-checked: var(--ion-color-primary);
+  --checkbox-background: var(--app-field-background);
+  --checkbox-background-checked: var(--ion-color-primary);
+  --checkmark-color: var(--ion-color-primary-contrast);
+}
+
+ion-radio {
+  --color: var(--app-border-strong);
+  --color-checked: var(--ion-color-primary);
+}
+
+ion-range {
+  --bar-background: color-mix(in srgb, var(--app-border-subtle), transparent 20%);
+  --bar-background-active: var(--ion-color-primary);
+  --knob-background: var(--app-surface-0);
+  --knob-box-shadow: 0 0 0 2px var(--ion-color-primary);
+  --pin-background: var(--ion-color-primary);
+  --pin-color: var(--ion-color-primary-contrast);
+}
+
+ion-button {
+  --border-radius: 12px;
+  --box-shadow: none;
+  --padding-top: 12px;
+  --padding-bottom: 12px;
+  --padding-start: 16px;
+  --padding-end: 16px;
+  min-height: 42px;
+  overflow: hidden;
+  isolation: isolate;
+  border-radius: var(--border-radius, 12px);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+ion-button::part(native) {
+  border: 1px solid transparent;
+  border-radius: inherit;
+  overflow: hidden;
+  transition:
+    background var(--app-transition-fast),
+    border-color var(--app-transition-fast),
+    color var(--app-transition-fast),
+    box-shadow var(--app-transition-fast);
+}
+
+ion-button:not([fill]),
+ion-button[fill="solid"] {
+  --background: var(--ion-color-primary);
+  --color: var(--ion-color-primary-contrast);
+}
+
+ion-button:not([fill])::part(native),
+ion-button[fill="solid"]::part(native) {
+  border-color: color-mix(in srgb, var(--background), var(--app-text-primary) 14%);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--background), white 7%) 0%,
+    var(--background) 62%,
+    color-mix(in srgb, var(--background), black 4%) 100%
+  );
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--color), transparent 82%);
+}
+
+ion-button[fill="outline"],
+ion-button[fill="clear"] {
+  --box-shadow: none;
+}
+
+ion-button[fill="outline"]:not([color]),
+ion-button[fill="outline"][color="primary"] {
+  --background: transparent;
+  --color: var(--ion-color-primary);
+  --border-width: 1px;
+  --border-color: color-mix(in srgb, var(--ion-color-primary), transparent 62%);
+}
+
+ion-button[fill="outline"][color="danger"] {
+  --background: transparent;
+  --color: var(--ion-color-danger);
+  --border-width: 1px;
+  --border-color: color-mix(in srgb, var(--ion-color-danger), transparent 58%);
+}
+
+ion-button[fill="outline"][color="success"] {
+  --background: transparent;
+  --color: var(--ion-color-success);
+  --border-width: 1px;
+  --border-color: color-mix(in srgb, var(--ion-color-success), transparent 58%);
+}
+
+ion-button[fill="clear"] {
+  --background: transparent;
+  --color: var(--app-text-secondary);
+}
+
+ion-button[color="medium"][fill="clear"] {
+  --color: var(--app-text-tertiary);
+}
+
+ion-chip {
+  --background: color-mix(in srgb, var(--app-surface-2), var(--app-accent-subtle) 24%);
+  --color: var(--app-text-primary);
+  min-height: 32px;
+  border: 1px solid var(--app-border-subtle);
+  border-radius: var(--app-radius-pill);
+}
+
+ion-chip ion-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+ion-badge {
+  padding: 6px 10px;
+  border-radius: var(--app-radius-pill);
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+ion-badge[color="light"] {
+  --background: color-mix(in srgb, var(--app-surface-2), var(--app-accent-subtle) 18%);
+  --color: var(--app-text-secondary);
+  border: 1px solid var(--app-border-subtle);
 }
 
 ion-card {
   margin: 0;
+  color: var(--app-text-primary);
+  border-radius: var(--app-radius-lg);
 }
 
+ion-card-header {
+  padding: 20px 20px 0;
+}
+
+ion-card-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+}
+
+ion-card-content {
+  padding: 18px 20px 20px;
+}
 
 .glass-card,
 .panel {
   position: relative;
   isolation: isolate;
-  background: linear-gradient(
-      140deg,
-      color-mix(in srgb, var(--app-hero-a), transparent 60%) 0%,
-      color-mix(in srgb, var(--app-hero-b), transparent 72%) 45%,
-      color-mix(in srgb, var(--app-hero-c), transparent 70%) 100%
-    ),
-    var(--app-surface);
-  border: 1px solid var(--app-border);
-  box-shadow: var(--app-shadow);
-  backdrop-filter: blur(16px) saturate(140%);
-  border-radius: var(--app-radius-xl);
   overflow: hidden;
-  animation: panel-enter 0.35s ease;
-}
-
-.glass-card::after,
-.panel::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: linear-gradient(180deg, color-mix(in srgb, #fff, transparent 88%) 0%, transparent 22%, transparent 100%);
-  opacity: 0.5;
-  z-index: 0;
+  border: 1px solid var(--app-border-subtle);
+  border-radius: var(--app-radius-lg);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--app-surface-1), var(--app-accent-subtle) 12%) 0%,
+    var(--app-surface-0) 100%
+  );
+  box-shadow: var(--app-shadow-sm);
 }
 
 .panel > * {
@@ -147,59 +483,27 @@ ion-card {
   z-index: 1;
 }
 
-.panel ion-card-header {
-  padding-bottom: 10px;
+.microcopy {
+  margin-top: 6px;
+  font-size: 0.84rem;
+  color: var(--app-text-tertiary);
 }
 
-.panel ion-card-title {
-  font-size: 1.15rem;
-  color: var(--ion-text-color);
+.muted {
+  color: var(--app-text-tertiary);
 }
 
-.panel ion-card-content {
-  padding-top: 10px;
+.mt-16 {
+  margin-top: 16px;
 }
 
-ion-item {
-  --background: color-mix(in srgb, var(--app-surface), transparent 4%);
-  --color: var(--ion-text-color);
-  --border-color: color-mix(in srgb, var(--app-border), transparent 12%);
-  --highlight-color-focused: var(--ion-color-primary);
-  --padding-start: 14px;
-  --padding-end: 14px;
-  --inner-padding-top: 10px;
-  --inner-padding-bottom: 10px;
-  border: 1px solid color-mix(in srgb, var(--app-border), transparent 22%);
-  border-radius: var(--app-radius-md);
-  margin-bottom: 12px;
-  transition: border-color 180ms ease, background 180ms ease, transform 180ms ease, box-shadow 180ms ease;
-}
-
-ion-item:hover {
-  border-color: color-mix(in srgb, var(--ion-text-color), var(--app-border) 76%);
-  background: color-mix(in srgb, var(--app-surface-strong), transparent 3%);
-  box-shadow: 0 10px 20px color-mix(in srgb, #000, transparent 94%);
-}
-
-ion-item h3,
-ion-item p {
-  color: var(--ion-text-color);
-}
-
-ion-item p {
-  opacity: 0.82;
-}
-
-ion-list {
-  background: transparent;
+.hidden-file-input {
+  display: none !important;
 }
 
 .data-list {
-  display: flex;
-  flex-direction: column;
+  display: grid;
   gap: 10px;
-  padding: 10px 10px;
-  border-radius: 20px;
   margin: 0;
 }
 
@@ -208,219 +512,349 @@ ion-list {
 }
 
 .data-item {
-  --background: color-mix(in srgb, var(--app-surface), transparent 2%);
-  --inner-padding-top: 10px;
-  --inner-padding-bottom: 10px;
-  --inner-padding-end: 12px;
-  --inner-padding-start: 12px;
-  --inner-border-width: 0;
+  --background: var(--app-surface-1);
+  --inner-padding-top: 12px;
+  --inner-padding-bottom: 12px;
+  --inner-padding-start: 14px;
+  --inner-padding-end: 14px;
+  border: 1px solid var(--app-border-subtle);
   border-radius: var(--app-radius-md);
-  border: 1px solid color-mix(in srgb, var(--app-border), transparent 20%);
+  background: var(--app-surface-1);
   overflow: hidden;
-  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
-}
-
-.data-item:hover {
-  transform: translateY(-1px);
-  border-color: color-mix(in srgb, var(--ion-text-color), var(--app-border) 76%);
-  box-shadow: 0 14px 26px color-mix(in srgb, #000, transparent 92%);
+  isolation: isolate;
 }
 
 .data-item::part(native) {
   border-radius: inherit;
   background: transparent;
+  overflow: hidden;
 }
 
 .item-title {
-  margin-bottom: 4px;
+  margin: 0 0 4px;
   font-size: 0.98rem;
   font-weight: 700;
-  color: var(--ion-text-color);
+  color: var(--app-text-primary);
+}
+
+.item-meta,
+.item-audit {
+  display: block;
+  white-space: normal;
 }
 
 .item-meta {
-  display: block;
   margin-top: 2px;
   font-size: 0.86rem;
-  line-height: 1.35;
-  white-space: normal;
-  color: var(--app-ink-muted);
+  line-height: 1.45;
+  color: var(--app-text-secondary);
 }
 
 .item-audit {
-  display: block;
-  margin-top: 4px;
+  margin-top: 5px;
   font-size: 0.82rem;
-  line-height: 1.35;
-  color: color-mix(in srgb, var(--ion-color-primary), var(--app-ink-soft) 45%);
+  line-height: 1.42;
+  color: color-mix(in srgb, var(--ion-color-primary), var(--app-text-secondary) 36%);
 }
 
 .empty-state {
   display: grid;
   justify-items: center;
-  text-align: center;
   gap: 8px;
-  padding: 22px 16px;
-  border: 1px dashed color-mix(in srgb, var(--app-border), transparent 10%);
+  padding: 24px 18px;
+  text-align: center;
+  border: 1px dashed color-mix(in srgb, var(--app-border-strong), transparent 15%);
   border-radius: var(--app-radius-md);
-  background: color-mix(in srgb, var(--app-surface), transparent 12%);
+  background: color-mix(in srgb, var(--app-surface-2), transparent 10%);
 }
 
 .empty-state ion-icon {
-  font-size: 1.5rem;
-  color: color-mix(in srgb, var(--ion-color-primary), var(--ion-text-color) 18%);
+  font-size: 1.4rem;
+  color: color-mix(in srgb, var(--ion-color-primary), var(--app-text-secondary) 14%);
 }
 
 .empty-state h3 {
   font-size: 1rem;
-  font-weight: 700;
-  color: var(--ion-text-color);
 }
 
 .empty-state p {
-  margin: 0;
-  font-size: 0.9rem;
-  color: var(--app-ink-muted);
+  max-width: 40ch;
+  color: var(--app-text-secondary);
 }
 
-ion-button {
-  --border-radius: 12px;
-  --box-shadow: 0 10px 20px color-mix(in srgb, var(--ion-color-primary), transparent 76%);
-  --padding-top: 12px;
-  --padding-bottom: 12px;
+.metric-tile {
+  min-height: 100%;
+  padding: 14px 12px;
+  border: 1px solid var(--app-border-subtle);
+  border-radius: var(--app-radius-md);
+  background: color-mix(in srgb, var(--app-surface-2), var(--app-accent-subtle) 18%);
+}
+
+.metric-tile strong {
+  display: block;
+  font-size: 0.75rem;
   font-weight: 700;
-  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--app-text-tertiary);
 }
 
-ion-button[fill="outline"] {
-  --border-width: 1px;
-  --border-color: color-mix(in srgb, var(--ion-color-primary), transparent 54%);
-  --color: color-mix(in srgb, var(--ion-color-primary), var(--ion-text-color) 42%);
-  --background: color-mix(in srgb, var(--app-surface-strong), var(--ion-color-primary) 10%);
+.metric-tile p {
+  margin-top: 8px;
+  font-size: 1.1rem;
+  font-weight: 800;
+  line-height: 1.15;
+  color: var(--app-text-primary);
 }
 
-ion-badge {
-  border-radius: 999px;
-  padding: 8px 12px;
-  font-weight: 700;
-  letter-spacing: 0.01em;
-}
-
-button:focus-visible,
-ion-button:focus-visible,
-.role-card:focus-visible,
-.avatar-preview-trigger:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--ion-color-primary), transparent 18%);
-  outline-offset: 2px;
-}
-
-ion-button.notification-button {
-  position: relative;
-  --padding-start: 10px;
-  --padding-end: 10px;
-  min-width: 42px;
-}
-
-ion-button.notification-button ion-icon {
-  font-size: 1.22rem;
-  color: var(--ion-text-color);
-}
-
-ion-button.notification-button .notification-badge {
-  position: absolute;
-  top: -1px;
-  right: -1px;
-  transform: translate(22%, -22%);
-  min-width: 18px;
-  height: 18px;
-  padding: 0 5px;
-  display: inline-flex;
+.report-pagination {
+  display: flex;
   align-items: center;
-  justify-content: center;
-  font-size: 0.66rem;
-  line-height: 1;
-  border-radius: 999px;
-  border: 1.5px solid var(--app-surface-strong);
-  box-shadow: 0 4px 10px color-mix(in srgb, var(--ion-color-danger), transparent 58%);
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.report-pagination span {
+  color: var(--app-text-secondary);
+  font-size: 0.9rem;
+}
+
+.app-inline-panel {
+  border: 1px solid var(--app-border-subtle);
+  border-radius: var(--app-radius-md);
+  background: var(--app-surface-2);
+  overflow: hidden;
+  isolation: isolate;
+  box-shadow: var(--app-shadow-xs);
+}
+
+.app-attached-item {
+  margin-bottom: 0;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  clip-path: inset(0 round var(--app-item-radius) var(--app-item-radius) 0 0);
+}
+
+.app-attached-item::part(native) {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  clip-path: inset(0 round var(--app-item-radius) var(--app-item-radius) 0 0);
+}
+
+.app-attached-panel {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+.app-attached-item + .app-attached-panel {
+  margin-top: -1px;
+}
+
+.app-attached-list {
+  padding: 8px 8px 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.app-inline-panel--accent {
+  border-color: color-mix(in srgb, var(--ion-color-primary), transparent 68%);
+  background: color-mix(in srgb, var(--app-surface-2), var(--app-accent-subtle) 48%);
+}
+
+.app-choice-card {
+  appearance: none;
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid var(--app-border-subtle);
+  border-radius: var(--app-radius-md);
+  background: var(--app-surface-1);
+  color: var(--app-text-primary);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background var(--app-transition-fast),
+    border-color var(--app-transition-fast),
+    box-shadow var(--app-transition-fast);
+}
+
+.app-table-shell {
+  overflow-x: auto;
+  border: 1px solid var(--app-border-subtle);
+  border-radius: var(--app-radius-md);
+  background: var(--app-surface-1);
+}
+
+.app-data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.app-data-table th,
+.app-data-table td {
+  padding: 12px 14px;
+  text-align: left;
+  border-bottom: 1px solid color-mix(in srgb, var(--app-border-subtle), transparent 18%);
+}
+
+.app-data-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.app-data-table th {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--app-text-tertiary);
+  background: color-mix(in srgb, var(--app-surface-3), transparent 20%);
+}
+
+.app-auth-screen {
+  --background: transparent;
+}
+
+.app-auth-wrap {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  position: relative;
+  isolation: isolate;
+}
+
+.app-auth-wrap::before,
+.app-auth-wrap::after {
+  content: "";
+  position: absolute;
   pointer-events: none;
+  filter: blur(34px);
+  z-index: -1;
 }
 
-ion-chip {
-  --background: color-mix(in srgb, var(--app-surface-strong), var(--ion-color-primary) 12%);
-  border: 1px solid color-mix(in srgb, var(--app-border), var(--ion-color-primary) 28%);
+.app-auth-top-actions {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-ion-select {
-  color: var(--ion-text-color);
-  --placeholder-color: var(--app-ink-muted);
-  --placeholder-opacity: 1;
-  --highlight-color-focused: var(--ion-color-primary);
+.app-theme-toggle {
+  --background: color-mix(in srgb, var(--app-surface-2), var(--app-accent-subtle) 48%);
+  --color: var(--app-text-primary);
+  --border-radius: var(--app-radius-pill);
+  --padding-start: 12px;
+  --padding-end: 12px;
 }
 
-ion-select::part(container),
-ion-select::part(text),
-ion-input::part(native),
-ion-textarea::part(native),
-ion-datetime::part(native) {
-  color: var(--ion-text-color);
+.app-compact-select {
+  min-width: 112px;
+  --padding-start: 10px;
+  --padding-end: 8px;
+  --highlight-color-focused: var(--app-focus-ring);
+  border: 1px solid var(--app-field-border);
+  border-radius: var(--app-radius-pill);
+  background: var(--app-field-background);
+  color: var(--app-text-primary);
+  padding: 2px 8px;
 }
 
-ion-select::part(placeholder) {
-  color: var(--app-ink-muted);
-  opacity: 1;
+.app-auth-card {
+  width: min(560px, 100%);
 }
 
-ion-select::part(icon) {
-  color: color-mix(in srgb, var(--ion-text-color), transparent 30%);
-  opacity: 1;
+.app-auth-card ion-card-content {
+  padding: 26px;
 }
 
+.app-photo-panel {
+  margin-top: 16px;
+  padding: 14px 16px;
+}
+
+.app-photo-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.app-photo-panel-head strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.app-photo-panel-head p {
+  color: var(--app-text-secondary);
+  font-size: 0.9rem;
+}
+
+.app-photo-panel-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+ion-modal,
 ion-popover,
 ion-alert,
-ion-modal {
-  --color: var(--ion-text-color);
+ion-loading {
+  --color: var(--app-text-primary);
 }
 
 ion-popover {
-  --background: color-mix(in srgb, var(--app-surface-strong), transparent 4%);
-  --box-shadow: 0 22px 48px color-mix(in srgb, #000, transparent 62%);
+  --background: var(--app-surface-overlay);
+  --backdrop-opacity: 0.26;
+  --box-shadow: var(--app-shadow-md);
+}
+
+ion-popover::part(content) {
+  border: 1px solid var(--app-border-subtle);
+  border-radius: var(--app-radius-md);
+}
+
+ion-popover.header-menu-popover {
+  --background: var(--app-surface-overlay);
+}
+
+ion-popover.header-menu-popover::part(content) {
+  background: var(--app-surface-overlay);
 }
 
 ion-select-popover {
-  --background: color-mix(in srgb, var(--app-surface-strong), transparent 2%);
-  --color: var(--ion-text-color);
+  --background: var(--app-surface-overlay);
+  --color: var(--app-text-primary);
 }
 
 ion-select-popover ion-item {
   --background: transparent;
-  --color: var(--ion-text-color);
-  --color-focused: var(--ion-text-color);
+  --color: var(--app-text-primary);
   --background-focused: color-mix(in srgb, var(--ion-color-primary), transparent 88%);
   border: 0;
-  margin-bottom: 0;
-}
-
-ion-select-popover ion-radio {
-  --color: var(--ion-text-color);
-}
-
-ion-alert {
-  --background: color-mix(in srgb, var(--app-surface-strong), transparent 6%);
+  box-shadow: none;
 }
 
 ion-modal {
-  --background: color-mix(in srgb, var(--app-surface-strong), transparent 2%);
+  --background: var(--app-surface-overlay);
   --width: min(720px, 94vw);
   --height: min(88vh, 820px);
-  --border-radius: 28px;
-  --box-shadow: 0 28px 72px color-mix(in srgb, #000, transparent 64%);
+  --border-radius: 20px;
+  --box-shadow: var(--app-shadow-md);
+  --backdrop-opacity: 0.32;
 }
 
 ion-modal::part(content) {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border-radius: var(--border-radius, 28px);
+  border-radius: var(--border-radius, 20px);
+  border: 1px solid var(--app-border-subtle);
   background: var(--background);
 }
 
@@ -429,24 +863,14 @@ ion-modal ion-footer {
   flex-shrink: 0;
 }
 
-ion-modal ion-toolbar {
-  --min-height: 60px;
-}
-
 ion-modal ion-content {
   flex: 1 1 auto;
   min-height: 0;
 }
 
-ion-modal ion-content::part(scroll) {
-  padding-bottom: max(18px, env(safe-area-inset-bottom));
-}
-
 ion-modal.photo-cropper-modal {
   --width: min(960px, 96vw);
   --height: min(90vh, 760px);
-  --border-radius: 28px;
-  --box-shadow: 0 28px 72px color-mix(in srgb, #000, transparent 64%);
 }
 
 ion-modal.profile-photo-viewer-modal {
@@ -454,116 +878,232 @@ ion-modal.profile-photo-viewer-modal {
   --height: min(88vh, 760px);
 }
 
-ion-modal.profile-photo-viewer-modal ion-content::part(scroll),
-ion-modal.photo-cropper-modal ion-content::part(scroll) {
+ion-modal.photo-cropper-modal ion-content::part(scroll),
+ion-modal.profile-photo-viewer-modal ion-content::part(scroll) {
   height: 100%;
+}
+
+.profile-photo-viewer-content {
+  --background:
+    radial-gradient(circle at top, color-mix(in srgb, var(--ion-color-primary), transparent 88%) 0%, transparent 36%),
+    linear-gradient(180deg, var(--app-surface-1) 0%, var(--app-surface-0) 100%);
+  --padding-bottom: 0;
+}
+
+.profile-photo-viewer-shell {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding: 24px;
+}
+
+.profile-photo-viewer-shell img {
+  width: min(100%, 380px);
+  max-height: min(70vh, 540px);
+  object-fit: cover;
+  border-radius: 24px;
+  border: 1px solid var(--app-border-subtle);
+  box-shadow: var(--app-shadow-md);
+}
+
+.profile-photo-viewer-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+}
+
+.profile-photo-viewer-meta strong {
+  font-size: 1.04rem;
+}
+
+.profile-photo-viewer-meta span {
+  color: var(--app-text-secondary);
+  font-size: 0.92rem;
+}
+
+.manager-picker-content {
+  --background:
+    radial-gradient(circle at top, color-mix(in srgb, var(--ion-color-primary), transparent 90%) 0%, transparent 40%),
+    linear-gradient(180deg, var(--app-surface-1) 0%, var(--app-surface-0) 100%);
+}
+
+.manager-picker-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 18px;
+}
+
+.manager-picker-head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.manager-picker-head strong {
+  font-size: 1rem;
+}
+
+.manager-picker-head span {
+  color: var(--app-text-secondary);
+  font-size: 0.9rem;
+}
+
+.manager-picker-search {
+  margin: 0;
+}
+
+.manager-picker-list {
+  display: grid;
+  gap: 10px;
+}
+
+.manager-picker-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.manager-picker-option-active {
+  border-color: color-mix(in srgb, var(--ion-color-primary), transparent 46%);
+  background: color-mix(in srgb, var(--app-surface-2), var(--app-accent-subtle) 48%);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ion-color-primary), transparent 72%);
+}
+
+.manager-picker-option-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.manager-picker-option-copy strong {
+  font-size: 0.94rem;
+}
+
+.manager-picker-option-copy span {
+  color: var(--app-text-secondary);
+  font-size: 0.86rem;
+  overflow-wrap: anywhere;
+}
+
+.manager-picker-empty {
+  margin: 0;
+}
+
+ion-alert {
+  --background: var(--app-surface-overlay);
+  --button-color: var(--ion-color-primary);
+  --backdrop-opacity: 0.3;
+}
+
+ion-loading {
+  --background: var(--app-surface-overlay);
+  --spinner-color: var(--ion-color-primary);
+  --backdrop-opacity: 0.28;
+}
+
+ion-segment {
+  --background: color-mix(in srgb, var(--app-surface-2), transparent 2%);
+  padding: 4px;
+  border: 1px solid var(--app-border-subtle);
+  border-radius: var(--app-radius-md);
+}
+
+ion-segment-button {
+  --background: transparent;
+  --background-checked: color-mix(in srgb, var(--ion-color-primary), transparent 88%);
+  --color: var(--app-text-secondary);
+  --color-checked: var(--ion-color-primary);
+  --indicator-box-shadow: none;
+  --indicator-color: transparent;
+  min-height: 40px;
+  border-radius: calc(var(--app-radius-md) - 4px);
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+ion-segment-button.segment-button-checked {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ion-color-primary), transparent 70%);
+}
+
+ion-tab-bar {
+  --background: var(--ion-tab-bar-background);
+  padding: 6px 8px max(6px, env(safe-area-inset-bottom));
+  border-top: 1px solid var(--app-divider);
+}
+
+ion-tab-button {
+  --color: var(--app-text-tertiary);
+  --color-selected: var(--ion-color-primary);
+  min-height: 54px;
+  border-radius: var(--app-radius-md);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+ion-tab-button.tab-selected {
+  background: color-mix(in srgb, var(--ion-color-primary), transparent 92%);
+}
+
+ion-fab-button {
+  --background: var(--ion-color-primary);
+  --color: var(--ion-color-primary-contrast);
+  --box-shadow: var(--app-shadow-md);
+}
+
+ion-spinner {
+  color: var(--ion-color-primary);
 }
 
 ion-datetime {
   --background: transparent;
-  --title-color: var(--ion-text-color);
-  --wheel-highlight-background: color-mix(in srgb, var(--ion-color-primary), transparent 80%);
+  --title-color: var(--app-text-primary);
+  --wheel-highlight-background: color-mix(in srgb, var(--ion-color-primary), transparent 82%);
 }
 
-body.dark-theme ion-badge[color="light"] {
-  --background: color-mix(in srgb, var(--app-surface-strong), #d6e4ff 8%);
-  --color: #f6f9ff;
-}
+@media (hover: hover) and (pointer: fine) {
+  ion-item:hover {
+    border-color: var(--app-field-border-strong);
+    background: var(--app-field-background-hover);
+  }
 
-body.dark-theme ion-item,
-body.dark-theme .data-item,
-body.dark-theme .metric-tile {
-  --color: var(--ion-text-color);
-}
+  .data-item:hover {
+    border-color: var(--app-border-strong);
+    background: color-mix(in srgb, var(--app-surface-1), var(--app-accent-subtle) 26%);
+  }
 
-body.dark-theme ion-select {
-  color: var(--ion-text-color);
-  --placeholder-color: color-mix(in srgb, var(--ion-text-color), transparent 34%);
-}
+  ion-button:not([fill]):hover::part(native),
+  ion-button[fill="solid"]:hover::part(native) {
+    filter: saturate(1.06) brightness(1.02);
+  }
 
-body.dark-theme ion-select::part(container),
-body.dark-theme ion-select::part(text),
-body.dark-theme ion-select::part(icon),
-body.dark-theme ion-input::part(native),
-body.dark-theme ion-textarea::part(native),
-body.dark-theme ion-searchbar input,
-body.dark-theme ion-label,
-body.dark-theme ion-note,
-body.dark-theme .item-native,
-body.dark-theme .native-input,
-body.dark-theme .select-text {
-  color: var(--ion-text-color) !important;
-}
+  ion-button:hover::part(native) {
+    box-shadow: var(--app-shadow-xs);
+  }
 
-body.dark-theme ion-select::part(placeholder),
-body.dark-theme ion-input::part(placeholder),
-body.dark-theme ion-textarea::part(placeholder),
-body.dark-theme ion-searchbar input::placeholder {
-  color: color-mix(in srgb, var(--ion-text-color), transparent 34%) !important;
-  opacity: 1;
-}
-
-body.dark-theme ion-select-popover,
-body.dark-theme ion-alert,
-body.dark-theme ion-action-sheet,
-body.dark-theme ion-picker {
-  --color: var(--ion-text-color);
-}
-
-body.dark-theme ion-select-popover ion-item,
-body.dark-theme ion-alert .alert-radio-label,
-body.dark-theme ion-alert .alert-checkbox-label,
-body.dark-theme ion-alert .alert-message,
-body.dark-theme ion-alert .alert-input,
-body.dark-theme ion-action-sheet .action-sheet-button,
-body.dark-theme ion-action-sheet .action-sheet-title,
-body.dark-theme ion-picker-column-option {
-  color: var(--ion-text-color) !important;
-}
-
-body.dark-theme ion-alert {
-  --button-color: var(--ion-color-primary);
-}
-
-.metric-tile {
-  position: relative;
-  border: 1px solid color-mix(in srgb, var(--app-border), transparent 24%);
-  border-radius: var(--app-radius-md);
-  background:
-    linear-gradient(180deg, color-mix(in srgb, #fff, transparent 92%) 0%, transparent 100%),
-    color-mix(in srgb, var(--app-surface), transparent 8%);
-  padding: 14px 12px;
-  overflow: hidden;
-}
-
-.metric-tile strong {
-  display: block;
-  font-size: 0.82rem;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-  color: var(--app-ink-muted);
-}
-
-.metric-tile p {
-  margin: 8px 0 0;
-  font-size: 1.12rem;
-  font-weight: 800;
-  color: var(--ion-text-color);
+  .app-choice-card:hover {
+    border-color: var(--app-border-strong);
+    background: var(--app-surface-0);
+  }
 }
 
 @media (max-width: 840px) {
   ion-modal {
-    --width: min(100vw, 100vw);
-    --height: min(100vh, 100vh);
-    --border-radius: 0;
-  }
-
-  ion-modal.photo-cropper-modal {
     --width: 100vw;
     --height: 100vh;
     --border-radius: 0;
   }
 
+  ion-modal.photo-cropper-modal,
   ion-modal.profile-photo-viewer-modal {
     --width: 100vw;
     --height: 100vh;
@@ -571,13 +1111,55 @@ body.dark-theme ion-alert {
   }
 }
 
-@keyframes panel-enter {
-  from {
-    opacity: 0;
-    transform: translateY(10px) scale(0.992);
+@media (max-width: 767px) {
+  .app-auth-wrap {
+    align-content: center;
+    padding-top: 72px;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
+
+  .app-auth-top-actions {
+    top: 12px;
+    right: 10px;
+  }
+
+  .app-auth-card ion-card-content {
+    padding: 22px;
+  }
+
+  .profile-photo-viewer-shell {
+    padding: 18px 14px 24px;
+  }
+
+  .profile-photo-viewer-shell img {
+    width: min(100%, 320px);
+    max-height: 58vh;
+    border-radius: 20px;
+  }
+
+  .app-photo-panel-head,
+  .app-photo-panel-actions,
+  .report-pagination {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .report-pagination {
+    justify-content: stretch;
+  }
+
+  .manager-picker-option {
+    align-items: start;
+    flex-direction: column;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
   }
 }
