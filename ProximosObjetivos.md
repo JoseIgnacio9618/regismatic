@@ -5,4 +5,3 @@
 -Los datos no se refrescan cada vez que entro en facturacion (error al aceptar nuevo miembro en el equipo para el limite) ¿pasa en mas sitios?
 
 
-
