@@ -9,6 +9,7 @@ import { prisma } from "../config/prisma";
 import { env } from "../config/env";
 import { AppError } from "../middlewares/error.middleware";
 import { getScopedUserById } from "./access.service";
+import { createNotificationsForUsers } from "./notification.service";
 
 type BillingInterval = "month" | "year";
 
@@ -45,6 +46,9 @@ const BILLING_SUBSCRIPTION_SELECT = {
   planCode: true,
   status: true,
   seatLimit: true,
+  customSeatLimit: true,
+  customSeatLimitUpdatedAt: true,
+  customSeatLimitUpdatedById: true,
   isTrial: true,
   trialEndsAt: true,
   stripeCustomerId: true,
@@ -85,11 +89,14 @@ export type BillingSummary = {
   plan: BillingPlanView;
   currentPrice: BillingPriceView | null;
   status: BillingSubscriptionStatus | "BYPASSED";
+  seatLimitSource: "BYPASSED" | "SUBSCRIPTION" | "CUSTOM";
   seatUsage: {
     used: number;
     limit: number;
     remaining: number;
   };
+  customSeatLimit: number | null;
+  customSeatLimitUpdatedAt: string | null;
   isTrial: boolean;
   trialEndsAt: string | null;
   currentPeriodEnd: string | null;
@@ -148,10 +155,50 @@ export type BillingPaymentsHistoryResponse = {
   accounts: BillingAccountPaymentsView[];
 };
 
+export type AttendanceAccessSummary = {
+  canRecordAttendance: boolean;
+  reason: "OK" | "TEAM_ASSIGNMENT_REQUIRED" | "BILLING_INACTIVE";
+  managedByAdminId: string | null;
+  managedByAdminName: string | null;
+  requiresSubscriptionAction: boolean;
+  dataDeletionAt: string | null;
+};
+
+export type AdminSeatLimitControlView = {
+  admin: {
+    id: string;
+    email: string;
+    fullName: string;
+  };
+  billing: {
+    planCode: BillingPlanCode;
+    status: BillingSubscriptionStatus;
+    seatLimitSource: "SUBSCRIPTION" | "CUSTOM";
+    subscriptionSeatLimit: number;
+    effectiveSeatLimit: number;
+    customSeatLimit: number | null;
+    customSeatLimitUpdatedAt: string | null;
+    isTrial: boolean;
+    trialEndsAt: string | null;
+    currentPeriodEnd: string | null;
+    cancelAtPeriodEnd: boolean;
+  };
+  seatUsage: {
+    used: number;
+    limit: number;
+    remaining: number;
+  };
+};
+
+type EffectiveSeatLimit = {
+  source: "SUBSCRIPTION" | "CUSTOM";
+  limit: number;
+};
+
 const BILLING_PLANS: Record<BillingPlanCode, BillingPlanDefinition> = {
   DEMO_10: {
     code: "DEMO_10",
-    defaultName: "Demo 3",
+    defaultName: "Demo 10",
     seatLimit: env.BILLING_TRIAL_SEAT_LIMIT,
     isDemo: true
   },
@@ -508,6 +555,54 @@ const isSubscriptionUsable = (subscription: BillingSubscriptionRecord): boolean 
   return true;
 };
 
+const addMonthsUtc = (date: Date, months: number): Date => {
+  const next = new Date(date.getTime());
+  next.setUTCMonth(next.getUTCMonth() + months);
+  return next;
+};
+
+const resolveBillingDeletionDeadline = (subscription: BillingSubscriptionRecord): Date => {
+  const referenceDate = subscription.trialEndsAt ?? subscription.currentPeriodEnd ?? subscription.updatedAt ?? subscription.createdAt;
+  return addMonthsUtc(referenceDate, 6);
+};
+
+const resolveEffectiveSeatLimit = (subscription: BillingSubscriptionRecord): EffectiveSeatLimit => {
+  if (typeof subscription.customSeatLimit === "number") {
+    return {
+      source: "CUSTOM",
+      limit: subscription.customSeatLimit
+    };
+  }
+
+  return {
+    source: "SUBSCRIPTION",
+    limit: subscription.seatLimit
+  };
+};
+
+const getAttendanceAccessForAdminRecord = (subscription: BillingSubscriptionRecord): AttendanceAccessSummary => {
+  const effectiveSeatLimit = resolveEffectiveSeatLimit(subscription);
+  if (effectiveSeatLimit.source === "CUSTOM" || isSubscriptionUsable(subscription)) {
+    return {
+      canRecordAttendance: true,
+      reason: "OK",
+      managedByAdminId: subscription.adminId,
+      managedByAdminName: null,
+      requiresSubscriptionAction: false,
+      dataDeletionAt: null
+    };
+  }
+
+  return {
+    canRecordAttendance: false,
+    reason: "BILLING_INACTIVE",
+    managedByAdminId: subscription.adminId,
+    managedByAdminName: null,
+    requiresSubscriptionAction: true,
+    dataDeletionAt: normalizeDate(resolveBillingDeletionDeadline(subscription))
+  };
+};
+
 const buildBillingSummary = async (
   role: Role,
   subscription: BillingSubscriptionRecord | null,
@@ -527,11 +622,14 @@ const buildBillingSummary = async (
       plan,
       currentPrice: resolveCurrentPriceView(plan, null),
       status: "BYPASSED",
+      seatLimitSource: "BYPASSED",
       seatUsage: {
         used: 0,
         limit: plan.seatLimit,
         remaining: plan.seatLimit
       },
+      customSeatLimit: null,
+      customSeatLimitUpdatedAt: null,
       isTrial: false,
       trialEndsAt: null,
       currentPeriodEnd: null,
@@ -546,7 +644,8 @@ const buildBillingSummary = async (
   const ensuredSubscription = subscription ?? (await loadOrCreateAdminSubscription(userId));
   const plan = plansCatalog[ensuredSubscription.planCode];
   const used = await getManagedEmployeesCount(userId);
-  const remaining = Math.max(0, ensuredSubscription.seatLimit - used);
+  const effectiveSeatLimit = resolveEffectiveSeatLimit(ensuredSubscription);
+  const remaining = Math.max(0, effectiveSeatLimit.limit - used);
 
   return {
     isBypassed: false,
@@ -554,11 +653,14 @@ const buildBillingSummary = async (
     plan,
     currentPrice: resolveCurrentPriceView(plan, ensuredSubscription),
     status: ensuredSubscription.status,
+    seatLimitSource: effectiveSeatLimit.source,
     seatUsage: {
       used,
-      limit: ensuredSubscription.seatLimit,
+      limit: effectiveSeatLimit.limit,
       remaining
     },
+    customSeatLimit: ensuredSubscription.customSeatLimit,
+    customSeatLimitUpdatedAt: normalizeDate(ensuredSubscription.customSeatLimitUpdatedAt),
     isTrial: ensuredSubscription.isTrial,
     trialEndsAt: normalizeDate(ensuredSubscription.trialEndsAt),
     currentPeriodEnd: normalizeDate(ensuredSubscription.currentPeriodEnd),
@@ -700,12 +802,14 @@ export const assertAdminSeatAvailability = async (params: { adminId: string; req
   }
 
   const subscription = await loadOrCreateAdminSubscription(admin.id);
-  if (!isSubscriptionUsable(subscription)) {
+  const effectiveSeatLimit = resolveEffectiveSeatLimit(subscription);
+
+  if (effectiveSeatLimit.source !== "CUSTOM" && !isSubscriptionUsable(subscription)) {
     throw new AppError("Your billing plan is not active. Upgrade or renew it before adding more employees.", 403);
   }
 
   const usedSeats = await getManagedEmployeesCount(admin.id);
-  if (usedSeats >= subscription.seatLimit) {
+  if (usedSeats >= effectiveSeatLimit.limit) {
     throw new AppError("Your current billing plan does not allow more employees.", 409);
   }
 };
@@ -886,13 +990,312 @@ export const getBillingSnapshotForAuth = async (userId: string, role: Role) => {
   return buildBillingSummary(role, subscription, userId);
 };
 
+export const getAttendanceAccessForUser = async (userId: string): Promise<AttendanceAccessSummary> => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      role: true,
+      managerId: true,
+      isActive: true,
+      manager: {
+        select: {
+          id: true,
+          fullName: true,
+          role: true,
+          isActive: true
+        }
+      }
+    }
+  });
+
+  if (!user || !user.isActive) {
+    throw new AppError("User not found.", 404);
+  }
+
+  if (user.role === "SUPERADMIN") {
+    return {
+      canRecordAttendance: true,
+      reason: "OK",
+      managedByAdminId: null,
+      managedByAdminName: null,
+      requiresSubscriptionAction: false,
+      dataDeletionAt: null
+    };
+  }
+
+  if (user.role === "ADMIN") {
+    const subscription = await loadOrCreateAdminSubscription(user.id);
+    return getAttendanceAccessForAdminRecord(subscription);
+  }
+
+  if (!user.managerId || !user.manager || user.manager.role !== "ADMIN" || !user.manager.isActive) {
+    return {
+      canRecordAttendance: false,
+      reason: "TEAM_ASSIGNMENT_REQUIRED",
+      managedByAdminId: null,
+      managedByAdminName: null,
+      requiresSubscriptionAction: false,
+      dataDeletionAt: null
+    };
+  }
+
+  const managerSubscription = await loadOrCreateAdminSubscription(user.manager.id);
+  const managerAccess = getAttendanceAccessForAdminRecord(managerSubscription);
+
+  return {
+    ...managerAccess,
+    managedByAdminId: user.manager.id,
+    managedByAdminName: user.manager.fullName
+  };
+};
+
+export const assertNonBillingFeatureAccessForUser = async (userId: string): Promise<void> => {
+  const access = await getAttendanceAccessForUser(userId);
+  if (access.reason === "BILLING_INACTIVE") {
+    throw new AppError("This section is unavailable while billing is inactive.", 403);
+  }
+};
+
 export const getAdminSeatUsage = async (adminId: string): Promise<{ used: number; limit: number }> => {
   const subscription = await loadOrCreateAdminSubscription(adminId);
+  const effectiveSeatLimit = resolveEffectiveSeatLimit(subscription);
   const used = await getManagedEmployeesCount(adminId);
   return {
     used,
-    limit: subscription.seatLimit
+    limit: effectiveSeatLimit.limit
   };
+};
+
+const notifyAdminCustomSeatLimitChange = async (params: {
+  adminId: string;
+  adminName: string;
+  actorName: string;
+  customSeatLimit: number | null;
+}): Promise<void> => {
+  const isRemoval = params.customSeatLimit === null;
+
+  await createNotificationsForUsers({
+    userIds: [params.adminId],
+    type: "SYSTEM",
+    title: isRemoval ? "Limite personalizado retirado" : "Limite personalizado actualizado",
+    body: isRemoval
+      ? `${params.actorName} ha retirado tu limite personalizado de usuarios. Tu cuenta vuelve a usar el control de plazas de la suscripcion.`
+      : `${params.actorName} ha fijado tu limite personalizado de usuarios en ${params.customSeatLimit} plazas. Este limite tiene prioridad sobre tu suscripcion hasta que se retire.`,
+    i18n: isRemoval
+      ? {
+          titleKey: "notifications.billing_custom_limit_removed_title",
+          bodyKey: "notifications.billing_custom_limit_removed_body",
+          params: {
+            actor: params.actorName
+          }
+        }
+      : {
+          titleKey: "notifications.billing_custom_limit_set_title",
+          bodyKey: "notifications.billing_custom_limit_set_body",
+          params: {
+            actor: params.actorName,
+            limit: params.customSeatLimit ?? 0
+          }
+        },
+    metadata: {
+      route: "/billing",
+      adminId: params.adminId,
+      adminName: params.adminName,
+      customSeatLimit: params.customSeatLimit
+    }
+  });
+};
+
+export const listAdminSeatLimitControls = async (requesterId: string): Promise<AdminSeatLimitControlView[]> => {
+  const requester = await getScopedUserById(requesterId);
+  if (requester.role !== "SUPERADMIN") {
+    throw new AppError("Insufficient permissions.", 403);
+  }
+
+  const [admins, seatCounts] = await Promise.all([
+    prisma.user.findMany({
+      where: {
+        role: "ADMIN",
+        isActive: true
+      },
+      select: {
+        id: true,
+        email: true,
+        fullName: true,
+        billingSubscription: {
+          select: BILLING_SUBSCRIPTION_SELECT
+        }
+      },
+      orderBy: [{ fullName: "asc" }]
+    }),
+    prisma.user.groupBy({
+      by: ["managerId"],
+      where: {
+        role: "EMPLOYEE",
+        managerId: {
+          not: null
+        }
+      },
+      _count: {
+        _all: true
+      }
+    })
+  ]);
+
+  const seatCountMap = new Map<string, number>();
+  for (const row of seatCounts) {
+    if (row.managerId) {
+      seatCountMap.set(row.managerId, row._count._all);
+    }
+  }
+
+  const controls = await Promise.all(
+    admins.map(async (admin) => {
+      const subscription = admin.billingSubscription ?? (await loadOrCreateAdminSubscription(admin.id));
+      const effectiveSeatLimit = resolveEffectiveSeatLimit(subscription);
+      const used = seatCountMap.get(admin.id) ?? 0;
+
+      return {
+        admin: {
+          id: admin.id,
+          email: admin.email,
+          fullName: admin.fullName
+        },
+        billing: {
+          planCode: subscription.planCode,
+          status: subscription.status,
+          seatLimitSource: effectiveSeatLimit.source,
+          subscriptionSeatLimit: subscription.seatLimit,
+          effectiveSeatLimit: effectiveSeatLimit.limit,
+          customSeatLimit: subscription.customSeatLimit,
+          customSeatLimitUpdatedAt: normalizeDate(subscription.customSeatLimitUpdatedAt),
+          isTrial: subscription.isTrial,
+          trialEndsAt: normalizeDate(subscription.trialEndsAt),
+          currentPeriodEnd: normalizeDate(subscription.currentPeriodEnd),
+          cancelAtPeriodEnd: subscription.cancelAtPeriodEnd
+        },
+        seatUsage: {
+          used,
+          limit: effectiveSeatLimit.limit,
+          remaining: Math.max(0, effectiveSeatLimit.limit - used)
+        }
+      } satisfies AdminSeatLimitControlView;
+    })
+  );
+
+  return controls;
+};
+
+export const setAdminCustomSeatLimit = async (params: {
+  requesterId: string;
+  adminId: string;
+  seatLimit: number;
+}): Promise<AdminSeatLimitControlView> => {
+  const requester = await getScopedUserById(params.requesterId);
+  if (requester.role !== "SUPERADMIN") {
+    throw new AppError("Insufficient permissions.", 403);
+  }
+
+  const admin = await prisma.user.findUnique({
+    where: { id: params.adminId },
+    select: {
+      id: true,
+      email: true,
+      fullName: true,
+      role: true,
+      isActive: true
+    }
+  });
+
+  if (!admin || !admin.isActive) {
+    throw new AppError("User not found.", 404);
+  }
+
+  if (admin.role !== "ADMIN") {
+    throw new AppError("Selected manager is not a valid administrator.", 400);
+  }
+
+  await loadOrCreateAdminSubscription(admin.id);
+
+  await prisma.billingSubscription.update({
+    where: { adminId: admin.id },
+    data: {
+      customSeatLimit: params.seatLimit,
+      customSeatLimitUpdatedAt: new Date(),
+      customSeatLimitUpdatedById: requester.id
+    }
+  });
+
+  await notifyAdminCustomSeatLimitChange({
+    adminId: admin.id,
+    adminName: admin.fullName,
+    actorName: requester.fullName,
+    customSeatLimit: params.seatLimit
+  });
+
+  const controls = await listAdminSeatLimitControls(requester.id);
+  const updated = controls.find((item) => item.admin.id === admin.id);
+  if (!updated) {
+    throw new AppError("User not found.", 404);
+  }
+
+  return updated;
+};
+
+export const clearAdminCustomSeatLimit = async (params: {
+  requesterId: string;
+  adminId: string;
+}): Promise<AdminSeatLimitControlView> => {
+  const requester = await getScopedUserById(params.requesterId);
+  if (requester.role !== "SUPERADMIN") {
+    throw new AppError("Insufficient permissions.", 403);
+  }
+
+  const admin = await prisma.user.findUnique({
+    where: { id: params.adminId },
+    select: {
+      id: true,
+      email: true,
+      fullName: true,
+      role: true,
+      isActive: true
+    }
+  });
+
+  if (!admin || !admin.isActive) {
+    throw new AppError("User not found.", 404);
+  }
+
+  if (admin.role !== "ADMIN") {
+    throw new AppError("Selected manager is not a valid administrator.", 400);
+  }
+
+  await loadOrCreateAdminSubscription(admin.id);
+
+  await prisma.billingSubscription.update({
+    where: { adminId: admin.id },
+    data: {
+      customSeatLimit: null,
+      customSeatLimitUpdatedAt: new Date(),
+      customSeatLimitUpdatedById: requester.id
+    }
+  });
+
+  await notifyAdminCustomSeatLimitChange({
+    adminId: admin.id,
+    adminName: admin.fullName,
+    actorName: requester.fullName,
+    customSeatLimit: null
+  });
+
+  const controls = await listAdminSeatLimitControls(requester.id);
+  const updated = controls.find((item) => item.admin.id === admin.id);
+  if (!updated) {
+    throw new AppError("User not found.", 404);
+  }
+
+  return updated;
 };
 
 const listStripeInvoicesForCustomer = async (customerId: string): Promise<BillingPaymentRecord[]> => {

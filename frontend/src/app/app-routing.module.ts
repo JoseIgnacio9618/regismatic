@@ -2,6 +2,7 @@ import { NgModule } from "@angular/core";
 import { PreloadAllModules, RouterModule, Routes } from "@angular/router";
 import { AuthGuard } from "./core/guards/auth.guard";
 import { AdminGuard } from "./core/guards/admin.guard";
+import { BillingAccessGuard } from "./core/guards/billing-access.guard";
 
 const routes: Routes = [
   {
@@ -18,27 +19,27 @@ const routes: Routes = [
   },
   {
     path: "dashboard",
-    canActivate: [AuthGuard],
+    canActivate: [AuthGuard, BillingAccessGuard],
     loadChildren: () => import("./pages/dashboard/dashboard.module").then((m) => m.DashboardPageModule)
   },
   {
     path: "reports",
-    canActivate: [AuthGuard],
+    canActivate: [AuthGuard, BillingAccessGuard],
     loadChildren: () => import("./pages/reports/reports.module").then((m) => m.ReportsPageModule)
   },
   {
     path: "users",
-    canActivate: [AuthGuard, AdminGuard],
+    canActivate: [AuthGuard, AdminGuard, BillingAccessGuard],
     loadChildren: () => import("./pages/users/users.module").then((m) => m.UsersPageModule)
   },
   {
     path: "billing",
-    canActivate: [AuthGuard],
+    canActivate: [AuthGuard, AdminGuard, BillingAccessGuard],
     loadChildren: () => import("./pages/billing/billing.module").then((m) => m.BillingPageModule)
   },
   {
     path: "billing-history",
-    canActivate: [AuthGuard],
+    canActivate: [AuthGuard, AdminGuard, BillingAccessGuard],
     loadChildren: () => import("./pages/billing-history/billing-history.module").then((m) => m.BillingHistoryPageModule)
   },
   {

@@ -151,6 +151,14 @@ export const createTeamJoinRequestForEmployee = async (params: {
     type: "TEAM_JOIN_REQUEST_CREATED",
     title: "Nueva solicitud de acceso a equipo",
     body: `${employee.fullName} ha solicitado unirse al equipo de ${targetManager.fullName}.`,
+    i18n: {
+      titleKey: "notifications.team_join_created_title",
+      bodyKey: "notifications.team_join_created_body",
+      params: {
+        employee: employee.fullName,
+        manager: targetManager.fullName
+      }
+    },
     metadata: {
       requestId: request.id,
       employeeId: employee.id,
@@ -318,6 +326,22 @@ export const reviewTeamJoinRequest = async (params: {
       params.action === "APPROVE"
         ? `${existing.targetManager.fullName} ha aceptado tu solicitud para unirte a su equipo.`
         : `${existing.targetManager.fullName} ha rechazado tu solicitud para unirte a su equipo.`,
+    i18n:
+      params.action === "APPROVE"
+        ? {
+            titleKey: "notifications.team_join_approved_title",
+            bodyKey: "notifications.team_join_approved_body",
+            params: {
+              manager: existing.targetManager.fullName
+            }
+          }
+        : {
+            titleKey: "notifications.team_join_rejected_title",
+            bodyKey: "notifications.team_join_rejected_body",
+            params: {
+              manager: existing.targetManager.fullName
+            }
+          },
     metadata: {
       requestId: existing.id,
       action: params.action,

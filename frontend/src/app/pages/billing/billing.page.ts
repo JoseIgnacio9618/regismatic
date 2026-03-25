@@ -1,6 +1,6 @@
 import { Component, OnInit } from "@angular/core";
 import { ToastController } from "@ionic/angular";
-import { BillingInterval, BillingPlan, BillingPriceOption, BillingSummary } from "src/app/core/models/types";
+import { AdminSeatLimitControl, BillingInterval, BillingPlan, BillingPriceOption, BillingSummary } from "src/app/core/models/types";
 import { AuthService } from "src/app/core/services/auth.service";
 import { BillingService } from "src/app/core/services/billing.service";
 import { I18nService } from "src/app/core/services/i18n.service";
@@ -14,9 +14,13 @@ import { I18nService } from "src/app/core/services/i18n.service";
 export class BillingPage implements OnInit {
   plans: BillingPlan[] = [];
   summary: BillingSummary | null = null;
+  adminSeatControls: AdminSeatLimitControl[] = [];
   loading = false;
   actionLoading = false;
+  seatLimitSavingId: string | null = null;
   selectedInterval: BillingInterval = "month";
+  adminSearch = "";
+  customSeatLimitDrafts: Record<string, string> = {};
 
   constructor(
     public readonly authService: AuthService,
@@ -35,6 +39,21 @@ export class BillingPage implements OnInit {
 
   get isAdminBilling(): boolean {
     return this.authService.user?.role === "ADMIN";
+  }
+
+  get isSuperadminBilling(): boolean {
+    return this.authService.user?.role === "SUPERADMIN";
+  }
+
+  get filteredAdminSeatControls(): AdminSeatLimitControl[] {
+    const query = this.adminSearch.trim().toLowerCase();
+    if (!query) {
+      return this.adminSeatControls;
+    }
+
+    return this.adminSeatControls.filter((item) => {
+      return item.admin.fullName.toLowerCase().includes(query) || item.admin.email.toLowerCase().includes(query);
+    });
   }
 
   formatCurrentPrice(billing: BillingSummary): string {
@@ -100,6 +119,10 @@ export class BillingPage implements OnInit {
     return !!price?.priceId && this.summary?.currentPrice?.priceId === price.priceId;
   }
 
+  planNameForCode(code: string): string {
+    return this.plans.find((plan) => plan.code === code)?.name ?? code;
+  }
+
   isSelectedPlanUnavailable(plan: BillingPlan): boolean {
     const price = this.selectedPriceFor(plan);
     return !price?.priceId || !price.checkoutEnabled;
@@ -146,6 +169,38 @@ export class BillingPage implements OnInit {
     return this.i18nService.t(`billing.status.${status}`);
   }
 
+  seatLimitSourceLabel(billing: BillingSummary | AdminSeatLimitControl["billing"]): string {
+    return this.i18nService.t(`billing.limit_source.${billing.seatLimitSource}`);
+  }
+
+  seatLimitSourceHint(billing: BillingSummary | AdminSeatLimitControl["billing"]): string {
+    if (billing.seatLimitSource === "CUSTOM") {
+      return this.i18nService.t("billing.limit_source_custom_desc");
+    }
+
+    if (billing.seatLimitSource === "BYPASSED") {
+      return this.i18nService.t("billing.superadmin_desc");
+    }
+
+    return this.i18nService.t("billing.limit_source_subscription_desc");
+  }
+
+  trialOrPeriodLabel(control: AdminSeatLimitControl): string {
+    if (control.billing.isTrial) {
+      return this.formatDate(control.billing.trialEndsAt);
+    }
+
+    return this.formatDate(control.billing.currentPeriodEnd);
+  }
+
+  getCustomSeatLimitDraft(adminId: string, fallback: number | null): string {
+    return this.customSeatLimitDrafts[adminId] ?? (fallback !== null ? String(fallback) : "");
+  }
+
+  updateCustomSeatLimitDraft(adminId: string, value: string | number | null | undefined): void {
+    this.customSeatLimitDrafts[adminId] = typeof value === "number" ? String(value) : String(value ?? "");
+  }
+
   async startCheckout(price: BillingPriceOption): Promise<void> {
     if (!this.isAdminBilling || !price.priceId || !price.checkoutEnabled) {
       return;
@@ -181,9 +236,17 @@ export class BillingPage implements OnInit {
   async loadOverview(): Promise<void> {
     this.loading = true;
     try {
-      const overview = await this.billingService.getOverview();
+      const [overview, adminSeatControlsResponse] = await Promise.all([
+        this.billingService.getOverview(),
+        this.isSuperadminBilling ? this.billingService.getAdminSeatLimitControls() : Promise.resolve({ admins: [] })
+      ]);
       this.plans = overview.plans;
       this.summary = overview.summary;
+      this.adminSeatControls = adminSeatControlsResponse.admins;
+      this.customSeatLimitDrafts = this.adminSeatControls.reduce<Record<string, string>>((drafts, item) => {
+        drafts[item.admin.id] = item.billing.customSeatLimit !== null ? String(item.billing.customSeatLimit) : "";
+        return drafts;
+      }, {});
       this.selectedInterval = overview.summary?.currentPrice?.interval ?? "month";
     } catch (error) {
       await this.showToast(error instanceof Error ? error.message : this.i18nService.t("billing.load_failed"), "danger");
@@ -201,5 +264,38 @@ export class BillingPage implements OnInit {
     });
 
     await toast.present();
+  }
+
+  async saveCustomSeatLimit(control: AdminSeatLimitControl): Promise<void> {
+    const rawValue = this.getCustomSeatLimitDraft(control.admin.id, control.billing.customSeatLimit).trim();
+    const seatLimit = Number(rawValue);
+    if (!Number.isInteger(seatLimit) || seatLimit < 1) {
+      await this.showToast(this.i18nService.t("billing.invalid_custom_limit"), "danger");
+      return;
+    }
+
+    this.seatLimitSavingId = control.admin.id;
+    try {
+      await this.billingService.setAdminCustomSeatLimit(control.admin.id, seatLimit);
+      await this.loadOverview();
+      await this.showToast(this.i18nService.t("billing.custom_limit_saved"), "success");
+    } catch (error) {
+      await this.showToast(error instanceof Error ? error.message : this.i18nService.t("billing.custom_limit_failed"), "danger");
+    } finally {
+      this.seatLimitSavingId = null;
+    }
+  }
+
+  async clearCustomSeatLimit(control: AdminSeatLimitControl): Promise<void> {
+    this.seatLimitSavingId = control.admin.id;
+    try {
+      await this.billingService.clearAdminCustomSeatLimit(control.admin.id);
+      await this.loadOverview();
+      await this.showToast(this.i18nService.t("billing.custom_limit_removed"), "success");
+    } catch (error) {
+      await this.showToast(error instanceof Error ? error.message : this.i18nService.t("billing.custom_limit_remove_failed"), "danger");
+    } finally {
+      this.seatLimitSavingId = null;
+    }
   }
 }

@@ -104,6 +104,94 @@
   gap: 16px;
 }
 
+.admin-limit-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+.admin-limit-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 18px;
+}
+
+.admin-limit-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.admin-limit-copy p {
+  margin-top: 6px;
+  color: var(--app-text-secondary);
+}
+
+.admin-limit-badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.admin-limit-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.admin-limit-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--app-surface-2), transparent 20%);
+  border: 1px solid color-mix(in srgb, var(--app-border-strong), transparent 18%);
+}
+
+.admin-limit-stat span {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--app-text-tertiary);
+}
+
+.admin-limit-stat strong {
+  font-size: 0.95rem;
+  line-height: 1.35;
+}
+
+.admin-limit-editor {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: end;
+}
+
+.admin-limit-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.admin-limits-toolbar {
+  margin-bottom: 18px;
+}
+
+.admin-limits-search {
+  --background: color-mix(in srgb, var(--app-surface-2), white 10%);
+  --border-radius: 18px;
+  --box-shadow: none;
+  --color: var(--app-text-primary);
+  --placeholder-color: var(--app-text-tertiary);
+  padding-inline: 0;
+}
+
 .plan-card {
   display: flex;
   flex-direction: column;
@@ -179,7 +267,8 @@
 
 @media (max-width: 767px) {
   .billing-status-card,
-  .plan-card-head {
+  .plan-card-head,
+  .admin-limit-head {
     flex-direction: column;
     align-items: start;
   }
@@ -196,5 +285,25 @@
 
   .billing-cycle-switch {
     width: 100%;
+  }
+
+  .admin-limit-badges {
+    justify-content: flex-start;
+  }
+
+  .admin-limit-meta {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-limit-editor {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-limit-actions {
+    justify-content: stretch;
+  }
+
+  .admin-limit-actions ion-button {
+    flex: 1 1 100%;
   }
 }

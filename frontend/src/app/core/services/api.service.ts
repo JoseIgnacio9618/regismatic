@@ -12,6 +12,7 @@ export class ApiService {
     environment.apiBaseUrl === "API_BASE_URL_PLACEHOLDER" ? "http://localhost:4000/api" : environment.apiBaseUrl;
   private readonly backendErrorMap: Record<string, string> = {
     "Too many login attempts. Try again later.": "errors.too_many_login_attempts",
+    "Too many requests. Try again later.": "errors.too_many_requests",
     "Validation error.": "errors.validation_error",
     "Not authenticated.": "errors.not_authenticated",
     "Insufficient permissions.": "errors.insufficient_permissions",
@@ -54,6 +55,8 @@ export class ApiService {
     "Team join request not found.": "errors.team_join_request_not_found",
     "The team join request was already reviewed.": "errors.team_join_request_already_reviewed",
     "Employees must belong to an administrator before recording attendance.": "errors.employee_team_assignment_required",
+    "Attendance is blocked until billing is active or a custom limit is assigned.": "errors.attendance_blocked_billing",
+    "This section is unavailable while billing is inactive.": "errors.billing_section_locked",
     "A demo admin account was already created from this IP address.": "errors.demo_ip_already_used",
     "Your billing plan is not active. Upgrade or renew it before adding more employees.": "errors.billing_not_active",
     "Your current billing plan does not allow more employees.": "errors.billing_employee_limit_reached",

@@ -24,6 +24,9 @@ POSTGRES_USER=regismatic
 POSTGRES_PASSWORD=<password-fuerte>
 JWT_SECRET=<secreto-largo-muy-aleatorio>
 JWT_EXPIRES_IN=12h
+JSON_BODY_LIMIT=256kb
+API_RATE_LIMIT_WINDOW_MS=60000
+API_RATE_LIMIT_MAX=240
 AUTH_RATE_LIMIT_WINDOW_MS=900000
 AUTH_RATE_LIMIT_MAX=10
 FCM_SERVICE_ACCOUNT_PATH=/run/secrets/firebase-service-account.json
@@ -53,6 +56,7 @@ Notas:
 - si vas a usar push, define `FCM_SERVICE_ACCOUNT_JSON` o `FCM_SERVICE_ACCOUNT_PATH`
 - Stripe en esta integracion no necesita clave publica en frontend porque Checkout y Customer Portal se abren desde sesiones generadas por backend
 - si tu app esta detras de proxy, deja `TRUST_PROXY=true` para que la IP de demo y los rate limits funcionen bien
+- ajusta `API_RATE_LIMIT_*` y `AUTH_RATE_LIMIT_*` segun el trafico real de tu despliegue
 
 ## 3. Despliegue
 
@@ -101,6 +105,24 @@ Resultado:
 - los admins nuevos arrancan con demo de `7 dias / 3 usuarios`
 - al contratar o cambiar plan, Stripe actualiza el backend por webhook
 - el limite de empleados se aplica tanto al crear empleados como al aceptar solicitudes de union al equipo
+- el `SUPERADMIN` puede aplicar a cualquier admin un limite manual de usuarios que tiene prioridad sobre Stripe hasta que se retire
+
+## 3.2. Limites manuales del superadmin
+- No requieren variables de entorno nuevas.
+- No pasan por Stripe ni por webhooks.
+- Se gestionan desde la pantalla `Facturacion` entrando con una cuenta `SUPERADMIN`.
+- Tienen estas reglas:
+  - si existe limite manual, ese es el limite efectivo del admin
+  - si se retira, la cuenta vuelve a usar su trial o su suscripcion
+  - cada alta, cambio o retirada genera una notificacion para el admin afectado
+  - si el admin no tiene ni suscripcion activa ni limite manual:
+    - ni el ni su equipo podran fichar
+    - el admin solo podra acceder a `Dashboard` y `Facturacion`
+    - los empleados afectados solo podran acceder a `Dashboard`
+    - el dashboard avisara de la posible eliminacion de datos tras 6 meses sin regularizar la cuenta
+- Recomendacion operativa:
+  - usa los limites manuales para acuerdos comerciales especiales, migraciones o soporte
+  - deja Stripe como fuente principal cuando quieras cobro y renovacion automatizados
 
 ## 4. Arquitectura de produccion
 - `proxy` (Caddy): termina TLS y enruta por dominio

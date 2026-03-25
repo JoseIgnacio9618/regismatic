@@ -184,9 +184,12 @@ ion-item {
   --background: var(--app-field-background);
   --color: var(--app-text-primary);
   --border-color: transparent;
+  --highlight-height: 0;
   --highlight-color-focused: var(--app-focus-ring);
+  --highlight-color-valid: transparent;
   --highlight-color-invalid: var(--ion-color-danger);
   --inner-border-width: 0;
+  --border-width: 0;
   --padding-start: 14px;
   --padding-end: 14px;
   --inner-padding-top: 10px;
@@ -271,7 +274,9 @@ ion-select {
   --color: var(--app-text-primary);
   --placeholder-color: var(--app-text-tertiary);
   --placeholder-opacity: 1;
+  --highlight-height: 0;
   --highlight-color-focused: var(--app-focus-ring);
+  --highlight-color-valid: transparent;
   --highlight-color-invalid: var(--ion-color-danger);
 }
 
@@ -281,6 +286,27 @@ ion-select::part(text),
 ion-select::part(icon),
 ion-datetime::part(native) {
   color: var(--app-text-primary);
+}
+
+ion-input.has-focus input,
+ion-input.has-focus.sc-ion-input-md-h input.sc-ion-input-md,
+ion-input.ion-focused input,
+ion-input.ion-focused.sc-ion-input-md-h input.sc-ion-input-md,
+ion-textarea.ion-valid textarea,
+ion-textarea.ion-valid.sc-ion-textarea-md-h textarea.sc-ion-textarea-md,
+ion-textarea.ion-focused textarea,
+ion-textarea.ion-focused.sc-ion-textarea-md-h textarea.sc-ion-textarea-md,
+ion-textarea.has-focus textarea,
+ion-textarea.has-focus.sc-ion-textarea-md-h textarea.sc-ion-textarea-md {
+  box-shadow: none !important;
+  border-color: transparent !important;
+  outline: none !important;
+  background-image: none !important;
+}
+
+ion-input::part(highlight),
+ion-textarea::part(highlight) {
+  display: none;
 }
 
 ion-select::part(placeholder) {
@@ -296,6 +322,7 @@ ion-searchbar {
   --placeholder-color: var(--app-text-tertiary);
   --icon-color: var(--app-text-tertiary);
   --clear-button-color: var(--app-text-secondary);
+  --highlight-color-valid: transparent;
   padding: 0;
   transition: filter var(--app-transition-fast);
 }
@@ -755,7 +782,9 @@ ion-card-content {
   min-width: 112px;
   --padding-start: 10px;
   --padding-end: 8px;
+  --highlight-height: 0;
   --highlight-color-focused: var(--app-focus-ring);
+  --highlight-color-valid: transparent;
   border: 1px solid var(--app-field-border);
   border-radius: var(--app-radius-pill);
   background: var(--app-field-background);

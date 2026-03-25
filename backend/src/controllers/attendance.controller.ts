@@ -12,22 +12,24 @@ import {
   reviewEditRequest,
   updateEventAsAdmin
 } from "../services/attendance.service";
+import { assertNonBillingFeatureAccessForUser } from "../services/billing.service";
 import { parseReportRange } from "../utils/report-range";
+import { strictObject } from "../utils/validation";
 
-const eventInputSchema = z.object({
+const eventInputSchema = strictObject({
   source: z.enum(["WEB", "MOBILE"]).default("WEB"),
   note: z.string().max(300).optional(),
   latitude: z.number().min(-90).max(90).optional(),
   longitude: z.number().min(-180).max(180).optional()
 });
 
-const adjustmentSchema = z.object({
+const adjustmentSchema = strictObject({
   userId: z.string().min(1),
   minutesDelta: z.number().int().min(-720).max(720),
   note: z.string().min(5).max(500)
 });
 
-const listEventsQuerySchema = z.object({
+const listEventsQuerySchema = strictObject({
   from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   userId: z.string().optional(),
@@ -35,8 +37,7 @@ const listEventsQuerySchema = z.object({
   pageSize: z.coerce.number().int().min(1).max(100).optional()
 });
 
-const updateEventSchema = z
-  .object({
+const updateEventSchema = strictObject({
     eventAt: z.coerce.date().optional(),
     note: z.string().max(500).nullable().optional(),
     reason: z.string().min(5).max(500)
@@ -45,20 +46,20 @@ const updateEventSchema = z
     message: "Debes indicar eventAt o note para modificar el registro."
   });
 
-const createEditRequestSchema = z.object({
+const createEditRequestSchema = strictObject({
   requestedEventAt: z.coerce.date(),
   requestedNote: z.string().max(500).nullable().optional(),
   reason: z.string().min(5).max(500)
 });
 
-const listEditRequestsQuerySchema = z.object({
+const listEditRequestsQuerySchema = strictObject({
   status: z.nativeEnum(EditRequestStatus).optional(),
   userId: z.string().optional(),
   page: z.coerce.number().int().min(1).optional(),
   pageSize: z.coerce.number().int().min(1).max(100).optional()
 });
 
-const reviewEditRequestSchema = z.object({
+const reviewEditRequestSchema = strictObject({
   action: z.enum(["APPROVE", "REJECT"]),
   reviewComment: z.string().max(500).optional()
 });
@@ -131,6 +132,8 @@ export const manualAdjustmentController = async (req: Request, res: Response) =>
     throw new AppError("Not authenticated.", 401);
   }
 
+  await assertNonBillingFeatureAccessForUser(req.user.id);
+
   const payload = adjustmentSchema.parse(req.body);
 
   const event = await addManualAdjustment({
@@ -147,6 +150,8 @@ export const listEventsController = async (req: Request, res: Response) => {
   if (!req.user) {
     throw new AppError("Not authenticated.", 401);
   }
+
+  await assertNonBillingFeatureAccessForUser(req.user.id);
 
   const query = listEventsQuerySchema.parse(req.query);
   const range = parseReportRange(query.from, query.to);
@@ -168,6 +173,8 @@ export const updateEventController = async (req: Request, res: Response) => {
     throw new AppError("Not authenticated.", 401);
   }
 
+  await assertNonBillingFeatureAccessForUser(req.user.id);
+
   const payload = updateEventSchema.parse(req.body);
   const eventId = getRouteParam(req.params.eventId, "eventId");
 
@@ -186,6 +193,8 @@ export const createEditRequestController = async (req: Request, res: Response) =
   if (!req.user) {
     throw new AppError("Not authenticated.", 401);
   }
+
+  await assertNonBillingFeatureAccessForUser(req.user.id);
 
   if (req.user.role !== "EMPLOYEE") {
     throw new AppError("Solo los empleados pueden crear solicitudes.", 403);
@@ -210,6 +219,8 @@ export const listEditRequestsController = async (req: Request, res: Response) =>
     throw new AppError("Not authenticated.", 401);
   }
 
+  await assertNonBillingFeatureAccessForUser(req.user.id);
+
   const query = listEditRequestsQuerySchema.parse(req.query);
   const result = await listEditRequests({
     requesterRole: req.user.role,
@@ -227,6 +238,8 @@ export const reviewEditRequestController = async (req: Request, res: Response) =
   if (!req.user) {
     throw new AppError("Not authenticated.", 401);
   }
+
+  await assertNonBillingFeatureAccessForUser(req.user.id);
 
   const requestId = getRouteParam(req.params.requestId, "requestId");
 

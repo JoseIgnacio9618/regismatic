@@ -140,9 +140,16 @@ export class NotificationService implements OnDestroy {
       });
 
       await PushNotifications.addListener("pushNotificationReceived", (notification) => {
+        const title =
+          this.translatePushField(notification.data?.["i18nTitleKey"], notification.data?.["i18nParams"], notification.title) ??
+          this.i18nService.t("notifications.new_title");
+        const body =
+          this.translatePushField(notification.data?.["i18nBodyKey"], notification.data?.["i18nParams"], notification.body) ??
+          this.i18nService.t("notifications.new_body");
+
         void this.presentToast({
-          title: notification.title ?? this.i18nService.t("notifications.new_title"),
-          body: notification.body ?? this.i18nService.t("notifications.new_body")
+          title,
+          body
         });
         void this.refresh(false);
       });
@@ -200,6 +207,14 @@ export class NotificationService implements OnDestroy {
     return this.resolveNotificationRouteFromType(notification.type) ?? "/dashboard";
   }
 
+  getNotificationTitle(notification: Pick<UserNotification, "title" | "metadata">): string {
+    return this.translateStoredNotificationField(notification.metadata, "title") ?? notification.title;
+  }
+
+  getNotificationBody(notification: Pick<UserNotification, "body" | "metadata">): string {
+    return this.translateStoredNotificationField(notification.metadata, "body") ?? notification.body;
+  }
+
   private resolveNotificationRouteFromType(type: unknown): string | null {
     const notificationType = typeof type === "string" ? (type as NotificationType) : null;
     switch (notificationType) {
@@ -220,14 +235,66 @@ export class NotificationService implements OnDestroy {
     }
   }
 
-  private async presentToast(notification: Pick<UserNotification, "title" | "body">): Promise<void> {
+  private async presentToast(notification: Pick<UserNotification, "title" | "body"> & { metadata?: Record<string, unknown> | null }): Promise<void> {
     const toast = await this.toastController.create({
-      header: notification.title,
-      message: notification.body,
+      header: notification.metadata ? this.getNotificationTitle(notification as Pick<UserNotification, "title" | "metadata">) : notification.title,
+      message: notification.metadata ? this.getNotificationBody(notification as Pick<UserNotification, "body" | "metadata">) : notification.body,
       duration: 3200,
       color: "primary",
       position: "top"
     });
     await toast.present();
+  }
+
+  private translateStoredNotificationField(
+    metadata: Record<string, unknown> | null | undefined,
+    field: "title" | "body"
+  ): string | null {
+    const i18n = metadata?.["i18n"];
+    if (!i18n || typeof i18n !== "object") {
+      return null;
+    }
+
+    const keyProp = field === "title" ? "titleKey" : "bodyKey";
+    const translationKey = typeof (i18n as Record<string, unknown>)[keyProp] === "string" ? String((i18n as Record<string, unknown>)[keyProp]) : null;
+    if (!translationKey) {
+      return null;
+    }
+
+    const paramsRaw = (i18n as Record<string, unknown>)["params"];
+    const params =
+      paramsRaw && typeof paramsRaw === "object"
+        ? Object.entries(paramsRaw as Record<string, unknown>).reduce<Record<string, string | number>>((acc, [key, value]) => {
+            if (typeof value === "string" || typeof value === "number") {
+              acc[key] = value;
+            }
+            return acc;
+          }, {})
+        : undefined;
+
+    return this.i18nService.t(translationKey, params);
+  }
+
+  private translatePushField(keyValue: unknown, paramsValue: unknown, fallback: string | null | undefined): string | null {
+    if (typeof keyValue !== "string" || !keyValue.trim()) {
+      return fallback ?? null;
+    }
+
+    let params: Record<string, string | number> | undefined;
+    if (typeof paramsValue === "string") {
+      try {
+        const parsed = JSON.parse(paramsValue) as Record<string, unknown>;
+        params = Object.entries(parsed).reduce<Record<string, string | number>>((acc, [key, value]) => {
+          if (typeof value === "string" || typeof value === "number") {
+            acc[key] = value;
+          }
+          return acc;
+        }, {});
+      } catch {
+        params = undefined;
+      }
+    }
+
+    return this.i18nService.t(keyValue, params);
   }
 }

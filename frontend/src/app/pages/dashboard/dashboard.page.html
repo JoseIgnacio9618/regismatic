@@ -27,8 +27,14 @@
 
             <section class="empty-state mt-16 status-error" *ngIf="isAttendanceLocked">
               <ion-icon name="lock-closed-outline" aria-hidden="true"></ion-icon>
-              <h3>{{ "dashboard.attendance_locked_title" | t }}</h3>
-              <p>{{ "dashboard.attendance_locked_desc" | t }}</p>
+              <h3>{{ (isBillingLocked ? "dashboard.attendance_billing_locked_title" : "dashboard.attendance_locked_title") | t }}</h3>
+              <p>{{ attendanceLockDescription }}</p>
+              <ion-note *ngIf="showDeletionWarning" class="item-meta">
+                {{ "dashboard.attendance_data_deletion_warning" | t: { date: formatDateOnly(attendanceDeletionAt || '') } }}
+              </ion-note>
+              <ion-button fill="outline" size="small" *ngIf="showBillingCta" routerLink="/billing">
+                {{ "dashboard.go_billing" | t }}
+              </ion-button>
             </section>
 
             <div class="mt-16" *ngIf="!isAttendanceLocked && effectiveState === 'OFF'">

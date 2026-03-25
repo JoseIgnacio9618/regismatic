@@ -17,6 +17,8 @@ La base de datos es **PostgreSQL (SQL)**, no SQLite.
 - Soporta multiadministrador y equipos separados
 - Incluye notificaciones internas y push
 - Incluye facturacion por planes con Stripe para admins
+- Si un `ADMIN` no tiene suscripcion activa ni limite manual, ni el ni su equipo pueden fichar
+- Cuando una cuenta administradora queda sin suscripcion ni limite manual, la app avisa de que sus datos podran eliminarse tras 6 meses
 - Incluye datos demo basicos y fixtures demo opcionales masivos
 
 ## Estructura
@@ -38,6 +40,8 @@ La base de datos es **PostgreSQL (SQL)**, no SQLite.
   - `Pack 100: 99 EUR/mes`
   - planes mensual y anual en Stripe
   - checkout y portal de cliente con Stripe
+  - el `SUPERADMIN` puede fijar limites manuales de usuarios para cada `ADMIN`
+  - el limite manual tiene prioridad sobre Stripe hasta que se retire
 - Alta publica de empleados desde la propia app (`/register-employee`)
 - El primer alta publica de administrador se promociona automaticamente a `SUPERADMIN`
 - Los admins nuevos arrancan con una demo de 7 dias y 3 usuarios
@@ -62,7 +66,7 @@ La base de datos es **PostgreSQL (SQL)**, no SQLite.
   - `ADMIN`: solo crea y gestiona empleados propios
   - `SUPERADMIN`: ve todo, puede crear admins, superadmins y empleados asignados, y reasignar empleados entre administradores
 - Carga opcional de fixtures demo masiva para pruebas visuales y funcionales
-- Hardening basico de API: CORS configurable, rate limit de login, health checks
+- Hardening basico de API: CORS configurable, rate limit, saneado global de payloads, esquemas estrictos y health checks
 
 ## Arquitectura funcional
 - `frontend/`
@@ -80,7 +84,7 @@ La base de datos es **PostgreSQL (SQL)**, no SQLite.
 
 ## Roles y permisos
 - `EMPLOYEE`
-  - ficha su propia jornada
+  - ficha su propia jornada cuando su administrador tiene facturacion activa o limite manual
   - consulta sus registros
   - solicita correcciones
   - puede crear su perfil publicamente
@@ -89,6 +93,7 @@ La base de datos es **PostgreSQL (SQL)**, no SQLite.
   - gestiona solo su equipo
   - crea empleados directamente
   - su limite de empleados depende del plan activo
+  - si no tiene suscripcion activa ni limite manual, solo puede usar `Dashboard` y `Facturacion` hasta regularizar la cuenta
   - aprueba o rechaza solicitudes de correccion de su equipo
   - aprueba o rechaza solicitudes de union a su equipo
   - puede modificar registros de su plantilla
@@ -97,6 +102,7 @@ La base de datos es **PostgreSQL (SQL)**, no SQLite.
   - puede crear `ADMIN`, `SUPERADMIN` y `EMPLOYEE`
   - puede reasignar empleados entre administradores
   - puede revisar cualquier incidencia y cualquier solicitud de union a equipo
+  - puede fijar o retirar limites manuales de usuarios para cualquier `ADMIN`
   - no depende de validaciones de terceros
   - no queda limitado por planes ni por Stripe
 
@@ -117,6 +123,11 @@ La base de datos es **PostgreSQL (SQL)**, no SQLite.
   - el admin o superadmin la revisa en `Reportes`
 - Notificaciones
   - cada notificacion redirige a la pantalla donde se puede actuar sobre ella
+- Bloqueo por facturacion inactiva
+  - si un `ADMIN` pierde la suscripcion y tampoco tiene limite manual, el fichaje queda bloqueado para el admin y todos sus empleados
+  - en ese estado, el admin solo puede entrar en `Dashboard` y `Facturacion`
+  - los empleados afectados solo pueden entrar en `Dashboard`
+  - el dashboard muestra aviso de posible eliminacion de datos a los 6 meses si la situacion no se corrige
 
 ## Requisitos
 - Node.js 20+
@@ -215,6 +226,9 @@ Variables principales de backend:
 - `JWT_SECRET`
 - `CORS_ORIGIN`
 - `PORT`
+- `JSON_BODY_LIMIT`
+- `API_RATE_LIMIT_WINDOW_MS`
+- `API_RATE_LIMIT_MAX`
 - `BILLING_TRIAL_DAYS`
 - `BILLING_TRIAL_SEAT_LIMIT`
 - `BILLING_TRIAL_IP_ENFORCEMENT`
@@ -295,6 +309,11 @@ Guia ampliada: [docs/deploy-production.md](docs/deploy-production.md)
 ## 3.1) Stripe Billing
 - La integracion usa `Stripe Checkout` para contratar/cambiar plan y `Customer Portal` para gestionar el cobro.
 - No hace falta clave publica en el frontend porque la redireccion a Stripe se crea desde backend.
+- El `SUPERADMIN` puede asignar a cualquier `ADMIN` un limite manual de usuarios desde `Facturacion`.
+- Si existe un limite manual:
+  - manda sobre la demo o la suscripcion de Stripe
+  - puede retirarse en cualquier momento
+  - se notifica automaticamente al admin afectado
 - Claves/IDs que debes configurar:
   - `STRIPE_SECRET_KEY`: clave secreta de tu cuenta Stripe
   - `STRIPE_WEBHOOK_SECRET`: secreto del endpoint webhook de Stripe

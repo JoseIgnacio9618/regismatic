@@ -11,6 +11,7 @@ import { prisma } from "../config/prisma";
 import { AppError } from "../middlewares/error.middleware";
 import { diffMinutes, madridDateKey, madridDayRange, nowUtc } from "../utils/dates";
 import { assertCanManageUser, assertCanViewUser, getScopedUserById, listVisibleUserIds } from "./access.service";
+import { getAttendanceAccessForUser } from "./billing.service";
 import { createNotificationsForUsers, listApproverUsersForEmployee } from "./notification.service";
 import { buildProfilePhotoApiPath } from "./profile-photo.service";
 
@@ -536,21 +537,14 @@ const getEventForAdmin = async (eventId: string): Promise<WorkEvent> => {
 };
 
 const assertAttendanceEnabledForUser = async (userId: string): Promise<void> => {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: {
-      role: true,
-      managerId: true,
-      isActive: true
-    }
-  });
+  const access = await getAttendanceAccessForUser(userId);
 
-  if (!user || !user.isActive) {
-    throw new AppError("User not found.", 404);
+  if (access.reason === "TEAM_ASSIGNMENT_REQUIRED") {
+    throw new AppError("Employees must belong to an administrator before recording attendance.", 403);
   }
 
-  if (user.role === "EMPLOYEE" && !user.managerId) {
-    throw new AppError("Employees must belong to an administrator before recording attendance.", 403);
+  if (!access.canRecordAttendance) {
+    throw new AppError("Attendance is blocked until billing is active or a custom limit is assigned.", 403);
   }
 };
 
@@ -684,6 +678,10 @@ export const updateEventAsAdmin = async (params: UpdateEventByAdminParams): Prom
         type: NotificationType.EVENT_MODIFIED,
         title: "Registro modificado por administracion",
         body: "Un administrador ha modificado uno de tus fichajes.",
+        i18n: {
+          titleKey: "notifications.event_modified_title",
+          bodyKey: "notifications.event_modified_body"
+        },
         metadata: {
           eventId: event.id,
           route: "/reports"
@@ -761,6 +759,13 @@ export const createEditRequest = async (params: CreateEditRequestParams): Promis
     type: NotificationType.EDIT_REQUEST_CREATED,
     title: "Nueva solicitud de correccion",
     body: `${created.requestedBy.fullName} ha enviado una solicitud de correccion.`,
+    i18n: {
+      titleKey: "notifications.edit_request_created_title",
+      bodyKey: "notifications.edit_request_created_body",
+      params: {
+        employee: created.requestedBy.fullName
+      }
+    },
     metadata: {
       requestId: created.id,
       requestedById: created.requestedBy.id,
@@ -895,6 +900,10 @@ export const reviewEditRequest = async (params: ReviewEditRequestParams): Promis
       type: NotificationType.EDIT_REQUEST_REJECTED,
       title: "Solicitud de correccion rechazada",
       body: "Tu solicitud de correccion ha sido rechazada por administracion.",
+      i18n: {
+        titleKey: "notifications.edit_request_rejected_title",
+        bodyKey: "notifications.edit_request_rejected_body"
+      },
       metadata: {
         requestId: rejected.id,
         route: "/reports"
@@ -956,6 +965,10 @@ export const reviewEditRequest = async (params: ReviewEditRequestParams): Promis
     type: NotificationType.EDIT_REQUEST_APPROVED,
     title: "Solicitud de correccion aprobada",
     body: "Tu solicitud de correccion ha sido aprobada.",
+    i18n: {
+      titleKey: "notifications.edit_request_approved_title",
+      bodyKey: "notifications.edit_request_approved_body"
+    },
     metadata: {
       requestId: approved.id,
       route: "/reports"

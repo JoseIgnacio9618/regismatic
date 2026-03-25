@@ -13,6 +13,7 @@ export type NotificationType =
 export type PushPlatform = "WEB" | "ANDROID" | "IOS";
 export type BillingPlanCode = "DEMO_10" | "PACK_10" | "PACK_20" | "PACK_50" | "PACK_100";
 export type BillingInterval = "month" | "year";
+export type BillingSeatLimitSource = "BYPASSED" | "SUBSCRIPTION" | "CUSTOM";
 export type BillingSubscriptionStatus =
   | "TRIALING"
   | "ACTIVE"
@@ -48,11 +49,14 @@ export interface BillingSummary {
   plan: BillingPlan;
   currentPrice: BillingPriceOption | null;
   status: BillingSubscriptionStatus | "BYPASSED";
+  seatLimitSource: BillingSeatLimitSource;
   seatUsage: {
     used: number;
     limit: number;
     remaining: number;
   };
+  customSeatLimit: number | null;
+  customSeatLimitUpdatedAt: string | null;
   isTrial: boolean;
   trialEndsAt: string | null;
   currentPeriodEnd: string | null;
@@ -60,6 +64,41 @@ export interface BillingSummary {
   managementUrls: {
     checkoutAvailable: boolean;
     portalAvailable: boolean;
+  };
+}
+
+export interface AttendanceAccessSummary {
+  canRecordAttendance: boolean;
+  reason: "OK" | "TEAM_ASSIGNMENT_REQUIRED" | "BILLING_INACTIVE";
+  managedByAdminId: string | null;
+  managedByAdminName: string | null;
+  requiresSubscriptionAction: boolean;
+  dataDeletionAt: string | null;
+}
+
+export interface AdminSeatLimitControl {
+  admin: {
+    id: string;
+    email: string;
+    fullName: string;
+  };
+  billing: {
+    planCode: BillingPlanCode;
+    status: BillingSubscriptionStatus;
+    seatLimitSource: "SUBSCRIPTION" | "CUSTOM";
+    subscriptionSeatLimit: number;
+    effectiveSeatLimit: number;
+    customSeatLimit: number | null;
+    customSeatLimitUpdatedAt: string | null;
+    isTrial: boolean;
+    trialEndsAt: string | null;
+    currentPeriodEnd: string | null;
+    cancelAtPeriodEnd: boolean;
+  };
+  seatUsage: {
+    used: number;
+    limit: number;
+    remaining: number;
   };
 }
 
@@ -122,6 +161,7 @@ export interface AuthUser {
   isActive: boolean;
   createdAt: string;
   billing?: BillingSummary | null;
+  attendanceAccess?: AttendanceAccessSummary | null;
 }
 
 export interface LoginResponse {

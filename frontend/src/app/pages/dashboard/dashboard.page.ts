@@ -67,7 +67,35 @@ export class DashboardPage implements OnInit {
   }
 
   get isAttendanceLocked(): boolean {
-    return this.showJoinTeamCard;
+    return this.authService.user?.attendanceAccess?.canRecordAttendance === false;
+  }
+
+  get isBillingLocked(): boolean {
+    return this.authService.user?.attendanceAccess?.reason === "BILLING_INACTIVE";
+  }
+
+  get attendanceDeletionAt(): string | null {
+    return this.authService.user?.attendanceAccess?.dataDeletionAt ?? null;
+  }
+
+  get attendanceLockDescription(): string {
+    if (this.isBillingLocked) {
+      return this.authService.isAdmin
+        ? this.i18nService.t("dashboard.attendance_billing_locked_admin_desc")
+        : this.i18nService.t("dashboard.attendance_billing_locked_employee_desc", {
+            admin: this.authService.user?.attendanceAccess?.managedByAdminName ?? this.i18nService.t("role.ADMIN")
+          });
+    }
+
+    return this.i18nService.t("dashboard.attendance_locked_desc");
+  }
+
+  get showBillingCta(): boolean {
+    return this.isBillingLocked && this.authService.user?.role === "ADMIN";
+  }
+
+  get showDeletionWarning(): boolean {
+    return this.isBillingLocked && Boolean(this.attendanceDeletionAt);
   }
 
   get pendingJoinRequests(): TeamJoinRequest[] {
@@ -115,9 +143,22 @@ export class DashboardPage implements OnInit {
     });
   }
 
+  formatDateOnly(iso: string): string {
+    return new Date(iso).toLocaleDateString(this.i18nService.locale, {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric"
+    });
+  }
+
   async handleAction(action: "clockIn" | "breakStart" | "breakEnd" | "clockOut"): Promise<void> {
     if (this.isAttendanceLocked) {
-      await this.showToast(this.i18nService.t("errors.employee_team_assignment_required"), "danger");
+      await this.showToast(
+        this.i18nService.t(
+          this.isBillingLocked ? "errors.attendance_blocked_billing" : "errors.employee_team_assignment_required"
+        ),
+        "danger"
+      );
       return;
     }
 

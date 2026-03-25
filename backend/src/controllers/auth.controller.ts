@@ -3,17 +3,18 @@ import { z } from "zod";
 import { prisma } from "../config/prisma";
 import { AppError } from "../middlewares/error.middleware";
 import { ensureAdminInviteCode } from "../services/admin-invite.service";
-import { getBillingSnapshotForAuth } from "../services/billing.service";
+import { getAttendanceAccessForUser, getBillingSnapshotForAuth } from "../services/billing.service";
 import { buildProfilePhotoApiPath } from "../services/profile-photo.service";
 import { login, registerAdmin, registerEmployee } from "../services/auth.service";
 import { getRequestIp } from "../utils/network";
+import { strictObject } from "../utils/validation";
 
-const loginSchema = z.object({
+const loginSchema = strictObject({
   email: z.string().email(),
   password: z.string().min(6)
 });
 
-const registerAdminSchema = z.object({
+const registerAdminSchema = strictObject({
   email: z.string().email(),
   password: z
     .string()
@@ -25,7 +26,7 @@ const registerAdminSchema = z.object({
   fullName: z.string().min(3)
 });
 
-const registerEmployeeSchema = z.object({
+const registerEmployeeSchema = strictObject({
   email: z.string().email(),
   password: z
     .string()
@@ -86,11 +87,15 @@ export const meController = async (req: Request, res: Response) => {
 
   const adminInviteCode = await ensureAdminInviteCode(user);
   const { profilePhotoPath, ...rest } = user;
-  const billing = await getBillingSnapshotForAuth(user.id, user.role);
+  const [billing, attendanceAccess] = await Promise.all([
+    getBillingSnapshotForAuth(user.id, user.role),
+    getAttendanceAccessForUser(user.id)
+  ]);
   return res.json({
     ...rest,
     adminInviteCode,
     profilePhotoUrl: buildProfilePhotoApiPath(user.id, profilePhotoPath),
-    billing
+    billing,
+    attendanceAccess
   });
 };

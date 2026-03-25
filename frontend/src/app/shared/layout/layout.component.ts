@@ -77,6 +77,26 @@ export class LayoutComponent implements OnDestroy {
     return "medium";
   }
 
+  get isBillingRestricted(): boolean {
+    return this.authService.user?.attendanceAccess?.reason === "BILLING_INACTIVE";
+  }
+
+  get canAccessReports(): boolean {
+    return !this.isBillingRestricted;
+  }
+
+  get canAccessTeam(): boolean {
+    return this.authService.isAdmin && !this.isBillingRestricted;
+  }
+
+  get canAccessBilling(): boolean {
+    return this.authService.isAdmin;
+  }
+
+  get canAccessBillingHistory(): boolean {
+    return this.authService.isAdmin && !this.isBillingRestricted;
+  }
+
   go(path: string): void {
     void this.closeMenus();
     void this.router.navigateByUrl(path);

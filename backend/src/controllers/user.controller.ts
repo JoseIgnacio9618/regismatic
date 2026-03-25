@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import { z } from "zod";
 import { TeamJoinRequestStatus } from "@prisma/client";
 import { AppError } from "../middlewares/error.middleware";
+import { assertNonBillingFeatureAccessForUser } from "../services/billing.service";
 import {
   assignEmployeeManager,
   createUser,
@@ -16,21 +17,22 @@ import {
   listTeamJoinRequests,
   reviewTeamJoinRequest
 } from "../services/team-join-request.service";
+import { strictObject } from "../utils/validation";
 
-const paginatedUsersQuerySchema = z.object({
+const paginatedUsersQuerySchema = strictObject({
   page: z.coerce.number().int().min(1).optional(),
   pageSize: z.coerce.number().int().min(1).max(100).optional(),
   search: z.string().trim().optional(),
   role: z.enum(["SUPERADMIN", "ADMIN", "EMPLOYEE"]).optional()
 });
 
-const paginatedJoinRequestsQuerySchema = z.object({
+const paginatedJoinRequestsQuerySchema = strictObject({
   page: z.coerce.number().int().min(1).optional(),
   pageSize: z.coerce.number().int().min(1).max(100).optional(),
   status: z.nativeEnum(TeamJoinRequestStatus).optional()
 });
 
-const createUserSchema = z.object({
+const createUserSchema = strictObject({
   email: z.string().email(),
   password: z
     .string()
@@ -44,16 +46,16 @@ const createUserSchema = z.object({
   managerId: z.string().min(1).optional()
 });
 
-const assignManagerSchema = z.object({
+const assignManagerSchema = strictObject({
   managerId: z.string().min(1)
 });
 
-const createTeamJoinRequestSchema = z.object({
+const createTeamJoinRequestSchema = strictObject({
   inviteCode: z.string().trim().min(3),
   message: z.string().trim().max(300).optional()
 });
 
-const reviewTeamJoinRequestSchema = z.object({
+const reviewTeamJoinRequestSchema = strictObject({
   action: z.enum(["APPROVE", "REJECT"]),
   reviewComment: z.string().trim().max(300).optional()
 });
@@ -62,6 +64,8 @@ export const createUserController = async (req: Request, res: Response) => {
   if (!req.user) {
     throw new AppError("Not authenticated.", 401);
   }
+
+  await assertNonBillingFeatureAccessForUser(req.user.id);
 
   const payload = createUserSchema.parse(req.body);
   const user = await createUser({
@@ -75,6 +79,8 @@ export const listUsersController = async (req: Request, res: Response) => {
   if (!req.user) {
     throw new AppError("Not authenticated.", 401);
   }
+
+  await assertNonBillingFeatureAccessForUser(req.user.id);
 
   const query = paginatedUsersQuerySchema.parse(req.query);
   const result = await listUsers({
@@ -107,6 +113,8 @@ export const listTeamJoinRequestsController = async (req: Request, res: Response
     throw new AppError("Not authenticated.", 401);
   }
 
+  await assertNonBillingFeatureAccessForUser(req.user.id);
+
   const query = paginatedJoinRequestsQuerySchema.parse(req.query);
   const result = await listTeamJoinRequests({
     requesterId: req.user.id,
@@ -121,6 +129,8 @@ export const reviewTeamJoinRequestController = async (req: Request, res: Respons
   if (!req.user) {
     throw new AppError("Not authenticated.", 401);
   }
+
+  await assertNonBillingFeatureAccessForUser(req.user.id);
 
   const payload = reviewTeamJoinRequestSchema.parse(req.body);
   const requestId = z.string().min(1).parse(req.params.requestId);
@@ -139,6 +149,8 @@ export const deleteUserController = async (req: Request, res: Response) => {
     throw new AppError("Not authenticated.", 401);
   }
 
+  await assertNonBillingFeatureAccessForUser(req.user.id);
+
   const userId = z.string().min(1).parse(req.params.userId);
   const deletedUser = await deleteUser({
     userId,
@@ -152,6 +164,8 @@ export const assignEmployeeManagerController = async (req: Request, res: Respons
   if (!req.user) {
     throw new AppError("Not authenticated.", 401);
   }
+
+  await assertNonBillingFeatureAccessForUser(req.user.id);
 
   const payload = assignManagerSchema.parse(req.body);
   const userId = z.string().min(1).parse(req.params.userId);

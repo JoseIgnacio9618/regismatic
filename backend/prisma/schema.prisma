@@ -211,6 +211,9 @@ model BillingSubscription {
   planCode              BillingPlanCode
   status                BillingSubscriptionStatus
   seatLimit             Int
+  customSeatLimit       Int?
+  customSeatLimitUpdatedAt DateTime?
+  customSeatLimitUpdatedById String?
   isTrial               Boolean                   @default(false)
   trialEndsAt           DateTime?
   stripeCustomerId      String?                   @unique

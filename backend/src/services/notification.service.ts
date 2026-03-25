@@ -39,6 +39,11 @@ type CreateNotificationsParams = {
   body: string;
   metadata?: Record<string, unknown>;
   pushData?: Record<string, unknown>;
+  i18n?: {
+    titleKey: string;
+    bodyKey: string;
+    params?: Record<string, string | number>;
+  };
 };
 
 const toUserNotificationRecord = (notification: Notification): UserNotificationRecord => ({
@@ -148,13 +153,26 @@ export const createNotificationsForUsers = async (params: CreateNotificationsPar
 
   const now = nowUtc();
 
+  const notificationMetadata = {
+    ...(params.metadata ?? {}),
+    ...(params.i18n
+      ? {
+          i18n: {
+            titleKey: params.i18n.titleKey,
+            bodyKey: params.i18n.bodyKey,
+            params: params.i18n.params ?? {}
+          }
+        }
+      : {})
+  };
+
   await prisma.notification.createMany({
     data: uniqueUserIds.map((userId) => ({
       userId,
       type: params.type,
       title: params.title,
       body: params.body,
-      metadata: params.metadata as Prisma.InputJsonValue | undefined,
+      metadata: notificationMetadata as Prisma.InputJsonValue | undefined,
       createdAt: now
     }))
   });
@@ -185,7 +203,16 @@ export const createNotificationsForUsers = async (params: CreateNotificationsPar
       {
         title: params.title,
         body: params.body,
-        data: params.pushData ?? params.metadata
+        data: {
+          ...(params.pushData ?? params.metadata ?? {}),
+          ...(params.i18n
+            ? {
+                i18nTitleKey: params.i18n.titleKey,
+                i18nBodyKey: params.i18n.bodyKey,
+                i18nParams: params.i18n.params ?? {}
+              }
+            : {})
+        }
       }
     );
   } catch (error) {

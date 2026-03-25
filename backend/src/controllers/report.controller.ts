@@ -2,9 +2,11 @@ import type { Request, Response } from "express";
 import { z } from "zod";
 import { AppError } from "../middlewares/error.middleware";
 import { getSummaryReport, summaryToCsv, summaryToExcelBuffer } from "../services/report.service";
+import { assertNonBillingFeatureAccessForUser } from "../services/billing.service";
 import { parseReportRange } from "../utils/report-range";
+import { strictObject } from "../utils/validation";
 
-const reportQuerySchema = z.object({
+const reportQuerySchema = strictObject({
   from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   userId: z.string().optional(),
@@ -12,10 +14,12 @@ const reportQuerySchema = z.object({
   pageSize: z.coerce.number().int().min(1).max(100).optional()
 });
 
-const getParsedReportQuery = (req: Request) => {
+const getParsedReportQuery = async (req: Request) => {
   if (!req.user) {
     throw new AppError("Not authenticated.", 401);
   }
+
+  await assertNonBillingFeatureAccessForUser(req.user.id);
 
   const query = reportQuerySchema.parse(req.query);
   const range = parseReportRange(query.from, query.to);
@@ -32,7 +36,7 @@ const getParsedReportQuery = (req: Request) => {
 };
 
 const getReportRows = async (req: Request) => {
-  return getSummaryReport(getParsedReportQuery(req));
+  return getSummaryReport(await getParsedReportQuery(req));
 };
 
 export const summaryReportController = async (req: Request, res: Response) => {
@@ -41,7 +45,7 @@ export const summaryReportController = async (req: Request, res: Response) => {
 };
 
 export const csvReportController = async (req: Request, res: Response) => {
-  const query = getParsedReportQuery(req);
+  const query = await getParsedReportQuery(req);
   const report = await getSummaryReport({
     ...query,
     page: 1,
@@ -55,7 +59,7 @@ export const csvReportController = async (req: Request, res: Response) => {
 };
 
 export const excelReportController = async (req: Request, res: Response) => {
-  const query = getParsedReportQuery(req);
+  const query = await getParsedReportQuery(req);
   const report = await getSummaryReport({
     ...query,
     page: 1,

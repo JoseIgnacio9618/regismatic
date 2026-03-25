@@ -38,6 +38,9 @@ API por defecto: `http://localhost:4000`
 - `JWT_EXPIRES_IN`
 - `CORS_ORIGIN`
 - `PORT`
+- `JSON_BODY_LIMIT`
+- `API_RATE_LIMIT_WINDOW_MS`
+- `API_RATE_LIMIT_MAX`
 - `AUTH_RATE_LIMIT_WINDOW_MS`
 - `AUTH_RATE_LIMIT_MAX`
 - `BILLING_TRIAL_DAYS`
@@ -107,11 +110,20 @@ Notas:
 - `POST /api/notifications/push-token`
 - `GET /api/reports/summary.xlsx`
 - `GET /api/billing/overview`
+- `GET /api/billing/admin-seat-limits` (`SUPERADMIN`)
 - `POST /api/billing/checkout-session`
 - `POST /api/billing/portal-session`
+- `PATCH /api/billing/admins/:adminId/custom-seat-limit` (`SUPERADMIN`)
+- `DELETE /api/billing/admins/:adminId/custom-seat-limit` (`SUPERADMIN`)
 - `POST /api/billing/webhook`
 - `GET /health`
 - `GET /health/ready`
+
+## Reglas de bloqueo por facturacion
+- Si un `ADMIN` no tiene suscripcion activa ni limite manual, el fichaje queda bloqueado para esa cuenta y todos sus `EMPLOYEE` asignados.
+- En ese estado, la API sigue permitiendo `Dashboard` y `Facturacion`, pero bloquea secciones operativas como `Reportes`, `Equipo` e historico de pagos para administradores afectados.
+- Los empleados cuyo administrador este en ese estado quedan igualmente bloqueados para fichar y para usar secciones operativas fuera de `Dashboard`.
+- El dashboard expone una fecha orientativa de eliminacion de datos a los 6 meses si la cuenta no regulariza su facturacion.
 
 ## Notas
 - en Docker la entrada aplica `prisma migrate deploy` automaticamente
@@ -119,3 +131,4 @@ Notas:
 - si `RUN_DEMO_FIXTURES=true`, carga ademas los fixtures masivos
 - los admins nuevos arrancan con demo de `7 dias / 3 usuarios`
 - el backend aplica limites de plan tanto al crear empleados como al aprobar solicitudes de union a equipo
+- si un `ADMIN` tiene un limite manual asignado por `SUPERADMIN`, ese limite manda sobre Stripe hasta que se retire
