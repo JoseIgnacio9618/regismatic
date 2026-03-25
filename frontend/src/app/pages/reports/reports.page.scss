@@ -1,5 +1,5 @@
 .reports-grid {
-  row-gap: 16px;
+  row-gap: 20px;
 }
 
 .scope-panel,
@@ -45,7 +45,7 @@
 
 .actions-col {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   align-items: end;
   flex-wrap: wrap;
 }
@@ -53,7 +53,7 @@
 .reports-scope-shell {
   display: grid;
   grid-template-columns: minmax(0, 1.7fr) minmax(240px, 0.9fr);
-  gap: 16px;
+  gap: 18px;
   align-items: start;
 }
 
@@ -66,7 +66,7 @@
 }
 
 .scope-selection-card {
-  padding: 16px 18px;
+  padding: 18px 20px;
 }
 
 .scope-selection-card strong {
@@ -100,8 +100,8 @@
 .request-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 8px;
+  gap: 8px;
+  margin-top: 10px;
 }
 
 .request-chips ion-badge {
@@ -110,8 +110,8 @@
 
 .event-editor,
 .review-box {
-  margin: 8px 0 12px;
-  padding: 12px 14px;
+  margin: 10px 0 14px;
+  padding: 14px 16px;
   overflow: hidden;
 }
 
@@ -122,9 +122,9 @@
 
 .editor-actions {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   justify-content: flex-end;
-  margin-top: 8px;
+  margin-top: 10px;
   flex-wrap: wrap;
 }
 

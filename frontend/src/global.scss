@@ -33,9 +33,9 @@ body {
   margin: 0;
   color: var(--app-text-primary);
   background:
-    radial-gradient(circle at top left, color-mix(in srgb, var(--app-brand-base), transparent 93%) 0%, transparent 34%),
-    radial-gradient(circle at bottom right, color-mix(in srgb, var(--app-accent-base), transparent 94%) 0%, transparent 32%),
-    linear-gradient(180deg, var(--app-canvas) 0%, color-mix(in srgb, var(--app-canvas), var(--app-surface-2) 48%) 100%);
+    radial-gradient(circle at top left, color-mix(in srgb, var(--ion-color-primary), transparent 96%) 0%, transparent 30%),
+    radial-gradient(circle at bottom right, color-mix(in srgb, var(--ion-color-secondary), transparent 95%) 0%, transparent 34%),
+    linear-gradient(180deg, var(--app-canvas) 0%, color-mix(in srgb, var(--app-canvas), var(--app-surface-2) 36%) 100%);
   transition: background var(--app-transition-slow), color var(--app-transition-base);
 }
 
@@ -45,10 +45,10 @@ body::before {
   inset: 0;
   pointer-events: none;
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--app-text-primary), transparent 98%) 0%, transparent 20%),
-    radial-gradient(circle at 1px 1px, color-mix(in srgb, var(--app-text-primary), transparent 94%) 1px, transparent 0);
-  background-size: auto, 24px 24px;
-  opacity: 0.35;
+    linear-gradient(180deg, color-mix(in srgb, var(--app-text-primary), transparent 98.5%) 0%, transparent 20%),
+    radial-gradient(circle at 1px 1px, color-mix(in srgb, var(--app-text-primary), transparent 95.5%) 1px, transparent 0);
+  background-size: auto, 26px 26px;
+  opacity: 0.18;
   z-index: -1;
 }
 
@@ -142,6 +142,7 @@ ion-toolbar {
   --background: var(--ion-toolbar-background);
   --color: var(--ion-toolbar-color);
   border-bottom: 1px solid var(--app-divider);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--app-divider), transparent 8%);
 }
 
 ion-title {
@@ -171,9 +172,9 @@ ion-menu::part(container) {
 ion-list {
   --app-list-radius: var(--app-radius-md);
   margin: 0;
-  padding: 8px;
+  padding: 10px;
   border-radius: var(--app-list-radius);
-  background: color-mix(in srgb, var(--app-surface-1), transparent 6%);
+  background: color-mix(in srgb, var(--app-surface-1), var(--ion-color-secondary) 4%);
   overflow: hidden;
   isolation: isolate;
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--app-border-subtle), transparent 18%);
@@ -190,12 +191,12 @@ ion-item {
   --highlight-color-invalid: var(--ion-color-danger);
   --inner-border-width: 0;
   --border-width: 0;
-  --padding-start: 14px;
-  --padding-end: 14px;
-  --inner-padding-top: 10px;
-  --inner-padding-bottom: 10px;
-  --min-height: 56px;
-  margin-bottom: 12px;
+  --padding-start: 15px;
+  --padding-end: 15px;
+  --inner-padding-top: 12px;
+  --inner-padding-bottom: 12px;
+  --min-height: 58px;
+  margin-bottom: 14px;
   border: 1px solid var(--app-field-border);
   border-radius: var(--app-item-radius);
   overflow: hidden;
@@ -368,9 +369,9 @@ ion-button {
   --box-shadow: none;
   --padding-top: 12px;
   --padding-bottom: 12px;
-  --padding-start: 16px;
-  --padding-end: 16px;
-  min-height: 42px;
+  --padding-start: 18px;
+  --padding-end: 18px;
+  min-height: 44px;
   overflow: hidden;
   isolation: isolate;
   border-radius: var(--border-radius, 12px);
@@ -397,14 +398,16 @@ ion-button[fill="solid"] {
 
 ion-button:not([fill])::part(native),
 ion-button[fill="solid"]::part(native) {
-  border-color: color-mix(in srgb, var(--background), var(--app-text-primary) 14%);
+  border-color: color-mix(in srgb, var(--background), black 10%);
   background: linear-gradient(
     180deg,
-    color-mix(in srgb, var(--background), white 7%) 0%,
+    color-mix(in srgb, var(--background), white 10%) 0%,
     var(--background) 62%,
-    color-mix(in srgb, var(--background), black 4%) 100%
+    color-mix(in srgb, var(--background), black 6%) 100%
   );
-  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--color), transparent 82%);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--color), transparent 84%),
+    0 8px 16px color-mix(in srgb, var(--background), transparent 76%);
 }
 
 ion-button[fill="outline"],
@@ -414,10 +417,10 @@ ion-button[fill="clear"] {
 
 ion-button[fill="outline"]:not([color]),
 ion-button[fill="outline"][color="primary"] {
-  --background: transparent;
+  --background: color-mix(in srgb, var(--ion-color-primary), transparent 94%);
   --color: var(--ion-color-primary);
   --border-width: 1px;
-  --border-color: color-mix(in srgb, var(--ion-color-primary), transparent 62%);
+  --border-color: color-mix(in srgb, var(--ion-color-primary), transparent 58%);
 }
 
 ion-button[fill="outline"][color="danger"] {
@@ -444,7 +447,7 @@ ion-button[color="medium"][fill="clear"] {
 }
 
 ion-chip {
-  --background: color-mix(in srgb, var(--app-surface-2), var(--app-accent-subtle) 24%);
+  --background: color-mix(in srgb, var(--app-surface-2), var(--ion-color-secondary) 10%);
   --color: var(--app-text-primary);
   min-height: 32px;
   border: 1px solid var(--app-border-subtle);
@@ -465,7 +468,7 @@ ion-badge {
 }
 
 ion-badge[color="light"] {
-  --background: color-mix(in srgb, var(--app-surface-2), var(--app-accent-subtle) 18%);
+  --background: color-mix(in srgb, var(--app-surface-2), var(--ion-color-secondary) 8%);
   --color: var(--app-text-secondary);
   border: 1px solid var(--app-border-subtle);
 }
@@ -477,7 +480,7 @@ ion-card {
 }
 
 ion-card-header {
-  padding: 20px 20px 0;
+  padding: 22px 22px 0;
 }
 
 ion-card-title {
@@ -487,7 +490,7 @@ ion-card-title {
 }
 
 ion-card-content {
-  padding: 18px 20px 20px;
+  padding: 20px 22px 22px;
 }
 
 .glass-card,
@@ -499,10 +502,12 @@ ion-card-content {
   border-radius: var(--app-radius-lg);
   background: linear-gradient(
     180deg,
-    color-mix(in srgb, var(--app-surface-1), var(--app-accent-subtle) 12%) 0%,
+    color-mix(in srgb, var(--app-surface-1), var(--ion-color-secondary) 6%) 0%,
     var(--app-surface-0) 100%
   );
-  box-shadow: var(--app-shadow-sm);
+  box-shadow:
+    var(--app-shadow-sm),
+    inset 0 1px 0 color-mix(in srgb, white, transparent 88%);
 }
 
 .panel > * {
@@ -511,7 +516,7 @@ ion-card-content {
 }
 
 .microcopy {
-  margin-top: 6px;
+  margin-top: 8px;
   font-size: 0.84rem;
   color: var(--app-text-tertiary);
 }
@@ -530,7 +535,7 @@ ion-card-content {
 
 .data-list {
   display: grid;
-  gap: 10px;
+  gap: 12px;
   margin: 0;
 }
 
@@ -540,10 +545,10 @@ ion-card-content {
 
 .data-item {
   --background: var(--app-surface-1);
-  --inner-padding-top: 12px;
-  --inner-padding-bottom: 12px;
-  --inner-padding-start: 14px;
-  --inner-padding-end: 14px;
+  --inner-padding-top: 13px;
+  --inner-padding-bottom: 13px;
+  --inner-padding-start: 15px;
+  --inner-padding-end: 15px;
   border: 1px solid var(--app-border-subtle);
   border-radius: var(--app-radius-md);
   background: var(--app-surface-1);
@@ -588,7 +593,7 @@ ion-card-content {
   display: grid;
   justify-items: center;
   gap: 8px;
-  padding: 24px 18px;
+  padding: 28px 22px;
   text-align: center;
   border: 1px dashed color-mix(in srgb, var(--app-border-strong), transparent 15%);
   border-radius: var(--app-radius-md);
@@ -611,10 +616,14 @@ ion-card-content {
 
 .metric-tile {
   min-height: 100%;
-  padding: 14px 12px;
+  padding: 16px 14px;
   border: 1px solid var(--app-border-subtle);
   border-radius: var(--app-radius-md);
-  background: color-mix(in srgb, var(--app-surface-2), var(--app-accent-subtle) 18%);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--app-surface-2), var(--ion-color-secondary) 12%) 0%,
+    color-mix(in srgb, var(--app-surface-1), var(--ion-color-secondary) 6%) 100%
+  );
 }
 
 .metric-tile strong {
@@ -627,7 +636,7 @@ ion-card-content {
 }
 
 .metric-tile p {
-  margin-top: 8px;
+  margin-top: 10px;
   font-size: 1.1rem;
   font-weight: 800;
   line-height: 1.15;
@@ -639,7 +648,7 @@ ion-card-content {
   align-items: center;
   justify-content: flex-end;
   gap: 10px;
-  margin-top: 16px;
+  margin-top: 20px;
   flex-wrap: wrap;
 }
 
@@ -651,7 +660,11 @@ ion-card-content {
 .app-inline-panel {
   border: 1px solid var(--app-border-subtle);
   border-radius: var(--app-radius-md);
-  background: var(--app-surface-2);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--app-surface-2), var(--ion-color-secondary) 10%) 0%,
+    var(--app-surface-1) 100%
+  );
   overflow: hidden;
   isolation: isolate;
   box-shadow: var(--app-shadow-xs);
@@ -687,16 +700,20 @@ ion-card-content {
 
 .app-inline-panel--accent {
   border-color: color-mix(in srgb, var(--ion-color-primary), transparent 68%);
-  background: color-mix(in srgb, var(--app-surface-2), var(--app-accent-subtle) 48%);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--app-surface-2), var(--ion-color-secondary) 11%) 0%,
+    color-mix(in srgb, var(--app-surface-1), var(--ion-color-primary) 6%) 100%
+  );
 }
 
 .app-choice-card {
   appearance: none;
   width: 100%;
-  padding: 14px 16px;
+  padding: 16px 18px;
   border: 1px solid var(--app-border-subtle);
   border-radius: var(--app-radius-md);
-  background: var(--app-surface-1);
+  background: color-mix(in srgb, var(--app-surface-1), var(--ion-color-secondary) 6%);
   color: var(--app-text-primary);
   text-align: left;
   cursor: pointer;
@@ -711,6 +728,7 @@ ion-card-content {
   border: 1px solid var(--app-border-subtle);
   border-radius: var(--app-radius-md);
   background: var(--app-surface-1);
+  box-shadow: var(--app-shadow-xs);
 }
 
 .app-data-table {
@@ -720,7 +738,7 @@ ion-card-content {
 
 .app-data-table th,
 .app-data-table td {
-  padding: 12px 14px;
+  padding: 14px 16px;
   text-align: left;
   border-bottom: 1px solid color-mix(in srgb, var(--app-border-subtle), transparent 18%);
 }
@@ -735,7 +753,7 @@ ion-card-content {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--app-text-tertiary);
-  background: color-mix(in srgb, var(--app-surface-3), transparent 20%);
+  background: color-mix(in srgb, var(--app-surface-3), var(--ion-color-secondary) 10%);
 }
 
 .app-auth-screen {
@@ -746,7 +764,7 @@ ion-card-content {
   min-height: 100vh;
   display: grid;
   place-items: center;
-  padding: 24px;
+  padding: 28px;
   position: relative;
   isolation: isolate;
 }
@@ -797,12 +815,12 @@ ion-card-content {
 }
 
 .app-auth-card ion-card-content {
-  padding: 26px;
+  padding: 28px;
 }
 
 .app-photo-panel {
   margin-top: 16px;
-  padding: 14px 16px;
+  padding: 16px 18px;
 }
 
 .app-photo-panel-head {
@@ -826,7 +844,7 @@ ion-card-content {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
-  margin-top: 12px;
+  margin-top: 14px;
   flex-wrap: wrap;
 }
 

@@ -1,5 +1,5 @@
 .users-grid {
-  row-gap: 16px;
+  row-gap: 20px;
 }
 
 .scope-panel,
@@ -46,7 +46,7 @@
 .scope-hero {
   display: grid;
   grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr);
-  gap: 18px;
+  gap: 20px;
   align-items: start;
 }
 
@@ -64,20 +64,20 @@
 .fixed-role-summary,
 .invite-code-panel,
 .join-request-card {
-  padding: 14px 16px;
+  padding: 16px 18px;
 }
 
 .billing-notice {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  margin-top: 16px;
+  margin-top: 18px;
 }
 
 .scope-metrics {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  gap: 12px;
 }
 
 .scope-metric strong {
@@ -94,7 +94,7 @@
 }
 
 .role-picker {
-  margin-top: 16px;
+  margin-top: 18px;
 }
 
 .role-picker-head {
@@ -159,7 +159,7 @@
 }
 
 .invite-code-panel {
-  margin-bottom: 16px;
+  margin-bottom: 18px;
 }
 
 .invite-code-panel strong {
@@ -212,13 +212,13 @@
 
 .join-request-list {
   display: grid;
-  gap: 12px;
+  gap: 14px;
 }
 
 .join-request-card {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 14px;
+  gap: 16px;
 }
 
 .join-request-copy {
@@ -246,14 +246,14 @@
 }
 
 .team-section + .team-section {
-  margin-top: 18px;
+  margin-top: 22px;
 }
 
 .team-toolbar {
   display: grid;
   grid-template-columns: minmax(0, 1.4fr) minmax(220px, 0.6fr);
-  gap: 12px;
-  margin-bottom: 14px;
+  gap: 14px;
+  margin-bottom: 16px;
 }
 
 .team-searchbar,
@@ -262,8 +262,8 @@
 }
 
 .team-results-summary {
-  gap: 8px;
-  margin-bottom: 14px;
+  gap: 10px;
+  margin-bottom: 16px;
 }
 
 .team-results-summary strong {
@@ -280,7 +280,7 @@
   align-items: start;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
 .team-section-head h3 {
@@ -347,14 +347,14 @@
 .team-user-cell {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 16px;
   min-width: 0;
 }
 
 .team-user-copy {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 5px;
   min-width: 0;
 }
 
@@ -410,7 +410,7 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 8px;
+  gap: 10px;
   min-width: 0;
   max-width: 220px;
   margin-left: auto;
@@ -511,8 +511,8 @@
   }
 
   .team-table tbody tr {
-    padding: 14px;
-    margin-bottom: 12px;
+    padding: 16px;
+    margin-bottom: 14px;
     border: 1px solid var(--app-border-subtle);
     border-radius: var(--app-radius-md);
     background: var(--app-surface-1);
@@ -524,7 +524,7 @@
   }
 
   .team-table tbody td + td {
-    margin-top: 12px;
+    margin-top: 14px;
   }
 
   .team-table tbody td::before {

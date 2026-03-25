@@ -199,7 +199,7 @@ ion-title {
 }
 
 .page-shell {
-  padding: calc(var(--app-toolbar-height) + 24px) var(--app-page-padding) 32px;
+  padding: calc(var(--app-toolbar-height) + 28px) var(--app-page-padding) 40px;
   max-width: var(--app-page-max-width);
   margin: 0 auto;
 }
@@ -305,6 +305,7 @@ ion-title {
   }
 
   .page-shell {
-    padding-top: calc(var(--app-toolbar-height) + 16px);
+    padding-top: calc(var(--app-toolbar-height) + 18px);
+    padding-bottom: 28px;
   }
 }
