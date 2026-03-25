@@ -13,8 +13,10 @@ import { notificationRouter } from "./routes/notification.routes";
 import { reportRouter } from "./routes/report.routes";
 import { userRouter } from "./routes/user.routes";
 import { AppError, errorMiddleware } from "./middlewares/error.middleware";
+import { requestSanitizationMiddleware } from "./middlewares/request-sanitization.middleware";
 
 export const app = express();
+app.disable("x-powered-by");
 
 if (env.TRUST_PROXY === "true") {
   app.set("trust proxy", 1);
@@ -26,6 +28,14 @@ const authLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { message: "Too many login attempts. Try again later." }
+});
+
+const apiLimiter = rateLimit({
+  windowMs: env.API_RATE_LIMIT_WINDOW_MS,
+  max: env.API_RATE_LIMIT_MAX,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "Too many requests. Try again later." }
 });
 
 const allowedOrigins = env.CORS_ORIGIN.split(",")
@@ -46,7 +56,10 @@ app.use(
 );
 app.use(morgan(env.NODE_ENV === "production" ? "combined" : "dev"));
 app.use("/api/billing", billingWebhookRouter);
-app.use(express.json());
+app.use(express.json({ limit: env.JSON_BODY_LIMIT }));
+app.use(express.urlencoded({ extended: false, limit: env.JSON_BODY_LIMIT }));
+app.use(requestSanitizationMiddleware);
+app.use("/api", apiLimiter);
 
 app.get("/health", (_req, res) => {
   res.json({ status: "ok" });

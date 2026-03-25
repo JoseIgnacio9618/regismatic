@@ -8,13 +8,14 @@ import {
   markNotificationAsRead,
   registerPushToken
 } from "../services/notification.service";
+import { strictObject } from "../utils/validation";
 
-const listNotificationsQuerySchema = z.object({
+const listNotificationsQuerySchema = strictObject({
   limit: z.coerce.number().int().min(1).max(50).optional(),
   unreadOnly: z.union([z.literal("true"), z.literal("false")]).optional()
 });
 
-const registerPushTokenSchema = z.object({
+const registerPushTokenSchema = strictObject({
   token: z.string().min(10).max(4096),
   platform: z.nativeEnum(PushPlatform)
 });
