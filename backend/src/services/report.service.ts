@@ -36,6 +36,48 @@ export type SummaryReportResult = {
   pageSize: number;
 };
 
+export type EventExportRow = {
+  eventId: string;
+  eventAt: string;
+  date: string;
+  time: string;
+  userId: string;
+  employee: string;
+  email: string;
+  type: WorkEventType;
+  source: string;
+  note: string;
+  latitude: number | null;
+  longitude: number | null;
+  modifiedAt: string | null;
+  modifiedBy: string | null;
+  modificationReason: string | null;
+  createdAt: string;
+};
+
+export type EditRequestExportRow = {
+  requestId: string;
+  eventId: string;
+  employee: string;
+  email: string;
+  eventType: WorkEventType;
+  originalEventAt: string;
+  requestedEventAt: string;
+  requestedNote: string | null;
+  reason: string;
+  status: string;
+  reviewComment: string | null;
+  requestedBy: string | null;
+  reviewedBy: string | null;
+  reviewedAt: string | null;
+  createdAt: string;
+};
+
+export type DetailedReportExport = {
+  events: EventExportRow[];
+  editRequests: EditRequestExportRow[];
+};
+
 const sortEvents = (events: WorkEvent[]): WorkEvent[] => {
   return [...events].sort((a, b) => {
     const byEvent = a.eventAt.getTime() - b.eventAt.getTime();
@@ -114,23 +156,7 @@ const buildDailySummary = (events: WorkEvent[]) => {
 };
 
 export const getSummaryReport = async (params: ReportParams): Promise<SummaryReportResult> => {
-  let userWhere: Prisma.WorkEventWhereInput = {};
-
-  if (params.userId) {
-    await assertCanViewUser(params.requesterUserId, params.userId);
-    userWhere = {
-      userId: params.userId
-    };
-  } else {
-    const requester = await getScopedUserById(params.requesterUserId);
-    if (requester.role !== "SUPERADMIN") {
-      userWhere = {
-        userId: {
-          in: await listVisibleUserIds(params.requesterUserId)
-        }
-      };
-    }
-  }
+  const userWhere = await resolveReportUserWhere(params);
 
   const events = await prisma.workEvent.findMany({
     where: {
@@ -211,6 +237,26 @@ export const getSummaryReport = async (params: ReportParams): Promise<SummaryRep
     total: sortedRows.length,
     page,
     pageSize
+  };
+};
+
+const resolveReportUserWhere = async (params: ReportParams): Promise<Prisma.WorkEventWhereInput> => {
+  if (params.userId) {
+    await assertCanViewUser(params.requesterUserId, params.userId);
+    return {
+      userId: params.userId
+    };
+  }
+
+  const requester = await getScopedUserById(params.requesterUserId);
+  if (requester.role === "SUPERADMIN") {
+    return {};
+  }
+
+  return {
+    userId: {
+      in: await listVisibleUserIds(params.requesterUserId)
+    }
   };
 };
 
@@ -407,6 +453,177 @@ export const summaryToExcelBuffer = async (rows: SummaryRow[]): Promise<Buffer> 
   infoSheet.addRow({
     guide:
       "Usa 'Detalle diario' para filtrar y auditar. Usa 'Pivot empleado' y 'Pivot fecha' como resumen de tablas dinamicas para analisis operativo."
+  });
+
+  const buffer = await workbook.xlsx.writeBuffer();
+  return Buffer.from(buffer);
+};
+
+export const getDetailedReportExport = async (params: ReportParams): Promise<DetailedReportExport> => {
+  const userWhere = await resolveReportUserWhere(params);
+
+  const events = await prisma.workEvent.findMany({
+    where: {
+      eventAt: {
+        gte: params.fromUtc,
+        lte: params.toUtc
+      },
+      ...userWhere
+    },
+    include: {
+      user: {
+        select: {
+          id: true,
+          fullName: true,
+          email: true
+        }
+      },
+      modifiedBy: {
+        select: {
+          fullName: true
+        }
+      },
+      editRequests: {
+        include: {
+          requestedBy: {
+            select: {
+              fullName: true
+            }
+          },
+          reviewedBy: {
+            select: {
+              fullName: true
+            }
+          }
+        },
+        orderBy: [{ createdAt: "asc" }]
+      }
+    },
+    orderBy: [{ eventAt: "asc" }, { createdAt: "asc" }]
+  });
+
+  const eventRows: EventExportRow[] = events.map((event) => ({
+    eventId: event.id,
+    eventAt: event.eventAt.toISOString(),
+    date: madridDateKey(event.eventAt),
+    time: event.eventAt.toISOString(),
+    userId: event.userId,
+    employee: event.user.fullName,
+    email: event.user.email,
+    type: event.type,
+    source: event.source,
+    note: event.note ?? "",
+    latitude: event.latitude ?? null,
+    longitude: event.longitude ?? null,
+    modifiedAt: event.modifiedAt ? event.modifiedAt.toISOString() : null,
+    modifiedBy: event.modifiedBy?.fullName ?? null,
+    modificationReason: event.modificationReason ?? null,
+    createdAt: event.createdAt.toISOString()
+  }));
+
+  const editRequestRows: EditRequestExportRow[] = events.flatMap((event) =>
+    event.editRequests.map((request) => ({
+      requestId: request.id,
+      eventId: event.id,
+      employee: event.user.fullName,
+      email: event.user.email,
+      eventType: event.type,
+      originalEventAt: event.eventAt.toISOString(),
+      requestedEventAt: request.requestedEventAt.toISOString(),
+      requestedNote: request.requestedNote ?? null,
+      reason: request.reason,
+      status: request.status,
+      reviewComment: request.reviewComment ?? null,
+      requestedBy: request.requestedBy?.fullName ?? null,
+      reviewedBy: request.reviewedBy?.fullName ?? null,
+      reviewedAt: request.reviewedAt ? request.reviewedAt.toISOString() : null,
+      createdAt: request.createdAt.toISOString()
+    }))
+  );
+
+  return {
+    events: eventRows,
+    editRequests: editRequestRows
+  };
+};
+
+export const detailedReportToExcelBuffer = async (report: DetailedReportExport): Promise<Buffer> => {
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = "Regismatic";
+  workbook.created = new Date();
+  workbook.modified = new Date();
+
+  const eventsSheet = workbook.addWorksheet("Registros");
+  eventsSheet.columns = [
+    { header: "ID", key: "eventId", width: 28 },
+    { header: "Fecha hora", key: "eventAt", width: 24 },
+    { header: "Fecha", key: "date", width: 14 },
+    { header: "Empleado", key: "employee", width: 26 },
+    { header: "Email", key: "email", width: 30 },
+    { header: "Tipo", key: "type", width: 18 },
+    { header: "Fuente", key: "source", width: 14 },
+    { header: "Nota", key: "note", width: 36 },
+    { header: "Latitud", key: "latitude", width: 14 },
+    { header: "Longitud", key: "longitude", width: 14 },
+    { header: "Modificado el", key: "modifiedAt", width: 24 },
+    { header: "Modificado por", key: "modifiedBy", width: 24 },
+    { header: "Motivo modificacion", key: "modificationReason", width: 34 },
+    { header: "Creado el", key: "createdAt", width: 24 }
+  ];
+
+  for (const row of report.events) {
+    eventsSheet.addRow(row);
+  }
+
+  eventsSheet.getRow(1).font = { bold: true };
+  eventsSheet.getRow(1).alignment = { vertical: "middle", horizontal: "center" };
+  eventsSheet.views = [{ state: "frozen", ySplit: 1 }];
+  if (report.events.length > 0) {
+    eventsSheet.autoFilter = {
+      from: { row: 1, column: 1 },
+      to: { row: 1, column: 14 }
+    };
+  }
+
+  const editRequestsSheet = workbook.addWorksheet("Rectificaciones");
+  editRequestsSheet.columns = [
+    { header: "Solicitud ID", key: "requestId", width: 28 },
+    { header: "Registro ID", key: "eventId", width: 28 },
+    { header: "Empleado", key: "employee", width: 26 },
+    { header: "Email", key: "email", width: 30 },
+    { header: "Tipo evento", key: "eventType", width: 18 },
+    { header: "Fecha original", key: "originalEventAt", width: 24 },
+    { header: "Fecha solicitada", key: "requestedEventAt", width: 24 },
+    { header: "Nota solicitada", key: "requestedNote", width: 34 },
+    { header: "Motivo", key: "reason", width: 34 },
+    { header: "Estado", key: "status", width: 14 },
+    { header: "Comentario revision", key: "reviewComment", width: 34 },
+    { header: "Solicitado por", key: "requestedBy", width: 24 },
+    { header: "Revisado por", key: "reviewedBy", width: 24 },
+    { header: "Revisado el", key: "reviewedAt", width: 24 },
+    { header: "Creado el", key: "createdAt", width: 24 }
+  ];
+
+  for (const row of report.editRequests) {
+    editRequestsSheet.addRow(row);
+  }
+
+  editRequestsSheet.getRow(1).font = { bold: true };
+  editRequestsSheet.getRow(1).alignment = { vertical: "middle", horizontal: "center" };
+  editRequestsSheet.views = [{ state: "frozen", ySplit: 1 }];
+  if (report.editRequests.length > 0) {
+    editRequestsSheet.autoFilter = {
+      from: { row: 1, column: 1 },
+      to: { row: 1, column: 15 }
+    };
+  }
+
+  const infoSheet = workbook.addWorksheet("Guia");
+  infoSheet.columns = [{ header: "Indicaciones", key: "guide", width: 120 }];
+  infoSheet.getRow(1).font = { bold: true };
+  infoSheet.addRow({
+    guide:
+      "Este Excel exporta todos los registros encontrados en la busqueda actual. La hoja 'Registros' contiene los fichajes completos y 'Rectificaciones' recoge las solicitudes relacionadas con esos registros."
   });
 
   const buffer = await workbook.xlsx.writeBuffer();

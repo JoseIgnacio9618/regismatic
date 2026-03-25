@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import { z } from "zod";
 import { AppError } from "../middlewares/error.middleware";
-import { getSummaryReport, summaryToCsv, summaryToExcelBuffer } from "../services/report.service";
+import { detailedReportToExcelBuffer, getDetailedReportExport, getSummaryReport, summaryToCsv } from "../services/report.service";
 import { assertNonBillingFeatureAccessForUser } from "../services/billing.service";
 import { parseReportRange } from "../utils/report-range";
 import { strictObject } from "../utils/validation";
@@ -60,12 +60,8 @@ export const csvReportController = async (req: Request, res: Response) => {
 
 export const excelReportController = async (req: Request, res: Response) => {
   const query = await getParsedReportQuery(req);
-  const report = await getSummaryReport({
-    ...query,
-    page: 1,
-    pageSize: undefined
-  });
-  const workbook = await summaryToExcelBuffer(report.rows);
+  const report = await getDetailedReportExport(query);
+  const workbook = await detailedReportToExcelBuffer(report);
 
   res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
   res.setHeader("Content-Disposition", "attachment; filename=regismatic-report.xlsx");
