@@ -1,638 +1,451 @@
-# Estudio de hosting escalable y propuesta de precios para Regismatic
+﻿# Estudio realista de costes, hosting y viabilidad para Regismatic
 
-Fecha del estudio: 2026-03-22
+Fecha del estudio: 2026-03-25
 
 ## 1. Resumen ejecutivo
 
-Regismatic no es una web estatica sin estado. Por lo que hace hoy, necesita:
+Inspirandome en la conversacion antigua, pero aterrizandola al estado real del proyecto hoy, mi conclusion es esta:
 
-- frontend web estatico
-- API Node/Express con Prisma
-- PostgreSQL persistente
-- almacenamiento persistente para fotos de perfil
-- soporte para notificaciones push con Firebase
-- picos de CPU puntuales por exportaciones Excel y consultas de reportes
+- Solo se consideran en este estudio opciones con `autoescalado real`.
+- Como tu prioridad declarada es que el sistema crezca solo cuando lleguen mas peticiones y que ademas puedas poner un maximo para no llevarte una factura sorpresa, la recomendacion tecnica cambia.
+- Con la app actual, un presupuesto realista para salir a produccion con autoescalado y algo de control de gasto esta mas cerca de `15-35 EUR/mes` que de `5-10 EUR/mes`.
+- El coste tecnico sigue siendo razonable. El riesgo economico real continuara estando mas en soporte, ventas y operacion que en la infraestructura.
 
-La mejor conclusion para esta aplicacion es esta:
+## 2. En que estado esta la app hoy y por que eso importa al coste
 
-- Para empezar rapido con poco DevOps: `Railway` o `Render`
-- Para escalar de forma mas solida a medio plazo: `Cloud Run + Cloud SQL + Cloud Storage`
-- El frontend no deberia vivir en el mismo servidor que la API si quieres optimizar coste
+Segun el repositorio actual, Regismatic ya no es un MVP trivial. Hoy incluye:
 
-La limitacion tecnica mas importante del proyecto actual es esta:
-
-- hoy las fotos de perfil se guardan en disco local del backend (`backend/src/services/profile-photo.service.ts`)
-- eso hace que el backend no sea completamente stateless
-- si pones varias replicas de API, unas replicas no veran los ficheros subidos en otras salvo que compartan volumen o migres a almacenamiento tipo S3
-
-Mi recomendacion realista:
-
-1. mover fotos a almacenamiento tipo S3 o compatible
-2. separar frontend estatico del backend
-3. dejar PostgreSQL como servicio gestionado
-4. entonces activar autoescalado en la API
-
-## 2. Lo que hace esta app y como impacta en costes
-
-Segun el repositorio actual, Regismatic tiene:
-
-- fichajes y eventos de jornada
-- solicitudes de correccion
-- solicitudes de union a equipo
-- notificaciones internas
-- push con Firebase
+- frontend `Ionic Angular`
+- backend `Express + Prisma`
+- `PostgreSQL`
+- `Stripe` para facturacion
+- `FCM` para push
+- exportaciones Excel
 - fotos de perfil
-- exportacion CSV y Excel
-- frontend Ionic/Angular compilable a web estatica
+- notificaciones internas
+- roles `EMPLOYEE`, `ADMIN`, `SUPERADMIN`
+- bloqueo de fichaje por facturacion inactiva
+- hardening basico de API: saneado, rate limit, validacion estricta
 
-### Traduccion tecnica de eso a infraestructura
+Y el despliegue actual de produccion del repo esta pensado asi:
 
-- `Frontend`: muy barato. Se puede servir como estatico en CDN.
-- `Backend API`: coste medio-bajo en reposo, pero con picos cuando hay exportaciones, consultas de reportes o notificaciones.
-- `PostgreSQL`: es el servicio mas importante. Debe ser fiable y con backup.
-- `Fotos`: el volumen no sera enorme al principio, pero deben salir del disco local si quieres escalar bien.
-- `Push`: FCM no suele ser el coste relevante; el coste esta en tu API y en la persistencia de tokens/notificaciones.
+- `web`
+- `api`
+- `db`
+- `proxy` con `Caddy`
+- volumen local para fotos
 
-## 3. Implicaciones de autoescalado del estado actual
+Eso tiene una consecuencia importante:
 
-### Lo que ya esta bien
+- Hoy Regismatic funciona especialmente bien en un `solo host`.
+- Si quisieras escalar horizontalmente la API de forma limpia, te interesaria sacar las fotos del filesystem local y mover la base de datos fuera del mismo host.
 
-- backend dockerizado
-- frontend dockerizado
-- health checks
-- CORS y hardening basico
-- PostgreSQL ya separado como servicio
-- autenticacion JWT, asi que no dependes de sticky sessions para escalar la API
+Por eso, y dado que aqui ya descartamos cualquier opcion sin autoescalado, el estudio se centra en plataformas gestionadas que permitan crecer y a la vez limitar el gasto.
+## 3. Si la prioridad es autoescalar con tope maximo
 
-### Lo que frenaria un autoescalado limpio
+Con ese criterio, para Regismatic hoy yo elegiria asi:
 
-- las fotos se guardan en `uploads/profile-photos` en el filesystem local del contenedor
-- en el despliegue actual de produccion el almacenamiento persistente esta pensado como volumen local Docker
-- la base de datos vive junto al stack del `docker-compose.prod.yml`, asi que el despliegue actual es de un solo host
+## Recomendacion principal: Railway
 
-### Que cambiaria antes de escalar
+Combina bastante bien estas tres cosas:
 
-- mover fotos a `Cloudflare R2`, `Railway Object Storage`, `AWS S3` o similar
-- sacar PostgreSQL a un servicio gestionado
-- dejar la API sin dependencia de disco local
-- mantener el frontend como build estatico aparte
+- escalado automatico por uso
+- coste razonable al principio
+- posibilidad de poner limites y vigilar mejor la factura
 
-## 4. Plataformas recomendadas
+### Por que encaja mejor con lo que quieres
 
-## Opcion A: Railway
+Porque has pedido exactamente esto:
 
-### Cuando la elegiria
+- que cuando lleguen mas peticiones el sistema suba recursos
+- que no tengas que redimensionar a mano todo el rato
+- que puedas poner un maximo para que no se dispare el gasto de golpe
 
-- si quieres salir rapido
-- si valoras pagar por uso real
-- si quieres escalar sin meterte todavia en cloud mas compleja
+Y ahi Railway me parece hoy la opcion mas equilibrada para Regismatic.
 
-### Ventajas para Regismatic
+## 4. Como dejaria Regismatic para que autoescale de forma sana
 
-- vertical autoscaling nativo
-- replicas horizontales
-- despliegue sencillo desde Docker
-- pricing bastante ajustado al inicio
-- object storage disponible si migras fotos
+Para que ese autoescalado sea real y no una fuente de problemas, haria esto:
 
-### Inconvenientes
+### Frontend
 
-- menos control fino que una arquitectura en GCP/AWS/Azure
-- para empresas grandes puede quedarse corto antes que una arquitectura cloud mas clasica
+- servirlo como estatico aparte
+- no consumir compute dinamico para la web si no hace falta
 
-### Coste orientativo para esta app
+### API
 
-Tomando los precios oficiales por segundo de Railway:
+- desplegarla en plataforma con autoescalado
+- fijar un maximo de replicas/consumo
 
-- CPU: `$0.00000772 por vCPU/seg`
-- RAM: `$0.00000386 por GB/seg`
-- volumen: `$0.00000006 por GB/seg`
-- object storage: `$0.015 por GB/mes`
-- egress de servicios: `$0.05 por GB`
+### Base de datos
 
-Escenario MVP razonable para Regismatic:
+- PostgreSQL fuera de un host unico
+- asumir que aqui estara buena parte del coste fijo
 
-- frontend estatico fuera de Railway o en servicio muy pequeno
-- API con el equivalente aproximado a `1 vCPU` y `0.5 GB`
-- PostgreSQL con el equivalente a `0.5 vCPU`, `1 GB RAM` y `20 GB` de volumen
-- almacenamiento de fotos: `5 GB`
+### Fotos
 
-Estimacion mensual:
+- moverlas a object storage
+- no depender del disco local de la API si quieres replicas de verdad
 
-- API: unos `$25.36/mes`
-- PostgreSQL: unos `$23.43/mes`
-- fotos: unos `$0.08/mes`
-- margen para logs, red, backups externos y pequenos picos: `$10-$20/mes`
+### Limites de seguridad economica
 
-Total razonable:
+- tope de gasto mensual o de consumo
+- alertas por umbral
+- limites de replicas o instancias
 
-- `unos $59 a $69/mes`
+## 5. Proveedor que veo mas coherente si tu prioridad es autoescalado
 
-Escenario crecimiento temprano:
+## Railway
 
-- `300 a 800` empleados activos en total
-- API equivalente a `1 vCPU` y `1 GB`
-- PostgreSQL equivalente a `1 vCPU`, `2 GB` y `40 GB`
+Datos oficiales relevantes:
 
-Total razonable:
+- plan `Hobby`: `5 USD` de minimo de uso mensual con `5 USD` de credito incluido
+- `CPU`: `0.00000772 USD por vCPU/seg`
+- `RAM`: `0.00000386 USD por GB/seg`
+- `Volume`: `0.00000006 USD por GB/seg`
+- `Object Storage`: `0.015 USD por GB/mes`
+- `Egress`: `0.05 USD por GB`
 
-- `unos $95 a $130/mes`
+### Mi lectura
 
-## Opcion B: Render
+- Para `autoescalar con cierto control de factura`, me parece la opcion mas equilibrada de las que si cumplen tu requisito.
+- Si mañana entran mas usuarios, la plataforma esta mejor preparada para absorberlo.
+- Si ademas configuras bien los limites de uso y vigilas el consumo, reduces mucho el riesgo de susto.
 
-### Cuando la elegiria
+## 6. Cuanto costaria Regismatic de verdad con autoescalado
 
-- si quieres simplicidad operacional
-- si prefieres precios mas faciles de leer mes a mes
-- si quieres un PaaS muy comodo para equipo pequeno
+Voy a separar dos escenarios:
 
-### Ventajas para Regismatic
+- `autoescalado minimo viable`
+- `autoescalado prudente`
 
-- frontend estatico gratis
-- Docker soportado
-- Postgres gestionado
-- autoscaling disponible en workspace Professional
+### Escenario A: autoescalado minimo viable
 
-### Inconvenientes
+Pensado para salir con autoescalado, pero sin pasarte de gasto.
 
-- para tener autoscaling necesitas `Professional`
-- las replicas adicionales de API se cobran por instancia
-- si mantienes fotos en disco persistente sigues teniendo una arquitectura peor para multiinstancia
-- Render indica expresamente que los servicios con `persistent disk` adjunto no pueden escalar a multiples instancias
+Componentes:
 
-### Coste orientativo para esta app
+- backend/API en Railway
+- PostgreSQL en Railway
+- frontend estatico aparte
+- object storage para fotos
+- dominio
 
-Precios oficiales relevantes:
+### Total realista
 
-- Workspace Professional: `$19/usuario/mes`
-- Web Service Starter: `$7/mes`
-- Web Service Standard: `$25/mes`
-- Render Postgres Basic 1 GB: `$19/mes`
-- Render Postgres Pro 4 GB: `$55/mes`
-- SSD persistente: `$0.25/GB/mes`
+- `15-25 EUR/mes` en una etapa muy inicial y de poco uso real
 
-Escenario MVP razonable:
+### Mi lectura
 
-- `1` usuario del workspace
+Este es el numero que yo usaria como referencia si quieres autoescalado desde el principio sin sobredimensionar.
+
+### Escenario B: autoescalado prudente
+
+Pensado para operar con un poco mas de margen y sin ir tan al limite.
+
+### Total realista
+
+- `25-45 EUR/mes`
+
+### Mi lectura
+
+Este es el rango que me parece mas honesto para una puesta en produccion pequena, pero bien planteada, con autoescalado y con cierto control de consumo.
+
+## 7. Estimacion por volumen de uso
+
+Estas cifras no son una tarifa oficial. Son una estimacion razonable basada en el software que hay hoy en el repo.
+
+## 0 usuarios
+
+La app esta publicada, pero nadie la usa.
+
+### Coste realista
+
+- `15-25 EUR/mes`
+
+Explicacion:
+
+- el suelo de base de la plataforma sigue existiendo
+- el dominio sigue existiendo
+- sigues teniendo base de datos y algo de almacenamiento
+- aun no aprovechas el autoescalado, pero si estas pagando la comodidad de tenerlo listo
+
+## 10 usuarios
+
+### Coste realista
+
+- `15-28 EUR/mes`
+
+Explicacion:
+
+- practicamente igual que con 0 usuarios
+- con este volumen no deberias necesitar grandes saltos
+- el beneficio aqui no es el ahorro, sino tener ya el mecanismo de crecimiento preparado
+
+## 100 usuarios
+
+### Coste realista
+
+- `22-45 EUR/mes`
+
+Explicacion:
+
+- aqui ya es razonable que la API suba consumo puntualmente
+- sobre todo por reportes, exportaciones Excel y accesos concurrentes
+- sigue siendo un coste asumible para un SaaS B2B pequeno
+
+## 1000 usuarios
+
+### Coste realista
+
+- `60-160 EUR/mes`
+
+Explicacion:
+
+A este nivel normalmente ya haria al menos una de estas cosas:
+
+- subir limites de consumo o replicas
+- reforzar base de datos
+- revisar exportaciones y consultas pesadas
+- reforzar monitorizacion, alertas y almacenamiento
+
+Aqui ya no hablas de \"el hosting mas barato\", sino de fiabilidad, topes de gasto y crecimiento ordenado.
+
+## 8. Comparativa honesta entre opciones con autoescalado
+
+Como no te interesan opciones sin autoescalado, la comparativa se queda solo con alternativas que si encajan en ese requisito.
+
+## Railway
+
+Datos oficiales relevantes:
+
+- plan `Hobby`: `5 USD` de minimo de uso mensual con `5 USD` de credito incluido
+- `CPU`: `0.00000772 USD por vCPU/seg`
+- `RAM`: `0.00000386 USD por GB/seg`
+- `Volume`: `0.00000006 USD por GB/seg`
+- `Object Storage`: `0.015 USD por GB/mes`
+- `Egress`: `0.05 USD por GB`
+
+### Mi lectura
+
+- Railway es muy bueno para probar y para salir rapido.
+- Pero con la app tal y como esta hoy, un despliegue estable en Railway no me parece tan barato como a veces se vende.
+- Si mantienes API, Postgres y cierta persistencia con comodidad, yo no haria numeros por debajo de `20-45 EUR/mes` de forma realista.
+
+## Render
+
+Datos oficiales relevantes:
+
+- `Professional`: `19 USD/usuario/mes`
+- `Web Service Starter`: `7 USD/mes`
+- `Web Service Standard`: `25 USD/mes`
+- `Render Postgres Basic-1gb`: `19 USD/mes`
+- `SSD persistente`: `0.25 USD/GB/mes`
+
+### Mi lectura
+
+- Render es comodo.
+- Pero para una app como esta, el suelo economico ya no es pequeno.
+- En una cuenta profesional basica, el minimo razonable se te pone rapidamente en una zona de `40-60 EUR/mes`.
+- No me parece la opcion mas agresiva en coste para arrancar.
+
+## DigitalOcean App Platform
+
+Datos oficiales relevantes:
+
+- App Platform contenedor minimo compartido: `5 USD/mes`
+- App Platform `1 vCPU / 1 GiB` compartido: `12 USD/mes`
+- Development database `512 MiB`: `7 USD/mes`
+- Managed PostgreSQL: `desde 15 USD/mes`
+- el autoscaling solo esta disponible en instancias dedicadas
+
+### Mi lectura
+
+- Si quieres algo mas gestionado que un VPS, me parece mas razonable que Render en varios casos.
+- Aun asi, en cuanto metes base de datos de verdad y no una development database efimera, el coste real ya se te va a `20-35 EUR/mes` como minimo serio.
+
+## Google Cloud Run + Cloud SQL
+
+### Mi lectura
+
+- Es muy buena opcion si en unos meses quieres una arquitectura mas seria.
+- Tiene autoescalado muy bueno y puedes limitar instancias.
+- Pero para controlar de verdad el coste total requiere mas disciplina de cloud y billing.
+- Yo no la pondria como primera opcion si quieres sencillez operativa desde ya.
+
+## 9. Conclusion tecnica clara
+
+Si me ciño a la app que tenemos hoy y a tu prioridad concreta, mi recomendacion es esta:
+
+### La mejor si priorizas autoescalado con tope
+
+- `Railway`
 - frontend estatico
-- API en `Starter`
-- PostgreSQL `Basic-1gb`
-- `10 GB` de disco para fotos si todavia no migras a object storage
+- API y base de datos con limites vigilados
+- fotos en object storage en cuanto sea posible
 
-Estimacion mensual:
+### La menos interesante para arrancar si ademas quieres vigilar mucho el coste
 
-- workspace: `$19`
-- API: `$7`
-- PostgreSQL: `$19`
-- disco: `$2.50`
-- extras prudentes para backup externo y monitorizacion: `$10-$20`
+- `Render`
 
-Total razonable:
+No porque sea mala, sino porque su suelo de precio es peor para este punto del proyecto.
 
-- `unos $57.50 a $67.50/mes`
+## 10. Como pondria el tope maximo para evitar sustos
 
-Escenario ya mas serio:
+Si eliges la via de autoescalado, yo dejaria configurado esto desde el dia uno:
 
-- API en `Standard`
-- PostgreSQL `Pro-4gb`
-- `20 GB` de almacenamiento para ficheros
+1. `gasto maximo mensual`
+2. `alerta al 50%, 75% y 90%`
+3. `maximo de replicas/instancias`
+4. `frontend separado del compute`
+5. `fotos fuera del filesystem local`
+6. `revisar consultas de reportes y exportaciones`
 
-Total razonable:
+La idea es esta:
 
-- `unos $104 a $124/mes`
+- que el sistema pueda subir recursos
+- pero dentro de una caja claramente definida
 
-Nota importante:
+## 11. Coste fijo real del negocio
 
-- si activas autoscaling y mantienes mas de una instancia de API, el coste puede subir rapido porque cada instancia adicional se factura completa
+Si hablamos solo de tecnologia minima para operar, yo haria dos presupuestos:
 
-## Opcion C: Google Cloud Run + Cloud SQL + Cloud Storage
+### Coste fijo tecnico minimo
 
-### Cuando la elegiria
+- `12-20 EUR/mes`
 
-- si quieres una arquitectura mas solida para escalar de verdad
-- si quieres separar bien frontend, API, base de datos y ficheros
-- si piensas llegar a volumen medio o alto
+Incluye:
 
-### Ventajas para Regismatic
+- servidor
+- backup basico
+- dominio
+- algo minimo de correo o monitorizacion
 
-- Cloud Run escala automaticamente
-- frontend puede ir muy barato en hosting estatico o CDN
-- Cloud Storage resuelve bien las fotos
-- arquitectura muy limpia para hacer el backend stateless
+### Coste fijo tecnico prudente
 
-### Inconvenientes
+- `20-35 EUR/mes`
 
-- mas complejidad de configuracion
-- Cloud SQL suele salir mas caro que Railway o Render al principio
-- necesitas algo mas de disciplina operativa
+Incluye:
 
-### Coste orientativo
+- nodo mas desahogado
+- mejor monitorizacion
+- backups mejor planteados
+- algo mas de margen ante incidencias
 
-Para una app como esta, el cuello de botella economico no suele ser Cloud Run sino `Cloud SQL`.
+## 12. Lo que de verdad no debes confundir con infraestructura
 
-En la practica:
+El gasto tecnico no es el unico gasto. De hecho, probablemente tampoco sera el mas importante.
 
-- etapa muy temprana: `~$40-$90/mes`
-- etapa estable con varios cientos de empleados: `~$100-$220/mes`
-- a cambio ganas una base mejor para crecer sin rehacer el despliegue
+Los costes reales que mas te pueden doler son:
 
-## 5. Recomendacion concreta para Regismatic
-
-Si fueras a lanzar esta semana, mi recomendacion seria:
-
-### Fase 1
-
-- frontend en hosting estatico
-- backend + PostgreSQL en `Railway`
-- fotos en `Railway Object Storage` o `Cloudflare R2`
-
-Motivo:
-
-- sales rapido
-- pagas poco mientras validas
-- el salto a replicas y algo de autoescalado es razonable
-
-### Fase 2
-
-- cuando pases de unos `500-1000 empleados activos` o tengas clientes exigentes, valorar migrar a `Cloud Run + Cloud SQL + Cloud Storage`
-
-Motivo:
-
-- mejor separacion de piezas
-- mejor elasticidad real
-- mejor base para crecer sin depender de volumenes locales
-
-## 6. Estimacion de uso y costes por volumen
-
-Para calcular precios he supuesto un SaaS multiempresa compartiendo infraestructura.
-
-Supuestos prudentes:
-
-- `22` dias laborables por mes
-- `4 a 6` eventos por empleado y dia
-- algunas consultas de reportes
-- exportaciones Excel ocasionales
-- una foto de perfil comprimida por usuario
-
-### Volumen de datos orientativo
-
-Por empleado:
-
-- `~90 a 130 eventos/mes`
-- `~1 foto`
-- `~pocas decenas` de notificaciones/mes
-
-Eso significa que:
-
-- la base de datos crecera de forma manejable durante bastante tiempo
-- el verdadero coste inicial no estara en almacenamiento masivo, sino en tener la API y la base siempre disponibles
-
-## 7. Coste total mensual estimado de SaaS compartido
-
-### Escenario 1: arranque comercial
-
-Supuesto:
-
-- `50 a 150` empleados activos totales sumando todos los clientes
-
-Coste mensual realista:
-
-- `EUR 55 a EUR 85/mes` si optimizas y mantienes stack ligero
-
-### Escenario 2: primeros clientes de verdad
-
-Supuesto:
-
-- `300 a 800` empleados activos totales
-
-Coste mensual realista:
-
-- `EUR 90 a EUR 160/mes`
-
-### Escenario 3: ya hay traccion
-
-Supuesto:
-
-- `1000 a 3000` empleados activos totales
-
-Coste mensual realista:
-
-- `EUR 180 a EUR 400/mes`
-
-Estas cifras no incluyen tu sueldo ni soporte humano. Son infraestructura y operacion tecnica basica.
-
-## 8. Cuanto deberias cobrar por usuario para ganar dinero
-
-Si quieres entrar mejor en mercado, tiene sentido bajar precios y vender paquetes cerrados por tramos de usuarios.
-
-Para esta app, un modelo razonable y mas facil de vender seria:
-
-- paquetes cerrados por numero maximo de usuarios
-- precio claro sin formulas raras
-- mas de `100` usuarios con presupuesto personalizado
-
-## Modelo recomendado de precios
-
-### Opcion recomendada
-
-- `Pack 10 usuarios: 19 EUR/mes`
-- `Pack 20 usuarios: 29 EUR/mes`
-- `Pack 50 usuarios: 59 EUR/mes`
-- `Pack 100 usuarios: 99 EUR/mes`
-- `Mas de 100 usuarios: contacto comercial y contrato a medida`
-
-### Por que esta estructura tiene sentido
-
-- es mucho mas facil de entender para una pyme
-- el cliente sabe desde el primer minuto lo que va a pagar
-- la barrera de entrada baja bastante frente al planteamiento anterior
-- sigues teniendo margen si compartes infraestructura entre clientes
-
-## 9. Ejemplos de margen con ese pricing
-
-### Cliente pequeno
-
-Supuesto:
-
-- `10` empleados activos
-
-Facturacion:
-
-- pack contratado `19 EUR/mes`
-
-Comentario:
-
-- es una entrada mucho mas facil para autonomos o microempresas
-- el margen es menor, pero te ayuda a captar clientes con menos friccion
-
-### Cliente medio
-
-Supuesto:
-
-- `25` empleados activos
-
-Facturacion:
-
-- necesitaria el `Pack 50`
-- total `59 EUR/mes`
-
-Comentario:
-
-- sigue siendo un precio bastante vendible
-- aqui ya puedes tener margen aceptable si compartes bien la infraestructura
-
-### Cliente mas grande
-
-Supuesto:
-
-- `100` empleados activos
-
-Facturacion:
-
-- pack contratado `99 EUR/mes`
-
-Comentario:
-
-- ya es un ticket util para sostener soporte e infraestructura
-- por encima de este punto conviene pasar a venta consultiva
-
-## 10. Costes fijos, margen comercial y punto de equilibrio
-
-Para aterrizar la rentabilidad, tomo una hipotesis prudente y util para venta inicial:
-
-- coste fijo mensual de infraestructura compartida: `70 EUR/mes`
-- dominio, correo operativo, copias externas y monitorizacion minima: `15 EUR/mes`
-- coste fijo mensual total de referencia: `85 EUR/mes`
-
-Ademas, para no engañarnos con un margen irreal, supongo un coste variable directo medio de:
-
-- `0.35 EUR por usuario/mes`
-
-Ese coste variable intenta cubrir:
-
-- crecimiento de PostgreSQL
-- almacenamiento de fotos
-- trafico de red
-- notificaciones y operacion basica
-- margen de seguridad por picos pequenos
-
-### Que significa exactamente cada coste
-
-- `Coste fijo mensual global`: `85 EUR/mes`
-  - lo pagas por tener el servicio disponible aunque no entre ningun cliente
-  - incluye infraestructura minima, dominio, correo tecnico, copias y monitorizacion basica
-- `Coste variable`: `0.35 EUR por usuario/mes`
-  - solo crece cuando crecen los usuarios activos de pago
-  - es el coste que puedes atribuir de forma directa a cada cliente segun su tamaño
-
-### Coste variable por cliente segun plan
-
-| Plan | Usuarios incluidos | Coste variable estimado por cliente |
-|---|---:|---:|
-| Pack 10 | 10 | 3.50 EUR/mes |
-| Pack 20 | 20 | 7.00 EUR/mes |
-| Pack 50 | 50 | 17.50 EUR/mes |
-| Pack 100 | 100 | 35.00 EUR/mes |
-
-### Por que el coste fijo esta puesto en 85 EUR/mes
-
-No es porque la app obligue tecnicamente a pagar exactamente eso desde el dia uno. Es una estimacion prudente para operar con cierta tranquilidad comercial y tecnica.
-
-Ese `85 EUR/mes` sale de pensar en un arranque serio pero todavia ligero:
-
-- backend y base de datos siempre encendidos
-- almacenamiento persistente
-- cierto margen para picos pequenos
-- dominio y correo profesional
-- copias externas o al menos una capa minima de proteccion
-- monitorizacion basica para no ir completamente a ciegas
+- tiempo de soporte
+- tiempo de alta y configuracion a clientes
+- comerciales o comisiones
+- impagos
+- cambios a medida
+- incidencias de despliegue o mantenimiento
 
 Dicho de forma simple:
 
-- no es el minimo absoluto posible
-- es un fijo razonable para no hacer un calculo demasiado optimista
+- la infraestructura de Regismatic es barata
+- operar y vender Regismatic es lo caro
 
-### Si tienes 0 usuarios, si: ese fijo se sigue pagando
+## 13. Viabilidad economica con los precios actuales de la app
 
-Si mantienes la plataforma desplegada y disponible, con `0 usuarios` sigues pagando el coste fijo global.
+Hoy la app tiene estos tramos publicos orientativos en el repositorio:
 
-Con esta hipotesis:
+- demo `7 dias / 3 usuarios`
+- `Pack 10`: `19 EUR/mes`
+- `Pack 20`: `29 EUR/mes`
+- `Pack 50`: `59 EUR/mes`
+- `Pack 100`: `99 EUR/mes`
 
-- `0 usuarios`: pagarias aproximadamente `85 EUR/mes`
-- `10 usuarios`: pagarias `85 + 3.50 = 88.50 EUR/mes`
-- `50 usuarios`: pagarias `85 + 17.50 = 102.50 EUR/mes`
-- `100 usuarios`: pagarias `85 + 35 = 120 EUR/mes`
+## Lectura de viabilidad
 
-### Se puede bajar ese coste fijo inicial
+Si tomamos un coste tecnico prudente de `25 EUR/mes`:
 
-Si quisieras arrancar de forma mas agresiva en ahorro, el fijo podria bajar aproximadamente a una banda como esta:
+- con `2 clientes` en `Pack 10` casi cubres estructura tecnica
+- con `3 clientes` en `Pack 10` la cubres con margen
+- con `1 cliente` en `Pack 50` mas otro pequeno ya respiras
 
-- `40 a 60 EUR/mes`
+Eso confirma algo importante:
 
-Pero solo aceptando mas compromiso:
+- la viabilidad no depende de bajar la infraestructura de `20 EUR` a `10 EUR`
+- depende de conseguir clientes y de no regalar soporte infinito
 
-- menos margen de seguridad
-- menos observabilidad
-- menos comodidad operativa
-- mas dependencia de configuraciones muy justas
+## 14. Recomendacion de despliegue por fases
 
-Mi recomendacion empresarial seria esta:
+## Fase 1: autoescalado controlado
 
-- usar `85 EUR/mes` como escenario prudente para calcular rentabilidad
-- usar `50 EUR/mes` como escenario optimista de arranque muy ajustado
+### Lo que haria yo
 
-Asi no te engañas al hacer pricing, pero tampoco pierdes de vista que puedes empezar algo mas barato si hace falta.
+- `Railway`
+- frontend estatico aparte
+- API y PostgreSQL con limites definidos
+- object storage o plan para migrar fotos muy pronto
+- alertas de gasto desde el primer dia
 
-### Margen comercial estimado por plan
+### Objetivo
 
-| Plan | Precio mensual | Usuarios incluidos | Coste variable estimado | Margen bruto por plan | Margen bruto % |
-|---|---:|---:|---:|---:|---:|
-| Pack 10 | 19 EUR | 10 | 3.50 EUR | 15.50 EUR | 81.6% |
-| Pack 20 | 29 EUR | 20 | 7.00 EUR | 22.00 EUR | 75.9% |
-| Pack 50 | 59 EUR | 50 | 17.50 EUR | 41.50 EUR | 70.3% |
-| Pack 100 | 99 EUR | 100 | 35.00 EUR | 64.00 EUR | 64.6% |
+- crecer automaticamente sin redimensionar a mano
+- evitar sustos de factura
+- validar ventas manteniendo control
 
-Lectura comercial:
+## Fase 2: estabilizar y desacoplar
 
-- el `Pack 10` sigue siendo bueno como puerta de entrada y captacion
-- el `Pack 20` ya empieza a tener una relacion margen/precio muy razonable
-- `Pack 50` y `Pack 100` son los que de verdad consolidan rentabilidad
-- en empresas grandes conviene seguir pasando a presupuesto a medida
+Cuando ya tengas clientes reales y facturacion recurrente:
 
-### Punto de equilibrio por plan vendido al 100% de su capacidad
+- sacar fotos a object storage si aun no lo has hecho
+- revisar limites de replicas y gasto
+- reforzar retencion de copias y monitorizacion
+- revisar si Railway sigue encajando o si conviene pasar a Cloud Run
 
-| Plan | Margen bruto por plan | Clientes necesarios para cubrir 85 EUR/mes | Usuarios incluidos equivalentes |
-|---|---:|---:|---:|
-| Pack 10 | 15.50 EUR | 6 clientes | 60 usuarios |
-| Pack 20 | 22.00 EUR | 4 clientes | 80 usuarios |
-| Pack 50 | 41.50 EUR | 3 clientes | 150 usuarios |
-| Pack 100 | 64.00 EUR | 2 clientes | 200 usuarios |
+## Fase 3: escalar en serio
 
-### Punto de equilibrio expresado en usuarios
+Solo cuando ya haya demanda real:
 
-Si llevas cada plan bastante lleno, el punto de equilibrio aproximado seria:
+- API stateless de verdad
+- base de datos mejor aislada
+- object storage
+- replicas o instancias con maximos claros
+- posiblemente worker separado para exportaciones pesadas
 
-- `Pack 10`: alrededor de `55 usuarios`
-- `Pack 20`: alrededor de `78 usuarios`
-- `Pack 50`: alrededor de `103 usuarios`
-- `Pack 100`: alrededor de `133 usuarios`
+## 15. Recomendacion comercial breve
 
-### Mi lectura realista
+Inspirandome en la conversacion antigua, mantengo esta conclusion:
 
-En un escenario comercial normal, con mezcla de clientes pequenos y medianos, el punto de equilibrio razonable para Regismatic estaria aproximadamente en:
+- al principio no me gastaria dinero serio en anuncios frios
+- priorizaria venta directa, asesorias, gestorias y red de contactos
+- para este tipo de SaaS, la pregunta no es "como consigo 1000 usuarios", sino "como consigo 10 clientes que paguen y se queden"
 
-- `70 a 100 usuarios activos de pago`
+Porque con este software:
 
-Eso es una referencia bastante util porque:
+- el coste tecnico escala lento
+- el negocio se gana o se pierde en comercializacion, onboarding y soporte
 
-- no exige un volumen enorme para cubrir infraestructura
-- te permite usar el pack de `10 usuarios` como entrada comercial sin que te hunda el modelo
-- a partir de ahi cada cliente nuevo mejora bastante la rentabilidad
+## 16. Conclusiones finales
 
-## 11. Version comercial aun mas afinada
+Si quiero ser honesto y realista con Regismatic hoy:
 
-Si quieres dejarlo muy claro en la web, yo lo presentaria asi:
+1. Si tu prioridad es `autoescalado con tope de gasto`, la recomendacion principal pasa a ser `Railway`.
+2. El coste tecnico de salida con ese enfoque me parece mas realista en `15-35 EUR/mes`.
+3. A cambio, ganas crecimiento automatico y mas tranquilidad operativa que con una solucion manual.
+4. Para que eso funcione bien, conviene sacar las fotos del disco local y vigilar mucho reportes/exportaciones.
+5. El siguiente gran salto no sera \"pagar mas cloud porque si\", sino endurecer arquitectura y mantener el crecimiento dentro de limites claros.
 
-### Plan Starter
+## 17. Fuentes oficiales usadas
 
-- `19 EUR/mes`
-- incluye hasta `10 usuarios`
-- pensado para microempresas
+- Railway pricing: https://railway.com/pricing
+- Render pricing: https://render.com/pricing
+- DigitalOcean App Platform pricing: https://www.digitalocean.com/pricing/app-platform
+- DigitalOcean managed PostgreSQL pricing: https://docs.digitalocean.com/products/databases/postgresql/details/pricing/
+- Google Cloud Run pricing: https://cloud.google.com/run/pricing
+- Google Cloud SQL pricing: https://cloud.google.com/sql/pricing
+- Namecheap domain pricing reference: https://www.namecheap.com/domains/
 
-### Plan Team
+## 18. Notas sobre las cifras
 
-- `29 EUR/mes`
-- incluye hasta `20 usuarios`
-- pensado para equipos pequenos
-
-### Plan Growth
-
-- `59 EUR/mes`
-- incluye hasta `50 usuarios`
-- pensado para pymes que ya operan con varios turnos o equipos
-
-### Plan Business
-
-- `99 EUR/mes`
-- incluye hasta `100 usuarios`
-- soporte prioritario por email
-
-### Plan Enterprise
-
-- mas de `100 usuarios`
-- contacto por telefono
-- contrato personalizado
-- posibilidad de onboarding, soporte ampliado y condiciones especiales
-
-Esta tabla funciona mejor comercialmente que un precio variable puro, porque:
-
-- crea sensacion de producto serio
-- evita calculos en cada visita comercial
-- hace mucho mas facil publicar pricing en la web
-
-## 12. Margen bruto esperado
-
-Si compartes infraestructura entre clientes, este modelo sigue pudiendo funcionar bien, aunque con menos margen que la propuesta inicial.
-
-Ejemplo simple:
-
-- `10 clientes` en `Pack 10` supondrian `190 EUR/mes`
-- `5 clientes` en `Pack 20` supondrian `145 EUR/mes`
-- `3 clientes` en `Pack 50` supondrian `177 EUR/mes`
-- total ejemplo: `512 EUR/mes`
-
-Frente a una infraestructura de `EUR 90-160/mes`, seguirias teniendo margen bruto razonable.
-
-Conclusion operativa:
-
-- estos precios ya son bastante mas agresivos
-- el `Pack 10` es casi de captacion
-- donde realmente se empieza a notar la rentabilidad es en `Pack 50` y `Pack 100`
-- por encima de `100` usuarios tiene sentido cerrar contrato a medida para no pillarte los dedos
-
-## 13. Decision final que tomaria yo
-
-Si tuviera que decidir hoy:
-
-1. `Lanzar en Railway`
-2. `Sacar las fotos del disco local` antes de activar replicas de API
-3. `Publicar precios cerrados de 19, 29, 59 y 99 EUR al mes`
-4. `Revisar metricas reales durante 2-3 meses`
-5. `Pedir llamada o contrato a medida a partir de 100 usuarios`
-6. `Migrar a arquitectura tipo Cloud Run` cuando el producto ya tenga traccion suficiente para justificarlo
-
-## 14. Siguiente trabajo tecnico recomendado en el repo
-
-Antes de venderlo a varios clientes, haria estas tareas:
-
-1. mover las fotos de perfil a object storage
-2. parametrizar URL publica o privada de ficheros
-3. separar despliegue del frontend como estatico
-4. sacar PostgreSQL fuera del `docker-compose` de un solo servidor
-5. anadir monitorizacion minima de API, DB y jobs de backup
-
-## 15. Fuentes oficiales usadas
-
-Precios y capacidad pueden cambiar, asi que conviene revisarlos al contratar.
-
-- Render Pricing: https://render.com/pricing
-- Railway Pricing: https://railway.com/pricing
-- Cloud Run Pricing: https://cloud.google.com/run/pricing
-
-Notas:
-
-- Render indica en su documentacion que el autoscaling esta disponible en `Professional` o superior.
-- Cloud Run indica en su pricing oficial que escala automaticamente.
-- Para Railway he usado su pagina oficial de pricing porque publica precios por CPU, RAM, volumen, egress y object storage.
-
-## 16. Nota final
-
-Este estudio esta hecho segun la arquitectura y el codigo actuales del repositorio. Si despues cambias a:
-
-- multi-tenant mas estricto
-- colas para exportaciones
-- S3 para fotos
-- cache Redis
-- auditoria o retencion ampliada
-
-entonces te convendra rehacer el modelo de costes porque el punto de equilibrio mejorara, pero tambien cambiara la estructura de infraestructura.
+- Las cifras de este documento son una estimacion razonable, no una oferta comercial cerrada.
+- Los proveedores cloud cambian precios, limites y promos con frecuencia.
+- He evitado contar aqui cosas que dependen demasiado del caso, como soporte humano, horas de desarrollo, impuestos o comisiones reales de venta.
+- Cuando hago una estimacion de coste mensual de Regismatic, estoy extrapolando desde la arquitectura actual del repositorio y desde precios oficiales publicados a fecha `2026-03-25`.
