@@ -6,7 +6,7 @@
           <ion-card-header>
             <ion-card-title>{{ "billing_history.title" | t }}</ion-card-title>
             <p class="microcopy">
-              {{ isSuperadminView ? ("billing_history.desc_superadmin" | t) : ("billing_history.desc_admin" | t) }}
+              {{ isSuperadminUser ? ("billing_history.desc_superadmin" | t) : ("billing_history.desc_admin" | t) }}
             </p>
           </ion-card-header>
           <ion-card-content>
@@ -21,10 +21,31 @@
               <p>{{ "billing_history.stripe_missing_desc" | t }}</p>
             </section>
 
+            <ng-container *ngIf="!loading && history?.stripeConfigured && isSuperadminUser">
+              <div class="app-inline-panel history-toolbar">
+                <div class="history-toolbar-copy">
+                  <strong>{{ "billing_history.search_title" | t }}</strong>
+                  <p>{{ "billing_history.search_desc" | t }}</p>
+                </div>
+
+                <ion-searchbar
+                  class="history-searchbar"
+                  [placeholder]="'billing_history.search_placeholder' | t"
+                  [value]="paymentsSearch"
+                  (ionInput)="paymentsSearch = $any($event.detail).value ?? ''; onPaymentsSearchChange()"
+                ></ion-searchbar>
+              </div>
+
+              <div class="billing-results-summary" *ngIf="paymentsTotal > 0">
+                <strong>{{ paymentsTotal }}</strong>
+                <span>{{ "billing_history.results_label" | t }}</span>
+              </div>
+            </ng-container>
+
             <section class="empty-state" *ngIf="!loading && history?.stripeConfigured && accounts.length === 0">
-              <ion-icon name="document-text-outline" aria-hidden="true"></ion-icon>
-              <h3>{{ "billing_history.empty_title" | t }}</h3>
-              <p>{{ "billing_history.empty_desc" | t }}</p>
+              <ion-icon [name]="paymentsSearch.trim() ? 'search-outline' : 'document-text-outline'" aria-hidden="true"></ion-icon>
+              <h3>{{ (paymentsSearch.trim() ? "billing_history.no_match_title" : "billing_history.empty_title") | t }}</h3>
+              <p>{{ (paymentsSearch.trim() ? "billing_history.no_match_desc" : "billing_history.empty_desc") | t }}</p>
             </section>
 
             <div class="accounts-grid" *ngIf="!loading && history?.stripeConfigured && accounts.length > 0">
@@ -109,6 +130,21 @@
                   </section>
                 </ng-template>
               </article>
+            </div>
+
+            <div class="report-pagination" *ngIf="!loading && isSuperadminUser && paymentsTotal > paymentsCurrentPageSize">
+              <ion-button size="small" fill="outline" [disabled]="paymentsCurrentPage === 1" (click)="goToPaymentsPage(paymentsCurrentPage - 1)">
+                {{ "common.previous" | t }}
+              </ion-button>
+              <span>{{ "reports.pagination_page" | t: { page: paymentsCurrentPage, total: paymentsPageCount } }}</span>
+              <ion-button
+                size="small"
+                fill="outline"
+                [disabled]="paymentsCurrentPage === paymentsPageCount"
+                (click)="goToPaymentsPage(paymentsCurrentPage + 1)"
+              >
+                {{ "common.next" | t }}
+              </ion-button>
             </div>
           </ion-card-content>
         </ion-card>

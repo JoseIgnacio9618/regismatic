@@ -756,6 +756,215 @@ ion-card-content {
   background: color-mix(in srgb, var(--app-surface-3), var(--ion-color-secondary) 10%);
 }
 
+.billing-results-summary,
+.admin-limit-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.billing-results-summary {
+  gap: 10px;
+  min-height: 38px;
+  margin-bottom: 16px;
+  padding: 0 12px;
+  width: fit-content;
+  border: 1px solid var(--app-border-subtle);
+  border-radius: var(--app-radius-pill);
+  background: color-mix(in srgb, var(--app-surface-1), var(--app-accent-subtle) 18%);
+}
+
+.billing-results-summary strong {
+  font-size: 1.04rem;
+}
+
+.billing-results-summary span {
+  color: var(--app-text-secondary);
+  font-size: 0.88rem;
+}
+
+.admin-limit-avatar {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--app-border-strong), transparent 20%);
+  background:
+    radial-gradient(circle at 24% 22%, color-mix(in srgb, var(--app-accent-base), transparent 24%) 0%, transparent 34%),
+    linear-gradient(145deg, color-mix(in srgb, var(--app-brand-base), #ffffff 16%) 0%, color-mix(in srgb, var(--app-accent-base), #203127 26%) 100%);
+  color: #ffffff;
+  font-size: 0.92rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  box-shadow: var(--app-shadow-xs);
+}
+
+.billing-table-shell {
+  overflow-x: auto;
+}
+
+.billing-admin-table {
+  min-width: 1040px;
+  table-layout: fixed;
+}
+
+.billing-col-admin {
+  width: 24%;
+}
+
+.billing-col-status {
+  width: 16%;
+}
+
+.billing-col-usage {
+  width: 22%;
+}
+
+.billing-col-plan {
+  width: 14%;
+}
+
+.billing-col-period {
+  width: 12%;
+}
+
+.billing-col-actions {
+  width: 12%;
+}
+
+.billing-admin-table tbody td {
+  vertical-align: middle;
+}
+
+.billing-admin-table tbody tr {
+  transition: background var(--app-transition-fast);
+}
+
+.billing-admin-col {
+  vertical-align: top !important;
+}
+
+.admin-table-user {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.admin-table-user-copy,
+.admin-table-usage,
+.admin-table-meta,
+.billing-table-actions {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.admin-table-user-copy {
+  gap: 4px;
+}
+
+.admin-table-user-copy strong,
+.admin-table-usage strong,
+.admin-table-meta strong {
+  font-size: 0.95rem;
+  line-height: 1.3;
+}
+
+.admin-table-user-copy span,
+.admin-table-usage span,
+.admin-table-meta span,
+.billing-table-actions ion-note {
+  font-size: 0.84rem;
+  line-height: 1.42;
+  overflow-wrap: anywhere;
+}
+
+.admin-table-alert {
+  color: color-mix(in srgb, var(--ion-color-warning), var(--app-text-primary) 22%) !important;
+}
+
+.admin-table-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.admin-table-usage {
+  gap: 8px;
+}
+
+.admin-limit-progress-track {
+  height: 9px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--app-border-subtle), transparent 22%);
+  overflow: hidden;
+}
+
+.admin-limit-progress-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--ion-color-success), white 6%) 0%,
+    color-mix(in srgb, var(--ion-color-success), black 4%) 100%
+  );
+  transition: width var(--app-transition-base), background var(--app-transition-base);
+}
+
+.admin-limit-progress-fill-warning {
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--ion-color-warning), white 10%) 0%,
+    color-mix(in srgb, var(--ion-color-warning), black 6%) 100%
+  );
+}
+
+.admin-limit-progress-fill-danger {
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--ion-color-danger), white 10%) 0%,
+    color-mix(in srgb, var(--ion-color-danger), black 8%) 100%
+  );
+}
+
+.billing-actions-col {
+  text-align: right;
+}
+
+.billing-table-actions {
+  align-items: stretch;
+  gap: 10px;
+  max-width: 220px;
+  margin-left: auto;
+}
+
+.billing-table-actions ion-button {
+  width: 100%;
+  margin: 0;
+}
+
+.admin-table-current-limit {
+  display: block;
+}
+
+.admin-limits-search {
+  --background: color-mix(in srgb, var(--app-surface-2), white 10%);
+  --border-radius: 18px;
+  --box-shadow: none;
+  --color: var(--app-text-primary);
+  --placeholder-color: var(--app-text-tertiary);
+  padding-inline: 0;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .billing-admin-table tbody tr:hover {
+    background: color-mix(in srgb, var(--ion-color-primary), transparent 96%);
+  }
+}
+
 .app-auth-screen {
   --background: transparent;
 }

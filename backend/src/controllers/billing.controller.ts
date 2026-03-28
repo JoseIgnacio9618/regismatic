@@ -22,6 +22,18 @@ const customSeatLimitSchema = strictObject({
   seatLimit: z.number().int().min(1).max(5000)
 });
 
+const adminSeatLimitControlsQuerySchema = strictObject({
+  page: z.coerce.number().int().min(1).optional(),
+  pageSize: z.coerce.number().int().min(1).max(100).optional(),
+  search: z.string().trim().optional()
+});
+
+const billingPaymentsHistoryQuerySchema = strictObject({
+  page: z.coerce.number().int().min(1).optional(),
+  pageSize: z.coerce.number().int().min(1).max(100).optional(),
+  search: z.string().trim().optional()
+});
+
 export const billingOverviewController = async (req: Request, res: Response) => {
   if (!req.user) {
     throw new AppError("Not authenticated.", 401);
@@ -60,8 +72,14 @@ export const billingPaymentsHistoryController = async (req: Request, res: Respon
   }
 
   await assertNonBillingFeatureAccessForUser(req.user.id);
+  const query = billingPaymentsHistoryQuerySchema.parse(req.query);
 
-  const history = await getBillingPaymentsHistoryForUser(req.user.id);
+  const history = await getBillingPaymentsHistoryForUser({
+    requesterId: req.user.id,
+    page: query.page,
+    pageSize: query.pageSize,
+    search: query.search
+  });
   return res.json(history);
 };
 
@@ -70,8 +88,14 @@ export const adminSeatLimitControlsController = async (req: Request, res: Respon
     throw new AppError("Not authenticated.", 401);
   }
 
-  const controls = await listAdminSeatLimitControls(req.user.id);
-  return res.json({ admins: controls });
+  const query = adminSeatLimitControlsQuerySchema.parse(req.query);
+  const controls = await listAdminSeatLimitControls({
+    requesterId: req.user.id,
+    page: query.page,
+    pageSize: query.pageSize,
+    search: query.search
+  });
+  return res.json(controls);
 };
 
 export const setAdminCustomSeatLimitController = async (req: Request, res: Response) => {

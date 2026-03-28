@@ -1,4 +1,4 @@
-import { Component, OnInit } from "@angular/core";
+import { Component, OnDestroy } from "@angular/core";
 import { ToastController } from "@ionic/angular";
 import { BillingAccountPaymentsView, BillingPaymentRecord, BillingPaymentsHistoryResponse } from "src/app/core/models/types";
 import { AuthService } from "src/app/core/services/auth.service";
@@ -11,9 +11,15 @@ import { I18nService } from "src/app/core/services/i18n.service";
   styleUrls: ["./billing-history.page.scss"],
   standalone: false
 })
-export class BillingHistoryPage implements OnInit {
+export class BillingHistoryPage implements OnDestroy {
+  private paymentsSearchDebounceHandle: ReturnType<typeof setTimeout> | null = null;
+  private historyRequestId = 0;
+
   history: BillingPaymentsHistoryResponse | null = null;
   loading = false;
+  paymentsSearch = "";
+  paymentsPage = 1;
+  readonly paymentsPageSize = 6;
 
   constructor(
     public readonly authService: AuthService,
@@ -22,7 +28,13 @@ export class BillingHistoryPage implements OnInit {
     private readonly toastController: ToastController
   ) {}
 
-  async ngOnInit(): Promise<void> {
+  ngOnDestroy(): void {
+    if (this.paymentsSearchDebounceHandle) {
+      clearTimeout(this.paymentsSearchDebounceHandle);
+    }
+  }
+
+  async ionViewWillEnter(): Promise<void> {
     await this.loadHistory();
   }
 
@@ -30,8 +42,24 @@ export class BillingHistoryPage implements OnInit {
     return this.history?.accounts ?? [];
   }
 
-  get isSuperadminView(): boolean {
-    return this.history?.scope === "SUPERADMIN";
+  get isSuperadminUser(): boolean {
+    return this.authService.user?.role === "SUPERADMIN";
+  }
+
+  get paymentsTotal(): number {
+    return this.history?.total ?? 0;
+  }
+
+  get paymentsCurrentPage(): number {
+    return this.history?.page ?? this.paymentsPage;
+  }
+
+  get paymentsCurrentPageSize(): number {
+    return this.history?.pageSize ?? this.paymentsPageSize;
+  }
+
+  get paymentsPageCount(): number {
+    return Math.max(1, Math.ceil(this.paymentsTotal / this.paymentsCurrentPageSize));
   }
 
   formatDate(value: string | null | undefined): string {
@@ -103,14 +131,62 @@ export class BillingHistoryPage implements OnInit {
     return payment.hostedInvoiceUrl ?? payment.invoicePdfUrl ?? null;
   }
 
+  onPaymentsSearchChange(): void {
+    if (this.paymentsSearchDebounceHandle) {
+      clearTimeout(this.paymentsSearchDebounceHandle);
+    }
+
+    this.paymentsSearchDebounceHandle = setTimeout(() => {
+      this.paymentsPage = 1;
+      void this.loadHistory();
+    }, 250);
+  }
+
+  async goToPaymentsPage(page: number): Promise<void> {
+    if (!this.isSuperadminUser || page < 1 || page > this.paymentsPageCount || page === this.paymentsCurrentPage) {
+      return;
+    }
+
+    this.paymentsPage = page;
+    await this.loadHistory();
+  }
+
   async loadHistory(): Promise<void> {
+    const requestId = ++this.historyRequestId;
     this.loading = true;
     try {
-      this.history = await this.billingService.getPaymentsHistory();
+      const history = await this.billingService.getPaymentsHistory(
+        this.isSuperadminUser
+          ? {
+              page: this.paymentsPage,
+              pageSize: this.paymentsPageSize,
+              search: this.paymentsSearch
+            }
+          : undefined
+      );
+
+      if (requestId !== this.historyRequestId) {
+        return;
+      }
+
+      if (this.isSuperadminUser && this.paymentsPage > 1 && history.accounts.length === 0 && history.total > 0) {
+        this.paymentsPage -= 1;
+        await this.loadHistory();
+        return;
+      }
+
+      this.history = history;
+      this.paymentsPage = history.page;
     } catch (error) {
+      if (requestId !== this.historyRequestId) {
+        return;
+      }
+
       await this.showToast(error instanceof Error ? error.message : this.i18nService.t("billing_history.load_failed"), "danger");
     } finally {
-      this.loading = false;
+      if (requestId === this.historyRequestId) {
+        this.loading = false;
+      }
     }
   }
 

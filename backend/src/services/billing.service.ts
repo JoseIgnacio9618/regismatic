@@ -153,6 +153,9 @@ export type BillingPaymentsHistoryResponse = {
   scope: "ADMIN" | "SUPERADMIN";
   stripeConfigured: boolean;
   accounts: BillingAccountPaymentsView[];
+  total: number;
+  page: number;
+  pageSize: number;
 };
 
 export type AttendanceAccessSummary = {
@@ -190,10 +193,38 @@ export type AdminSeatLimitControlView = {
   };
 };
 
+export type AdminSeatLimitControlsStats = {
+  totalAdmins: number;
+  totalManagedSeatsUsed: number;
+  totalManagedSeatsLimit: number;
+  totalManualOverrides: number;
+  totalAttentionAdmins: number;
+};
+
+export type PaginatedAdminSeatLimitControlsResult = {
+  admins: AdminSeatLimitControlView[];
+  total: number;
+  page: number;
+  pageSize: number;
+  stats: AdminSeatLimitControlsStats;
+};
+
 type EffectiveSeatLimit = {
   source: "SUBSCRIPTION" | "CUSTOM";
   limit: number;
 };
+
+const ADMIN_SEAT_LIMIT_CONTROL_SELECT = {
+  id: true,
+  email: true,
+  fullName: true,
+  isActive: true,
+  billingSubscription: {
+    select: BILLING_SUBSCRIPTION_SELECT
+  }
+} satisfies Prisma.UserSelect;
+
+type AdminSeatLimitAdminRecord = Prisma.UserGetPayload<{ select: typeof ADMIN_SEAT_LIMIT_CONTROL_SELECT }>;
 
 const BILLING_PLANS: Record<BillingPlanCode, BillingPlanDefinition> = {
   DEMO_10: {
@@ -577,6 +608,89 @@ const resolveEffectiveSeatLimit = (subscription: BillingSubscriptionRecord): Eff
   return {
     source: "SUBSCRIPTION",
     limit: subscription.seatLimit
+  };
+};
+
+const buildAdminSeatLimitControlView = async (
+  admin: AdminSeatLimitAdminRecord,
+  seatCountMap: Map<string, number>
+): Promise<AdminSeatLimitControlView> => {
+  const subscription = admin.billingSubscription ?? (await loadOrCreateAdminSubscription(admin.id));
+  const effectiveSeatLimit = resolveEffectiveSeatLimit(subscription);
+  const used = seatCountMap.get(admin.id) ?? 0;
+
+  return {
+    admin: {
+      id: admin.id,
+      email: admin.email,
+      fullName: admin.fullName
+    },
+    billing: {
+      planCode: subscription.planCode,
+      status: subscription.status,
+      seatLimitSource: effectiveSeatLimit.source,
+      subscriptionSeatLimit: subscription.seatLimit,
+      effectiveSeatLimit: effectiveSeatLimit.limit,
+      customSeatLimit: subscription.customSeatLimit,
+      customSeatLimitUpdatedAt: normalizeDate(subscription.customSeatLimitUpdatedAt),
+      isTrial: subscription.isTrial,
+      trialEndsAt: normalizeDate(subscription.trialEndsAt),
+      currentPeriodEnd: normalizeDate(subscription.currentPeriodEnd),
+      cancelAtPeriodEnd: subscription.cancelAtPeriodEnd
+    },
+    seatUsage: {
+      used,
+      limit: effectiveSeatLimit.limit,
+      remaining: Math.max(0, effectiveSeatLimit.limit - used)
+    }
+  } satisfies AdminSeatLimitControlView;
+};
+
+const isAdminSeatControlHealthy = (control: AdminSeatLimitControlView): boolean => {
+  return control.billing.seatLimitSource === "CUSTOM" || ACTIVE_BILLING_STATUSES.has(control.billing.status);
+};
+
+const isAdminSeatControlTrialEndingSoon = (control: AdminSeatLimitControlView): boolean => {
+  if (!control.billing.isTrial || control.billing.seatLimitSource === "CUSTOM" || !control.billing.trialEndsAt) {
+    return false;
+  }
+
+  const endsAt = new Date(control.billing.trialEndsAt).getTime();
+  const diffDays = Math.ceil((endsAt - Date.now()) / (1000 * 60 * 60 * 24));
+  return diffDays >= 0 && diffDays <= 3;
+};
+
+const isAdminSeatControlNearCapacity = (control: AdminSeatLimitControlView): boolean => {
+  if (control.seatUsage.limit <= 0 || control.seatUsage.used >= control.seatUsage.limit) {
+    return false;
+  }
+
+  return control.seatUsage.used / control.seatUsage.limit >= 0.9;
+};
+
+const adminSeatControlNeedsAttention = (control: AdminSeatLimitControlView): boolean => {
+  if (!isAdminSeatControlHealthy(control)) {
+    return true;
+  }
+
+  if (control.seatUsage.used >= control.seatUsage.limit || isAdminSeatControlNearCapacity(control)) {
+    return true;
+  }
+
+  if (isAdminSeatControlTrialEndingSoon(control)) {
+    return true;
+  }
+
+  return control.billing.cancelAtPeriodEnd && control.billing.seatLimitSource !== "CUSTOM";
+};
+
+const buildAdminSeatLimitStats = (controls: AdminSeatLimitControlView[]): AdminSeatLimitControlsStats => {
+  return {
+    totalAdmins: controls.length,
+    totalManagedSeatsUsed: controls.reduce((total, control) => total + control.seatUsage.used, 0),
+    totalManagedSeatsLimit: controls.reduce((total, control) => total + control.seatUsage.limit, 0),
+    totalManualOverrides: controls.filter((control) => control.billing.seatLimitSource === "CUSTOM").length,
+    totalAttentionAdmins: controls.filter((control) => adminSeatControlNeedsAttention(control)).length
   };
 };
 
@@ -1107,41 +1221,69 @@ const notifyAdminCustomSeatLimitChange = async (params: {
   });
 };
 
-export const listAdminSeatLimitControls = async (requesterId: string): Promise<AdminSeatLimitControlView[]> => {
-  const requester = await getScopedUserById(requesterId);
+export const listAdminSeatLimitControls = async (params: {
+  requesterId: string;
+  page?: number;
+  pageSize?: number;
+  search?: string;
+}): Promise<PaginatedAdminSeatLimitControlsResult> => {
+  const requester = await getScopedUserById(params.requesterId);
   if (requester.role !== "SUPERADMIN") {
     throw new AppError("Insufficient permissions.", 403);
   }
 
-  const [admins, seatCounts] = await Promise.all([
+  const trimmedSearch = params.search?.trim();
+  const pageSize = Math.min(100, Math.max(1, params.pageSize ?? 10));
+  const page = Math.max(1, params.page ?? 1);
+  const skip = (page - 1) * pageSize;
+
+  const baseWhere: Prisma.UserWhereInput = {
+    role: "ADMIN",
+    isActive: true
+  };
+
+  const where: Prisma.UserWhereInput = {
+    ...baseWhere
+  };
+
+  if (trimmedSearch) {
+    where.OR = [{ fullName: { contains: trimmedSearch, mode: "insensitive" } }, { email: { contains: trimmedSearch, mode: "insensitive" } }];
+  }
+
+  const [allAdmins, filteredTotal, pagedAdmins] = await Promise.all([
     prisma.user.findMany({
-      where: {
-        role: "ADMIN",
-        isActive: true
-      },
-      select: {
-        id: true,
-        email: true,
-        fullName: true,
-        billingSubscription: {
-          select: BILLING_SUBSCRIPTION_SELECT
-        }
-      },
+      where: baseWhere,
+      select: ADMIN_SEAT_LIMIT_CONTROL_SELECT,
       orderBy: [{ fullName: "asc" }]
     }),
-    prisma.user.groupBy({
-      by: ["managerId"],
-      where: {
-        role: "EMPLOYEE",
-        managerId: {
-          not: null
-        }
-      },
-      _count: {
-        _all: true
-      }
+    prisma.user.count({
+      where
+    }),
+    prisma.user.findMany({
+      where,
+      select: ADMIN_SEAT_LIMIT_CONTROL_SELECT,
+      orderBy: [{ fullName: "asc" }],
+      skip,
+      take: pageSize
     })
   ]);
+
+  const adminIds = allAdmins.map((admin) => admin.id);
+  const seatCounts =
+    adminIds.length > 0
+      ? await prisma.user.groupBy({
+          by: ["managerId"],
+          where: {
+            role: "EMPLOYEE",
+            managerId: {
+              in: adminIds
+            }
+          },
+          _count: {
+            _all: true
+          }
+        })
+      : [];
 
   const seatCountMap = new Map<string, number>();
   for (const row of seatCounts) {
@@ -1150,41 +1292,18 @@ export const listAdminSeatLimitControls = async (requesterId: string): Promise<A
     }
   }
 
-  const controls = await Promise.all(
-    admins.map(async (admin) => {
-      const subscription = admin.billingSubscription ?? (await loadOrCreateAdminSubscription(admin.id));
-      const effectiveSeatLimit = resolveEffectiveSeatLimit(subscription);
-      const used = seatCountMap.get(admin.id) ?? 0;
+  const allControls = await Promise.all(allAdmins.map((admin) => buildAdminSeatLimitControlView(admin, seatCountMap)));
+  const controlByAdminId = new Map(allControls.map((control) => [control.admin.id, control] as const));
 
-      return {
-        admin: {
-          id: admin.id,
-          email: admin.email,
-          fullName: admin.fullName
-        },
-        billing: {
-          planCode: subscription.planCode,
-          status: subscription.status,
-          seatLimitSource: effectiveSeatLimit.source,
-          subscriptionSeatLimit: subscription.seatLimit,
-          effectiveSeatLimit: effectiveSeatLimit.limit,
-          customSeatLimit: subscription.customSeatLimit,
-          customSeatLimitUpdatedAt: normalizeDate(subscription.customSeatLimitUpdatedAt),
-          isTrial: subscription.isTrial,
-          trialEndsAt: normalizeDate(subscription.trialEndsAt),
-          currentPeriodEnd: normalizeDate(subscription.currentPeriodEnd),
-          cancelAtPeriodEnd: subscription.cancelAtPeriodEnd
-        },
-        seatUsage: {
-          used,
-          limit: effectiveSeatLimit.limit,
-          remaining: Math.max(0, effectiveSeatLimit.limit - used)
-        }
-      } satisfies AdminSeatLimitControlView;
-    })
-  );
-
-  return controls;
+  return {
+    admins: pagedAdmins
+      .map((admin) => controlByAdminId.get(admin.id))
+      .filter((control): control is AdminSeatLimitControlView => Boolean(control)),
+    total: filteredTotal,
+    page,
+    pageSize,
+    stats: buildAdminSeatLimitStats(allControls)
+  };
 };
 
 export const setAdminCustomSeatLimit = async (params: {
@@ -1234,13 +1353,16 @@ export const setAdminCustomSeatLimit = async (params: {
     customSeatLimit: params.seatLimit
   });
 
-  const controls = await listAdminSeatLimitControls(requester.id);
-  const updated = controls.find((item) => item.admin.id === admin.id);
-  if (!updated) {
+  const adminRecord = await prisma.user.findUnique({
+    where: { id: admin.id },
+    select: ADMIN_SEAT_LIMIT_CONTROL_SELECT
+  });
+
+  if (!adminRecord) {
     throw new AppError("User not found.", 404);
   }
 
-  return updated;
+  return buildAdminSeatLimitControlView(adminRecord, new Map([[admin.id, await getManagedEmployeesCount(admin.id)]]));
 };
 
 export const clearAdminCustomSeatLimit = async (params: {
@@ -1289,13 +1411,16 @@ export const clearAdminCustomSeatLimit = async (params: {
     customSeatLimit: null
   });
 
-  const controls = await listAdminSeatLimitControls(requester.id);
-  const updated = controls.find((item) => item.admin.id === admin.id);
-  if (!updated) {
+  const adminRecord = await prisma.user.findUnique({
+    where: { id: admin.id },
+    select: ADMIN_SEAT_LIMIT_CONTROL_SELECT
+  });
+
+  if (!adminRecord) {
     throw new AppError("User not found.", 404);
   }
 
-  return updated;
+  return buildAdminSeatLimitControlView(adminRecord, new Map([[admin.id, await getManagedEmployeesCount(admin.id)]]));
 };
 
 const listStripeInvoicesForCustomer = async (customerId: string): Promise<BillingPaymentRecord[]> => {
@@ -1350,19 +1475,55 @@ const buildPaymentStats = (payments: BillingPaymentRecord[]) => {
   };
 };
 
-export const getBillingPaymentsHistoryForUser = async (requesterId: string): Promise<BillingPaymentsHistoryResponse> => {
-  const requester = await getScopedUserById(requesterId);
+export const getBillingPaymentsHistoryForUser = async (params: {
+  requesterId: string;
+  page?: number;
+  pageSize?: number;
+  search?: string;
+}): Promise<BillingPaymentsHistoryResponse> => {
+  const requester = await getScopedUserById(params.requesterId);
   if (requester.role !== "ADMIN" && requester.role !== "SUPERADMIN") {
     throw new AppError("Insufficient permissions.", 403);
   }
 
-  const subscriptions = await prisma.billingSubscription.findMany({
-    where:
-      requester.role === "ADMIN"
-        ? {
-            adminId: requester.id
+  const trimmedSearch = params.search?.trim();
+  const requestedPageSize = Math.min(100, Math.max(1, params.pageSize ?? 6));
+  const requestedPage = Math.max(1, params.page ?? 1);
+
+  const where: Prisma.BillingSubscriptionWhereInput =
+    requester.role === "ADMIN"
+      ? {
+          adminId: requester.id
+        }
+      : {
+          admin: {
+            role: "ADMIN",
+            ...(trimmedSearch
+              ? {
+                  OR: [
+                    {
+                      fullName: {
+                        contains: trimmedSearch,
+                        mode: "insensitive"
+                      }
+                    },
+                    {
+                      email: {
+                        contains: trimmedSearch,
+                        mode: "insensitive"
+                      }
+                    }
+                  ]
+                }
+              : {})
           }
-        : undefined,
+        };
+
+  const total = await prisma.billingSubscription.count({ where });
+  const page = requester.role === "SUPERADMIN" ? requestedPage : 1;
+  const pageSize = requester.role === "SUPERADMIN" ? requestedPageSize : Math.max(1, total || 1);
+  const subscriptions = await prisma.billingSubscription.findMany({
+    where,
     select: {
       adminId: true,
       planCode: true,
@@ -1388,7 +1549,13 @@ export const getBillingPaymentsHistoryForUser = async (requesterId: string): Pro
           fullName: "asc"
         }
       }
-    ]
+    ],
+    ...(requester.role === "SUPERADMIN"
+      ? {
+          skip: (page - 1) * pageSize,
+          take: pageSize
+        }
+      : {})
   });
 
   const accounts = await Promise.all(
@@ -1417,6 +1584,9 @@ export const getBillingPaymentsHistoryForUser = async (requesterId: string): Pro
   return {
     scope: requester.role === "SUPERADMIN" ? "SUPERADMIN" : "ADMIN",
     stripeConfigured: STRIPE_ENABLED,
-    accounts
+    accounts,
+    total,
+    page,
+    pageSize
   };
 };

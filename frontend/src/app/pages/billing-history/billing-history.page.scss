@@ -2,6 +2,42 @@
   padding-bottom: 32px;
 }
 
+.history-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 360px);
+  align-items: center;
+  gap: 14px 18px;
+  padding: 14px 16px;
+  margin-bottom: 18px;
+}
+
+.history-toolbar-copy {
+  min-width: 0;
+}
+
+.history-toolbar-copy strong {
+  display: block;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--app-text-tertiary);
+}
+
+.history-toolbar-copy p {
+  margin-top: 6px;
+  color: var(--app-text-secondary);
+}
+
+.history-searchbar {
+  --background: color-mix(in srgb, var(--app-surface-2), white 10%);
+  --border-radius: 18px;
+  --box-shadow: none;
+  --color: var(--app-text-primary);
+  --placeholder-color: var(--app-text-tertiary);
+  padding-inline: 0;
+}
+
 .accounts-grid {
   display: grid;
   gap: 16px;
@@ -58,6 +94,13 @@
 
 .empty-inline p {
   color: var(--app-text-secondary);
+}
+
+@media (max-width: 980px) {
+  .history-toolbar {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
 }
 
 @media (max-width: 767px) {

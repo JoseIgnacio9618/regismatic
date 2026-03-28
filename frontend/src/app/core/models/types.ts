@@ -102,6 +102,22 @@ export interface AdminSeatLimitControl {
   };
 }
 
+export interface BillingAdminSeatLimitStats {
+  totalAdmins: number;
+  totalManagedSeatsUsed: number;
+  totalManagedSeatsLimit: number;
+  totalManualOverrides: number;
+  totalAttentionAdmins: number;
+}
+
+export interface PaginatedAdminSeatLimitControlsResponse {
+  admins: AdminSeatLimitControl[];
+  total: number;
+  page: number;
+  pageSize: number;
+  stats: BillingAdminSeatLimitStats;
+}
+
 export interface BillingPaymentRecord {
   invoiceId: string;
   stripeSubscriptionId: string | null;
@@ -148,6 +164,9 @@ export interface BillingPaymentsHistoryResponse {
   scope: "ADMIN" | "SUPERADMIN";
   stripeConfigured: boolean;
   accounts: BillingAccountPaymentsView[];
+  total: number;
+  page: number;
+  pageSize: number;
 }
 
 export interface AuthUser {

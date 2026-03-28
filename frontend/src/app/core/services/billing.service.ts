@@ -1,14 +1,16 @@
 import { Injectable } from "@angular/core";
-import { AdminSeatLimitControl, BillingPaymentsHistoryResponse, BillingPlan, BillingSummary } from "../models/types";
+import {
+  AdminSeatLimitControl,
+  BillingPaymentsHistoryResponse,
+  BillingPlan,
+  BillingSummary,
+  PaginatedAdminSeatLimitControlsResponse
+} from "../models/types";
 import { ApiService } from "./api.service";
 
 type BillingOverviewResponse = {
   plans: BillingPlan[];
   summary: BillingSummary | null;
-};
-
-type AdminSeatLimitControlsResponse = {
-  admins: AdminSeatLimitControl[];
 };
 
 @Injectable({ providedIn: "root" })
@@ -19,12 +21,39 @@ export class BillingService {
     return this.apiService.get<BillingOverviewResponse>("/billing/overview", true);
   }
 
-  getPaymentsHistory(): Promise<BillingPaymentsHistoryResponse> {
-    return this.apiService.get<BillingPaymentsHistoryResponse>("/billing/payments-history", true);
+  getPaymentsHistory(params?: { page?: number; pageSize?: number; search?: string }): Promise<BillingPaymentsHistoryResponse> {
+    const query = new URLSearchParams();
+    if (params?.page) {
+      query.set("page", String(params.page));
+    }
+    if (params?.pageSize) {
+      query.set("pageSize", String(params.pageSize));
+    }
+    if (params?.search?.trim()) {
+      query.set("search", params.search.trim());
+    }
+
+    const queryString = query.toString();
+    return this.apiService.get<BillingPaymentsHistoryResponse>(`/billing/payments-history${queryString ? `?${queryString}` : ""}`, true);
   }
 
-  getAdminSeatLimitControls(): Promise<AdminSeatLimitControlsResponse> {
-    return this.apiService.get<AdminSeatLimitControlsResponse>("/billing/admin-seat-limits", true);
+  getAdminSeatLimitControls(params?: { page?: number; pageSize?: number; search?: string }): Promise<PaginatedAdminSeatLimitControlsResponse> {
+    const query = new URLSearchParams();
+    if (params?.page) {
+      query.set("page", String(params.page));
+    }
+    if (params?.pageSize) {
+      query.set("pageSize", String(params.pageSize));
+    }
+    if (params?.search?.trim()) {
+      query.set("search", params.search.trim());
+    }
+
+    const queryString = query.toString();
+    return this.apiService.get<PaginatedAdminSeatLimitControlsResponse>(
+      `/billing/admin-seat-limits${queryString ? `?${queryString}` : ""}`,
+      true
+    );
   }
 
   createCheckoutSession(priceId: string): Promise<{ url: string }> {

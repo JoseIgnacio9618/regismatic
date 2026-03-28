@@ -1,280 +1,546 @@
 <app-main-layout [title]="'billing.layout_title' | t">
+  <ion-modal [isOpen]="limitEditorOpen" (didDismiss)="closeLimitEditor()" class="billing-limit-modal">
+    <ng-template>
+      <ion-header translucent="true">
+        <ion-toolbar>
+          <ion-title>{{ "billing.limit_editor_title" | t }}</ion-title>
+          <ion-buttons slot="end">
+            <ion-button fill="clear" (click)="closeLimitEditor()">{{ "common.close" | t }}</ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+
+      <ion-content class="limit-editor-content">
+        <div class="limit-editor-shell" *ngIf="limitEditorControl as control">
+          <section class="app-inline-panel app-inline-panel--accent limit-editor-hero">
+            <div class="limit-editor-identity">
+              <div class="admin-limit-avatar" aria-hidden="true">{{ initialsFor(control.admin.fullName) }}</div>
+              <div class="limit-editor-copy">
+                <strong>{{ control.admin.fullName }}</strong>
+                <p>{{ control.admin.email }}</p>
+              </div>
+            </div>
+
+            <div class="limit-editor-badges">
+              <ion-badge [color]="subscriptionStatusColor(control.billing.status)">
+                {{ ("billing.status." + control.billing.status) | t }}
+              </ion-badge>
+              <ion-badge [color]="control.billing.seatLimitSource === 'CUSTOM' ? 'tertiary' : 'medium'">
+                {{ seatLimitSourceLabel(control.billing) }}
+              </ion-badge>
+              <ion-badge *ngIf="controlNeedsAttention(control)" [color]="attentionBadgeColor(control)">
+                {{ "billing.attention_badge" | t }}
+              </ion-badge>
+            </div>
+          </section>
+
+          <div class="limit-editor-summary">
+            <article class="limit-editor-summary-card app-inline-panel">
+              <strong>{{ "billing.base_plan_title" | t }}</strong>
+              <span>{{ planNameForCode(control.billing.planCode) }}</span>
+            </article>
+            <article class="limit-editor-summary-card app-inline-panel">
+              <strong>{{ "billing.seat_usage" | t }}</strong>
+              <span>{{ control.seatUsage.used }}/{{ control.seatUsage.limit }}</span>
+            </article>
+            <article class="limit-editor-summary-card app-inline-panel">
+              <strong>{{ "billing.effective_limit_title" | t }}</strong>
+              <span>{{ control.billing.effectiveSeatLimit }}</span>
+            </article>
+            <article class="limit-editor-summary-card app-inline-panel">
+              <strong>{{ control.billing.isTrial ? ("billing.trial_ends" | t) : ("billing.period_ends" | t) }}</strong>
+              <span>{{ trialOrPeriodLabel(control) }}</span>
+            </article>
+          </div>
+
+          <section class="limit-editor-alert" *ngIf="controlNeedsAttention(control)">
+            <ion-icon [name]="controlAlertIcon(control)" aria-hidden="true"></ion-icon>
+            <div>
+              <strong>{{ controlAttentionTitle(control) }}</strong>
+              <p>{{ controlAttentionDescription(control) }}</p>
+            </div>
+          </section>
+
+          <section class="app-inline-panel limit-editor-panel">
+            <div class="limit-editor-panel-head">
+              <strong>{{ "billing.limit_editor_preset_title" | t }}</strong>
+              <p>{{ "billing.limit_editor_preset_desc" | t }}</p>
+            </div>
+
+            <ion-item>
+              <ion-label position="stacked">{{ "billing.limit_editor_preset_field" | t }}</ion-label>
+              <ion-select
+                interface="popover"
+                [placeholder]="'billing.limit_editor_preset_placeholder' | t"
+                [value]="limitEditorPreset"
+                (ionChange)="setLimitEditorPreset($event.detail.value)"
+              >
+                <ion-select-option *ngFor="let option of limitPresetOptions(control)" [value]="limitPresetValue(option)">
+                  {{ "billing.limit_editor_preset_value" | t: { limit: option } }}
+                </ion-select-option>
+                <ion-select-option value="custom">{{ "billing.limit_editor_custom_option" | t }}</ion-select-option>
+              </ion-select>
+            </ion-item>
+
+            <ion-item>
+              <ion-label position="stacked">{{ "billing.custom_limit_field" | t }}</ion-label>
+              <ion-input
+                type="number"
+                min="1"
+                inputmode="numeric"
+                [value]="getCustomSeatLimitDraft(control.admin.id, control.billing.customSeatLimit)"
+                (ionInput)="onLimitEditorInput($any($event.detail).value)"
+              ></ion-input>
+            </ion-item>
+
+            <ion-note class="limit-editor-help">
+              {{
+                control.billing.customSeatLimit !== null
+                  ? ("billing.custom_limit_value" | t: { limit: control.billing.customSeatLimit })
+                  : ("billing.limit_editor_uses_plan" | t: { limit: control.billing.subscriptionSeatLimit })
+              }}
+            </ion-note>
+
+            <div class="limit-editor-actions">
+              <ion-button [disabled]="!canSaveCustomSeatLimit(control)" (click)="saveCurrentEditorLimit()">
+                {{ "billing.custom_limit_save" | t }}
+              </ion-button>
+              <ion-button fill="outline" color="medium" [disabled]="!canRemoveCustomSeatLimit(control)" (click)="clearCurrentEditorLimit()">
+                {{ "billing.custom_limit_remove" | t }}
+              </ion-button>
+            </div>
+          </section>
+        </div>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+
   <ion-grid fixed class="billing-grid">
-    <ion-row>
-      <ion-col size="12" size-lg="5">
-        <ion-card class="glass-card panel">
-          <ion-card-header>
-            <ion-card-title>{{ "billing.current_title" | t }}</ion-card-title>
-            <p class="microcopy">{{ "billing.current_desc" | t }}</p>
-          </ion-card-header>
-          <ion-card-content *ngIf="summary as billing; else loadingState">
-            <section class="empty-state" *ngIf="billing.isBypassed">
-              <ion-icon name="shield-checkmark-outline" aria-hidden="true"></ion-icon>
-              <h3>{{ "billing.superadmin_title" | t }}</h3>
-              <p>{{ "billing.superadmin_desc" | t }}</p>
-            </section>
-
-            <ng-container *ngIf="!billing.isBypassed">
-              <div class="billing-status-card app-inline-panel">
-                <div class="billing-status-copy">
-                  <span class="billing-status-kicker">{{ "common.current" | t }}</span>
-                  <strong>{{ billing.plan.name }}</strong>
-                  <p>{{ formatCurrentPrice(billing) }}</p>
-                </div>
-                <div class="billing-status-side">
-                  <ion-badge [color]="billing.isTrial ? 'warning' : 'success'">{{ planStatusLabel() }}</ion-badge>
-                  <ion-badge [color]="billing.seatLimitSource === 'CUSTOM' ? 'tertiary' : 'medium'">
-                    {{ seatLimitSourceLabel(billing) }}
-                  </ion-badge>
-                  <div class="billing-status-cycle">
-                    <span>{{ "billing.current_cycle" | t }}</span>
-                    <strong>{{ currentCycleLabel(billing) }}</strong>
-                  </div>
-                </div>
-              </div>
-
-              <ion-list lines="none" class="data-list">
-                <ion-item class="data-item">
-                  <ion-label>
-                    <h3 class="item-title">{{ "billing.seat_usage" | t }}</h3>
-                    <ion-note class="item-meta">
-                      {{ "billing.seat_usage_value" | t: { used: billing.seatUsage.used, limit: billing.seatUsage.limit, remaining: billing.seatUsage.remaining } }}
-                    </ion-note>
-                  </ion-label>
-                </ion-item>
-                <ion-item class="data-item">
-                  <ion-label>
-                    <h3 class="item-title">{{ "billing.limit_source_title" | t }}</h3>
-                    <ion-note class="item-meta">{{ seatLimitSourceHint(billing) }}</ion-note>
-                  </ion-label>
-                </ion-item>
-                <ion-item class="data-item" *ngIf="billing.customSeatLimit !== null">
-                  <ion-label>
-                    <h3 class="item-title">{{ "billing.custom_limit_active" | t }}</h3>
-                    <ion-note class="item-meta">
-                      {{ "billing.custom_limit_value" | t: { limit: billing.customSeatLimit } }}
-                    </ion-note>
-                  </ion-label>
-                </ion-item>
-                <ion-item class="data-item" *ngIf="billing.isTrial">
-                  <ion-label>
-                    <h3 class="item-title">{{ "billing.trial_ends" | t }}</h3>
-                    <ion-note class="item-meta">{{ formatDate(billing.trialEndsAt) }}</ion-note>
-                  </ion-label>
-                </ion-item>
-                <ion-item class="data-item" *ngIf="!billing.isTrial">
-                  <ion-label>
-                    <h3 class="item-title">{{ "billing.period_ends" | t }}</h3>
-                    <ion-note class="item-meta">{{ formatDate(billing.currentPeriodEnd) }}</ion-note>
-                  </ion-label>
-                </ion-item>
-                <ion-item class="data-item" *ngIf="billing.cancelAtPeriodEnd">
-                  <ion-label>
-                    <h3 class="item-title">{{ "billing.cancel_pending" | t }}</h3>
-                    <ion-note class="item-meta">{{ "billing.cancel_pending_desc" | t }}</ion-note>
-                  </ion-label>
-                </ion-item>
-              </ion-list>
-
-              <div class="billing-actions">
-                <ion-button expand="block" fill="outline" [disabled]="actionLoading || !billing.managementUrls.portalAvailable" (click)="openPortal()">
-                  {{ "billing.open_portal" | t }}
-                </ion-button>
-              </div>
-            </ng-container>
-          </ion-card-content>
-        </ion-card>
-      </ion-col>
-
-      <ion-col size="12" size-lg="7">
-        <ion-card class="glass-card panel">
-          <ion-card-header>
-            <ion-card-title>{{ "billing.plans_title" | t }}</ion-card-title>
-            <p class="microcopy">{{ "billing.plans_desc" | t }}</p>
-          </ion-card-header>
-          <ion-card-content>
-            <div class="plans-toolbar app-inline-panel">
-              <div class="plans-toolbar-copy">
-                <strong>{{ "billing.compare_cycle_title" | t }}</strong>
-                <p>{{ "billing.compare_cycle_desc" | t }}</p>
-              </div>
-
-              <ion-segment class="billing-cycle-switch" [value]="selectedInterval" (ionChange)="setSelectedInterval($event.detail.value)">
-                <ion-segment-button value="month">
-                  <ion-label>{{ "billing.monthly" | t }}</ion-label>
-                </ion-segment-button>
-                <ion-segment-button value="year">
-                  <ion-label>{{ "billing.yearly" | t }}</ion-label>
-                </ion-segment-button>
-              </ion-segment>
-            </div>
-
-            <div class="plans-grid">
-              <article class="plan-card app-inline-panel" *ngFor="let plan of paidPlans" [class.plan-card-active]="summary?.plan?.code === plan.code">
-                <div class="plan-card-head">
-                  <div class="plan-card-copy">
-                    <span class="plan-card-kicker">{{ "billing.seats" | t: { count: plan.seatLimit } }}</span>
-                    <strong>{{ plan.name }}</strong>
-                    <p>{{ formatCycleLabel(selectedInterval) }}</p>
-                  </div>
-                  <div class="plan-card-badges">
-                    <ion-badge color="primary" *ngIf="isCurrentPlan(plan)">{{ "billing.current_plan" | t }}</ion-badge>
-                  </div>
-                </div>
-
-                <ng-container *ngIf="selectedPriceFor(plan) as selectedPrice; else unavailableCycle">
-                  <ion-badge color="success" *ngIf="selectedPrice.interval === 'year' && selectedPrice.savingsVsMonthlyPercent">
-                    {{ "billing.save_percent" | t: { percent: selectedPrice.savingsVsMonthlyPercent } }}
-                  </ion-badge>
-
-                  <section class="price-callout app-inline-panel" [class.price-callout-current]="isCurrentPrice(selectedPrice)">
-                    <span class="price-callout-kicker">{{ formatCycleLabel(selectedPrice.interval) }}</span>
-                    <strong class="price-figure">{{ formatPriceOption(selectedPrice) }}</strong>
-                    <p>{{ formatPriceHint(selectedPrice) }}</p>
-                  </section>
-
-                  <ion-button
-                    expand="block"
-                    [fill]="isCurrentPrice(selectedPrice) ? 'outline' : 'solid'"
-                    [disabled]="actionLoading || !isAdminBilling || !selectedPrice.checkoutEnabled || !selectedPrice.priceId || isCurrentPrice(selectedPrice)"
-                    (click)="startCheckout(selectedPrice)"
-                  >
-                    {{ planActionLabel(plan, selectedPrice) }}
-                  </ion-button>
-
-                  <p class="plan-action-note" *ngIf="isCurrentPrice(selectedPrice)">
-                    {{ "common.selected" | t }}
-                  </p>
-                  <p class="plan-action-note" *ngIf="!isCurrentPrice(selectedPrice) && (!selectedPrice.checkoutEnabled || !selectedPrice.priceId)">
-                    {{ "billing.plan_cycle_unavailable" | t }}
-                  </p>
-                </ng-container>
-
-                <ng-template #unavailableCycle>
-                  <section class="price-callout app-inline-panel price-callout-unavailable">
-                    <span class="price-callout-kicker">{{ formatCycleLabel(selectedInterval) }}</span>
-                    <strong class="price-figure">{{ "billing.not_available" | t }}</strong>
-                    <p>{{ "billing.plan_cycle_unavailable" | t }}</p>
-                  </section>
-
-                  <ion-button expand="block" fill="outline" disabled>
-                    {{ "billing.not_available" | t }}
-                  </ion-button>
-                </ng-template>
-              </article>
-            </div>
-
-            <section class="empty-state" *ngIf="!isAdminBilling && !isSuperadminBilling">
-              <ion-icon name="information-circle-outline" aria-hidden="true"></ion-icon>
-              <h3>{{ "billing.superadmin_title" | t }}</h3>
-              <p>{{ "billing.superadmin_desc" | t }}</p>
-            </section>
-          </ion-card-content>
-        </ion-card>
-      </ion-col>
-    </ion-row>
-
-    <ion-row *ngIf="isSuperadminBilling">
-      <ion-col size="12">
-        <ion-card class="glass-card panel">
-          <ion-card-header>
-            <ion-card-title>{{ "billing.admin_limits_title" | t }}</ion-card-title>
-            <p class="microcopy">{{ "billing.admin_limits_desc" | t }}</p>
-          </ion-card-header>
-          <ion-card-content>
-            <div class="plans-toolbar app-inline-panel admin-limits-toolbar">
-              <div class="plans-toolbar-copy">
-                <strong>{{ "billing.admin_limits_search_title" | t }}</strong>
-                <p>{{ "billing.admin_limits_search_desc" | t }}</p>
-              </div>
-
-              <ion-searchbar
-                class="admin-limits-search"
-                [placeholder]="'billing.admin_limits_search_placeholder' | t"
-                [value]="adminSearch"
-                (ionInput)="adminSearch = $any($event.detail).value ?? ''"
-              ></ion-searchbar>
-            </div>
-
-            <div class="admin-limit-grid" *ngIf="filteredAdminSeatControls.length; else noAdminsState">
-              <article class="app-inline-panel admin-limit-card" *ngFor="let control of filteredAdminSeatControls">
-                <div class="admin-limit-head">
-                  <div class="admin-limit-copy">
-                    <strong>{{ control.admin.fullName }}</strong>
-                    <p>{{ control.admin.email }}</p>
-                  </div>
-
-                  <div class="admin-limit-badges">
-                    <ion-badge [color]="control.billing.seatLimitSource === 'CUSTOM' ? 'tertiary' : 'medium'">
-                      {{ seatLimitSourceLabel(control.billing) }}
+    <ng-container *ngIf="isSuperadminBilling; else adminBillingView">
+      <ion-row>
+        <ion-col size="12" size-xl="7">
+          <ion-card class="glass-card panel">
+            <ion-card-header>
+              <ion-card-title>{{ "billing.superadmin_overview_title" | t }}</ion-card-title>
+              <p class="microcopy">{{ "billing.superadmin_overview_desc" | t }}</p>
+            </ion-card-header>
+            <ion-card-content *ngIf="summary as billing; else loadingState">
+              <section class="app-inline-panel app-inline-panel--accent superadmin-hero">
+                <div class="superadmin-hero-copy">
+                  <div class="superadmin-hero-badges">
+                    <ion-badge color="warning">{{ "role.SUPERADMIN" | t }}</ion-badge>
+                    <ion-badge [color]="billing.stripeConfigured ? 'success' : 'medium'">
+                      {{ (billing.stripeConfigured ? "billing.superadmin_stripe_ready" : "billing.superadmin_stripe_missing") | t }}
                     </ion-badge>
-                    <ion-badge color="warning" *ngIf="control.billing.isTrial">{{ "billing.status.TRIALING" | t }}</ion-badge>
                   </div>
+                  <strong>{{ "billing.superadmin_title" | t }}</strong>
+                  <p>{{ "billing.superadmin_desc" | t }}</p>
                 </div>
 
-                <div class="admin-limit-meta">
-                  <div class="admin-limit-stat">
-                    <span>{{ "billing.seat_usage" | t }}</span>
-                    <strong>{{ "billing.seat_usage_value" | t: { used: control.seatUsage.used, limit: control.seatUsage.limit, remaining: control.seatUsage.remaining } }}</strong>
-                  </div>
-                  <div class="admin-limit-stat">
-                    <span>{{ "billing.current_plan" | t }}</span>
-                    <strong>{{ planNameForCode(control.billing.planCode) }}</strong>
-                  </div>
-                  <div class="admin-limit-stat">
-                    <span>{{ "billing.limit_source_title" | t }}</span>
-                    <strong>{{ seatLimitSourceHint(control.billing) }}</strong>
-                  </div>
-                  <div class="admin-limit-stat">
-                    <span>{{ control.billing.isTrial ? ("billing.trial_ends" | t) : ("billing.period_ends" | t) }}</span>
-                    <strong>{{ trialOrPeriodLabel(control) }}</strong>
-                  </div>
+                <ion-button fill="outline" routerLink="/billing-history">
+                  {{ "nav.payments" | t }}
+                </ion-button>
+              </section>
+
+              <ion-grid class="superadmin-metrics-grid">
+                <ion-row>
+                  <ion-col size="6" size-md="3" class="metric-tile">
+                    <strong>{{ "billing.superadmin_metric_admins" | t }}</strong>
+                    <p>{{ totalAdmins }}</p>
+                  </ion-col>
+                  <ion-col size="6" size-md="3" class="metric-tile">
+                    <strong>{{ "billing.superadmin_metric_seats" | t }}</strong>
+                    <p>{{ totalManagedSeatsUsed }} / {{ totalManagedSeatsLimit }}</p>
+                  </ion-col>
+                  <ion-col size="6" size-md="3" class="metric-tile">
+                    <strong>{{ "billing.superadmin_metric_overrides" | t }}</strong>
+                    <p>{{ totalManualOverrides }}</p>
+                  </ion-col>
+                  <ion-col size="6" size-md="3" class="metric-tile">
+                    <strong>{{ "billing.superadmin_metric_attention" | t }}</strong>
+                    <p>{{ totalAttentionAdmins }}</p>
+                  </ion-col>
+                </ion-row>
+              </ion-grid>
+            </ion-card-content>
+          </ion-card>
+        </ion-col>
+
+        <ion-col size="12" size-xl="5" *ngIf="paidPlans.length > 0">
+          <ion-card class="glass-card panel">
+            <ion-card-header>
+              <ion-card-title>{{ "billing.superadmin_catalog_title" | t }}</ion-card-title>
+              <p class="microcopy">{{ "billing.superadmin_catalog_desc" | t }}</p>
+            </ion-card-header>
+            <ion-card-content>
+              <div class="plans-toolbar app-inline-panel superadmin-catalog-toolbar">
+                <div class="plans-toolbar-copy">
+                  <strong>{{ "billing.compare_cycle_title" | t }}</strong>
+                  <p>{{ "billing.compare_cycle_desc" | t }}</p>
                 </div>
 
-                <div class="admin-limit-editor">
-                  <ion-input
-                    type="number"
-                    min="1"
-                    inputmode="numeric"
-                    [label]="'billing.custom_limit_field' | t"
-                    labelPlacement="stacked"
-                    [value]="getCustomSeatLimitDraft(control.admin.id, control.billing.customSeatLimit)"
-                    (ionInput)="updateCustomSeatLimitDraft(control.admin.id, $any($event.detail).value)"
-                  ></ion-input>
+                <ion-segment class="billing-cycle-switch" [value]="selectedInterval" (ionChange)="setSelectedInterval($event.detail.value)">
+                  <ion-segment-button value="month">
+                    <ion-label>{{ "billing.monthly" | t }}</ion-label>
+                  </ion-segment-button>
+                  <ion-segment-button value="year">
+                    <ion-label>{{ "billing.yearly" | t }}</ion-label>
+                  </ion-segment-button>
+                </ion-segment>
+              </div>
 
-                  <div class="admin-limit-actions">
-                    <ion-button
-                      size="small"
-                      [disabled]="seatLimitSavingId === control.admin.id"
-                      (click)="saveCustomSeatLimit(control)"
-                    >
-                      {{ "billing.custom_limit_save" | t }}
-                    </ion-button>
-                    <ion-button
-                      size="small"
-                      fill="outline"
-                      color="medium"
-                      [disabled]="seatLimitSavingId === control.admin.id || control.billing.customSeatLimit === null"
-                      (click)="clearCustomSeatLimit(control)"
-                    >
-                      {{ "billing.custom_limit_remove" | t }}
-                    </ion-button>
-                  </div>
+              <div class="plan-reference-grid">
+                <article class="plan-reference-card app-inline-panel" *ngFor="let plan of paidPlans">
+                  <span class="plan-card-kicker">{{ "billing.seats" | t: { count: plan.seatLimit } }}</span>
+                  <strong>{{ plan.name }}</strong>
+
+                  <ng-container *ngIf="selectedPriceFor(plan) as selectedPrice; else unavailableReference">
+                    <p class="plan-reference-price">{{ formatPriceOption(selectedPrice) }}</p>
+                    <ion-note>{{ formatPriceHint(selectedPrice) }}</ion-note>
+                  </ng-container>
+
+                  <ng-template #unavailableReference>
+                    <p class="plan-reference-price">{{ "billing.not_available" | t }}</p>
+                    <ion-note>{{ "billing.plan_cycle_unavailable" | t }}</ion-note>
+                  </ng-template>
+                </article>
+              </div>
+            </ion-card-content>
+          </ion-card>
+        </ion-col>
+      </ion-row>
+
+      <ion-row>
+        <ion-col size="12">
+          <ion-card class="glass-card panel">
+            <ion-card-header>
+              <ion-card-title>{{ "billing.admin_limits_title" | t }}</ion-card-title>
+              <p class="microcopy">{{ "billing.admin_limits_desc" | t }}</p>
+            </ion-card-header>
+            <ion-card-content>
+              <div class="app-inline-panel superadmin-controls-toolbar">
+                <div class="plans-toolbar-copy">
+                  <strong>{{ "billing.admin_limits_search_title" | t }}</strong>
+                  <p>{{ "billing.admin_limits_search_desc" | t }}</p>
                 </div>
-              </article>
-            </div>
 
-            <ng-template #noAdminsState>
-              <section class="empty-state">
+                <ion-searchbar
+                  class="admin-limits-search"
+                  [placeholder]="'billing.admin_limits_search_placeholder' | t"
+                  [value]="adminSearch"
+                  (ionInput)="adminSearch = $any($event.detail).value ?? ''; onAdminSearchChange()"
+                ></ion-searchbar>
+              </div>
+
+              <div class="billing-results-summary" *ngIf="adminSeatControlsTotal > 0">
+                <strong>{{ adminSeatControlsTotal }}</strong>
+                <span>{{ "billing.admin_results_label" | t }}</span>
+              </div>
+
+              <section class="empty-state" *ngIf="adminControlsLoading">
+                <ion-icon name="card-outline" aria-hidden="true"></ion-icon>
+                <h3>{{ "common.loading" | t }}</h3>
+              </section>
+
+              <ng-container *ngIf="!adminControlsLoading && adminSeatControls.length > 0">
+                <div class="billing-table-shell app-table-shell">
+                  <table class="billing-admin-table app-data-table">
+                    <colgroup>
+                      <col class="billing-col-admin" />
+                      <col class="billing-col-status" />
+                      <col class="billing-col-usage" />
+                      <col class="billing-col-plan" />
+                      <col class="billing-col-period" />
+                      <col class="billing-col-actions" />
+                    </colgroup>
+                    <thead>
+                      <tr>
+                        <th>{{ "billing.admin_table_admin" | t }}</th>
+                        <th>{{ "billing.admin_table_status" | t }}</th>
+                        <th>{{ "billing.admin_table_usage" | t }}</th>
+                        <th>{{ "billing.admin_table_plan" | t }}</th>
+                        <th>{{ "billing.admin_table_period" | t }}</th>
+                        <th>{{ "billing.admin_table_actions" | t }}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let control of adminSeatControls">
+                        <td class="billing-admin-col" [attr.data-label]="'billing.admin_table_admin' | t">
+                          <div class="admin-table-user">
+                            <div class="admin-limit-avatar" aria-hidden="true">{{ initialsFor(control.admin.fullName) }}</div>
+                            <div class="admin-table-user-copy">
+                              <strong>{{ control.admin.fullName }}</strong>
+                              <span>{{ control.admin.email }}</span>
+                              <span class="admin-table-alert" *ngIf="controlNeedsAttention(control)">
+                                {{ controlAttentionTitle(control) }}
+                              </span>
+                            </div>
+                          </div>
+                        </td>
+                        <td class="billing-status-col" [attr.data-label]="'billing.admin_table_status' | t">
+                          <div class="admin-table-status">
+                            <ion-badge [color]="subscriptionStatusColor(control.billing.status)">
+                              {{ ("billing.status." + control.billing.status) | t }}
+                            </ion-badge>
+                            <ion-badge [color]="control.billing.seatLimitSource === 'CUSTOM' ? 'tertiary' : 'medium'">
+                              {{ seatLimitSourceLabel(control.billing) }}
+                            </ion-badge>
+                            <ion-badge *ngIf="controlNeedsAttention(control)" [color]="attentionBadgeColor(control)">
+                              {{ "billing.attention_badge" | t }}
+                            </ion-badge>
+                          </div>
+                        </td>
+                        <td class="billing-usage-col" [attr.data-label]="'billing.admin_table_usage' | t">
+                          <div class="admin-table-usage">
+                            <strong>{{ control.seatUsage.used }}/{{ control.seatUsage.limit }}</strong>
+                            <div class="admin-limit-progress-track" aria-hidden="true">
+                              <span
+                                class="admin-limit-progress-fill"
+                                [style.width.%]="seatUsagePercent(control)"
+                                [class.admin-limit-progress-fill-danger]="!isBillingHealthy(control) || isOverCapacity(control) || isAtCapacity(control)"
+                                [class.admin-limit-progress-fill-warning]="isBillingHealthy(control) && !isOverCapacity(control) && !isAtCapacity(control) && (isNearCapacity(control) || isTrialEndingSoon(control) || control.billing.cancelAtPeriodEnd)"
+                              ></span>
+                            </div>
+                            <span>{{ "billing.seat_usage_value" | t: { used: control.seatUsage.used, limit: control.seatUsage.limit, remaining: control.seatUsage.remaining } }}</span>
+                          </div>
+                        </td>
+                        <td class="billing-plan-col" [attr.data-label]="'billing.admin_table_plan' | t">
+                          <div class="admin-table-meta">
+                            <strong>{{ planNameForCode(control.billing.planCode) }}</strong>
+                            <span>{{ seatLimitSourceHint(control.billing) }}</span>
+                          </div>
+                        </td>
+                        <td class="billing-period-col" [attr.data-label]="'billing.admin_table_period' | t">
+                          <div class="admin-table-meta">
+                            <strong>{{ trialOrPeriodLabel(control) }}</strong>
+                            <span>{{ control.billing.isTrial ? ("billing.trial_ends" | t) : ("billing.period_ends" | t) }}</span>
+                          </div>
+                        </td>
+                        <td class="billing-actions-col" [attr.data-label]="'billing.admin_table_actions' | t">
+                          <div class="billing-table-actions">
+                            <ion-button size="small" fill="outline" [disabled]="seatLimitSavingId === control.admin.id" (click)="openLimitEditor(control)">
+                              {{ "billing.limit_editor_open" | t }}
+                            </ion-button>
+                            <ion-note class="admin-table-current-limit" *ngIf="control.billing.customSeatLimit !== null">
+                              {{ "billing.custom_limit_value" | t: { limit: control.billing.customSeatLimit } }}
+                            </ion-note>
+                            <ion-note class="admin-table-current-limit" *ngIf="control.billing.customSeatLimit === null">
+                              {{ "billing.limit_editor_uses_plan" | t: { limit: control.billing.subscriptionSeatLimit } }}
+                            </ion-note>
+                          </div>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <div class="report-pagination" *ngIf="adminSeatControlsTotal > adminSeatControlsPageSize">
+                  <ion-button
+                    size="small"
+                    fill="outline"
+                    [disabled]="adminSeatControlsPage === 1"
+                    (click)="goToAdminSeatControlsPage(adminSeatControlsPage - 1)"
+                  >
+                    {{ "common.previous" | t }}
+                  </ion-button>
+                  <span>{{ "reports.pagination_page" | t: { page: adminSeatControlsPage, total: adminSeatControlsPageCount } }}</span>
+                  <ion-button
+                    size="small"
+                    fill="outline"
+                    [disabled]="adminSeatControlsPage === adminSeatControlsPageCount"
+                    (click)="goToAdminSeatControlsPage(adminSeatControlsPage + 1)"
+                  >
+                    {{ "common.next" | t }}
+                  </ion-button>
+                </div>
+              </ng-container>
+
+              <section class="empty-state" *ngIf="!adminControlsLoading && adminSeatControls.length === 0 && adminSeatControlsTotal === 0 && !adminSearch.trim()">
                 <ion-icon name="people-outline" aria-hidden="true"></ion-icon>
                 <h3>{{ "billing.admin_limits_empty_title" | t }}</h3>
                 <p>{{ "billing.admin_limits_empty_desc" | t }}</p>
               </section>
-            </ng-template>
-          </ion-card-content>
-        </ion-card>
-      </ion-col>
-    </ion-row>
+
+              <section class="empty-state" *ngIf="!adminControlsLoading && adminSeatControls.length === 0 && (adminSeatControlsTotal === 0 && !!adminSearch.trim())">
+                <ion-icon name="search-outline" aria-hidden="true"></ion-icon>
+                <h3>{{ "billing.admin_limits_no_match_title" | t }}</h3>
+                <p>{{ "billing.admin_limits_no_match_desc" | t }}</p>
+              </section>
+            </ion-card-content>
+          </ion-card>
+        </ion-col>
+      </ion-row>
+    </ng-container>
+
+    <ng-template #adminBillingView>
+      <ion-row>
+        <ion-col size="12" size-lg="5">
+          <ion-card class="glass-card panel">
+            <ion-card-header>
+              <ion-card-title>{{ "billing.current_title" | t }}</ion-card-title>
+              <p class="microcopy">{{ "billing.current_desc" | t }}</p>
+            </ion-card-header>
+            <ion-card-content *ngIf="summary as billing; else loadingState">
+              <section class="empty-state" *ngIf="billing.isBypassed">
+                <ion-icon name="shield-checkmark-outline" aria-hidden="true"></ion-icon>
+                <h3>{{ "billing.superadmin_title" | t }}</h3>
+                <p>{{ "billing.superadmin_desc" | t }}</p>
+              </section>
+
+              <ng-container *ngIf="!billing.isBypassed">
+                <div class="billing-status-card app-inline-panel">
+                  <div class="billing-status-copy">
+                    <span class="billing-status-kicker">{{ "common.current" | t }}</span>
+                    <strong>{{ billing.plan.name }}</strong>
+                    <p>{{ formatCurrentPrice(billing) }}</p>
+                  </div>
+                  <div class="billing-status-side">
+                    <ion-badge [color]="billing.isTrial ? 'warning' : 'success'">{{ planStatusLabel() }}</ion-badge>
+                    <ion-badge [color]="billing.seatLimitSource === 'CUSTOM' ? 'tertiary' : 'medium'">
+                      {{ seatLimitSourceLabel(billing) }}
+                    </ion-badge>
+                    <div class="billing-status-cycle">
+                      <span>{{ "billing.current_cycle" | t }}</span>
+                      <strong>{{ currentCycleLabel(billing) }}</strong>
+                    </div>
+                  </div>
+                </div>
+
+                <ion-list lines="none" class="data-list">
+                  <ion-item class="data-item">
+                    <ion-label>
+                      <h3 class="item-title">{{ "billing.seat_usage" | t }}</h3>
+                      <ion-note class="item-meta">
+                        {{ "billing.seat_usage_value" | t: { used: billing.seatUsage.used, limit: billing.seatUsage.limit, remaining: billing.seatUsage.remaining } }}
+                      </ion-note>
+                    </ion-label>
+                  </ion-item>
+                  <ion-item class="data-item">
+                    <ion-label>
+                      <h3 class="item-title">{{ "billing.limit_source_title" | t }}</h3>
+                      <ion-note class="item-meta">{{ seatLimitSourceHint(billing) }}</ion-note>
+                    </ion-label>
+                  </ion-item>
+                  <ion-item class="data-item" *ngIf="billing.customSeatLimit !== null">
+                    <ion-label>
+                      <h3 class="item-title">{{ "billing.custom_limit_active" | t }}</h3>
+                      <ion-note class="item-meta">
+                        {{ "billing.custom_limit_value" | t: { limit: billing.customSeatLimit } }}
+                      </ion-note>
+                    </ion-label>
+                  </ion-item>
+                  <ion-item class="data-item" *ngIf="billing.isTrial">
+                    <ion-label>
+                      <h3 class="item-title">{{ "billing.trial_ends" | t }}</h3>
+                      <ion-note class="item-meta">{{ formatDate(billing.trialEndsAt) }}</ion-note>
+                    </ion-label>
+                  </ion-item>
+                  <ion-item class="data-item" *ngIf="!billing.isTrial">
+                    <ion-label>
+                      <h3 class="item-title">{{ "billing.period_ends" | t }}</h3>
+                      <ion-note class="item-meta">{{ formatDate(billing.currentPeriodEnd) }}</ion-note>
+                    </ion-label>
+                  </ion-item>
+                  <ion-item class="data-item" *ngIf="billing.cancelAtPeriodEnd">
+                    <ion-label>
+                      <h3 class="item-title">{{ "billing.cancel_pending" | t }}</h3>
+                      <ion-note class="item-meta">{{ "billing.cancel_pending_desc" | t }}</ion-note>
+                    </ion-label>
+                  </ion-item>
+                </ion-list>
+
+                <div class="billing-actions">
+                  <ion-button expand="block" fill="outline" [disabled]="actionLoading || !billing.managementUrls.portalAvailable" (click)="openPortal()">
+                    {{ "billing.open_portal" | t }}
+                  </ion-button>
+                </div>
+              </ng-container>
+            </ion-card-content>
+          </ion-card>
+        </ion-col>
+
+        <ion-col size="12" size-lg="7">
+          <ion-card class="glass-card panel">
+            <ion-card-header>
+              <ion-card-title>{{ "billing.plans_title" | t }}</ion-card-title>
+              <p class="microcopy">{{ "billing.plans_desc" | t }}</p>
+            </ion-card-header>
+            <ion-card-content>
+              <div class="plans-toolbar app-inline-panel">
+                <div class="plans-toolbar-copy">
+                  <strong>{{ "billing.compare_cycle_title" | t }}</strong>
+                  <p>{{ "billing.compare_cycle_desc" | t }}</p>
+                </div>
+
+                <ion-segment class="billing-cycle-switch" [value]="selectedInterval" (ionChange)="setSelectedInterval($event.detail.value)">
+                  <ion-segment-button value="month">
+                    <ion-label>{{ "billing.monthly" | t }}</ion-label>
+                  </ion-segment-button>
+                  <ion-segment-button value="year">
+                    <ion-label>{{ "billing.yearly" | t }}</ion-label>
+                  </ion-segment-button>
+                </ion-segment>
+              </div>
+
+              <div class="plans-grid">
+                <article class="plan-card app-inline-panel" *ngFor="let plan of paidPlans" [class.plan-card-active]="summary?.plan?.code === plan.code">
+                  <div class="plan-card-head">
+                    <div class="plan-card-copy">
+                      <span class="plan-card-kicker">{{ "billing.seats" | t: { count: plan.seatLimit } }}</span>
+                      <strong>{{ plan.name }}</strong>
+                      <p>{{ formatCycleLabel(selectedInterval) }}</p>
+                    </div>
+                    <div class="plan-card-badges">
+                      <ion-badge color="primary" *ngIf="isCurrentPlan(plan)">{{ "billing.current_plan" | t }}</ion-badge>
+                    </div>
+                  </div>
+
+                  <ng-container *ngIf="selectedPriceFor(plan) as selectedPrice; else unavailableCycle">
+                    <ion-badge color="success" *ngIf="selectedPrice.interval === 'year' && selectedPrice.savingsVsMonthlyPercent">
+                      {{ "billing.save_percent" | t: { percent: selectedPrice.savingsVsMonthlyPercent } }}
+                    </ion-badge>
+
+                    <section class="price-callout app-inline-panel" [class.price-callout-current]="isCurrentPrice(selectedPrice)">
+                      <span class="price-callout-kicker">{{ formatCycleLabel(selectedPrice.interval) }}</span>
+                      <strong class="price-figure">{{ formatPriceOption(selectedPrice) }}</strong>
+                      <p>{{ formatPriceHint(selectedPrice) }}</p>
+                    </section>
+
+                    <ion-button
+                      expand="block"
+                      [fill]="isCurrentPrice(selectedPrice) ? 'outline' : 'solid'"
+                      [disabled]="actionLoading || !isAdminBilling || !selectedPrice.checkoutEnabled || !selectedPrice.priceId || isCurrentPrice(selectedPrice)"
+                      (click)="startCheckout(selectedPrice)"
+                    >
+                      {{ planActionLabel(plan, selectedPrice) }}
+                    </ion-button>
+
+                    <p class="plan-action-note" *ngIf="isCurrentPrice(selectedPrice)">
+                      {{ "common.selected" | t }}
+                    </p>
+                    <p class="plan-action-note" *ngIf="!isCurrentPrice(selectedPrice) && (!selectedPrice.checkoutEnabled || !selectedPrice.priceId)">
+                      {{ "billing.plan_cycle_unavailable" | t }}
+                    </p>
+                  </ng-container>
+
+                  <ng-template #unavailableCycle>
+                    <section class="price-callout app-inline-panel price-callout-unavailable">
+                      <span class="price-callout-kicker">{{ formatCycleLabel(selectedInterval) }}</span>
+                      <strong class="price-figure">{{ "billing.not_available" | t }}</strong>
+                      <p>{{ "billing.plan_cycle_unavailable" | t }}</p>
+                    </section>
+
+                    <ion-button expand="block" fill="outline" disabled>
+                      {{ "billing.not_available" | t }}
+                    </ion-button>
+                  </ng-template>
+                </article>
+              </div>
+            </ion-card-content>
+          </ion-card>
+        </ion-col>
+      </ion-row>
+    </ng-template>
   </ion-grid>
 
   <ng-template #loadingState>

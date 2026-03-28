@@ -2,22 +2,69 @@
   padding-bottom: 32px;
 }
 
+.superadmin-hero,
 .billing-status-card {
   display: flex;
   align-items: start;
   justify-content: space-between;
   gap: 16px;
-  padding: 16px;
+  padding: 16px 18px;
   margin-bottom: 18px;
 }
 
-.billing-status-card strong,
-.plan-card-head strong {
-  font-size: 1rem;
+.superadmin-hero-copy,
+.billing-status-copy,
+.plans-toolbar-copy,
+.limit-editor-copy {
+  min-width: 0;
 }
 
-.billing-status-copy {
+.superadmin-hero-badges,
+.limit-editor-badges,
+.plan-card-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.superadmin-hero-copy strong,
+.limit-editor-copy strong {
+  display: block;
+  font-size: 1.02rem;
+}
+
+.superadmin-hero-copy p,
+.limit-editor-copy p {
+  margin-top: 8px;
+  max-width: 56ch;
+}
+
+.superadmin-metrics-grid {
+  margin-top: 2px;
+}
+
+.superadmin-metrics-grid ion-row {
+  row-gap: 10px;
+}
+
+.plans-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(248px, 320px);
+  align-items: center;
+  gap: 14px 18px;
+  padding: 14px 16px;
+  margin-bottom: 18px;
+}
+
+.superadmin-catalog-toolbar,
+.superadmin-controls-toolbar {
+  margin-bottom: 18px;
+}
+
+.billing-cycle-switch {
+  width: 100%;
   min-width: 0;
+  justify-self: end;
 }
 
 .billing-status-kicker,
@@ -35,7 +82,10 @@
 .billing-status-card p,
 .plan-card-head p,
 .price-callout p,
-.plans-toolbar-copy p {
+.plans-toolbar-copy p,
+.admin-table-usage span,
+.admin-table-meta span,
+.billing-table-actions ion-note {
   margin-top: 6px;
   color: var(--app-text-secondary);
 }
@@ -70,133 +120,43 @@
   margin-top: 18px;
 }
 
-.plans-toolbar {
+.plan-reference-grid,
+.plans-grid,
+.limit-editor-summary {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(248px, 272px);
-  align-items: center;
-  gap: 14px 18px;
-  padding: 14px 16px;
-  margin-bottom: 18px;
-}
-
-.plans-toolbar-copy {
-  min-width: 0;
-  max-width: 48ch;
-}
-
-.plans-toolbar-copy strong {
-  margin-bottom: 2px;
-}
-
-.plans-toolbar-copy p {
-  max-width: 42ch;
-}
-
-.billing-cycle-switch {
-  width: 100%;
-  min-width: 0;
-  justify-self: end;
-}
-
-.plans-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 16px;
-}
-
-.admin-limit-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 16px;
-}
-
-.admin-limit-card {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding: 18px;
-}
-
-.admin-limit-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 14px;
-}
-
-.admin-limit-copy p {
-  margin-top: 6px;
-  color: var(--app-text-secondary);
-}
-
-.admin-limit-badges {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 8px;
-}
-
-.admin-limit-meta {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
 }
 
-.admin-limit-stat {
+.plan-reference-grid {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.plan-reference-card,
+.plan-card,
+.limit-editor-summary-card,
+.limit-editor-panel {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 12px 14px;
-  border-radius: 20px;
-  background: color-mix(in srgb, var(--app-surface-2), transparent 20%);
-  border: 1px solid color-mix(in srgb, var(--app-border-strong), transparent 18%);
 }
 
-.admin-limit-stat span {
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--app-text-tertiary);
-}
-
-.admin-limit-stat strong {
-  font-size: 0.95rem;
-  line-height: 1.35;
-}
-
-.admin-limit-editor {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 14px;
-  align-items: end;
-}
-
-.admin-limit-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  justify-content: flex-end;
-}
-
-.admin-limits-toolbar {
-  margin-bottom: 18px;
-}
-
-.admin-limits-search {
-  --background: color-mix(in srgb, var(--app-surface-2), white 10%);
-  --border-radius: 18px;
-  --box-shadow: none;
-  --color: var(--app-text-primary);
-  --placeholder-color: var(--app-text-tertiary);
-  padding-inline: 0;
-}
-
+.plan-reference-card,
 .plan-card {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+  gap: 12px;
+  min-height: 100%;
   padding: 16px;
+}
+
+.plan-reference-price,
+.price-figure {
+  font-size: 1.18rem;
+  font-weight: 800;
+  line-height: 1.15;
+  color: var(--app-text-primary);
+}
+
+.plans-grid {
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 16px;
 }
 
 .plan-card-active {
@@ -212,17 +172,6 @@
   gap: 12px;
 }
 
-.plan-card-copy {
-  min-width: 0;
-}
-
-.plan-card-badges {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 6px;
-}
-
 .price-callout {
   padding: 14px 16px;
 }
@@ -236,17 +185,101 @@
   opacity: 0.8;
 }
 
-.price-figure {
-  display: flex;
-  margin-top: 8px;
-  font-size: 1.2rem;
-  line-height: 1.15;
-}
-
 .plan-action-note {
   margin-top: -4px;
   font-size: 0.84rem;
   color: var(--app-text-tertiary);
+}
+
+.limit-editor-content {
+  --background:
+    radial-gradient(circle at top, color-mix(in srgb, var(--ion-color-primary), transparent 90%) 0%, transparent 36%),
+    linear-gradient(180deg, var(--app-surface-1) 0%, var(--app-surface-0) 100%);
+}
+
+.limit-editor-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 18px;
+}
+
+.limit-editor-hero {
+  margin: 0;
+}
+
+.limit-editor-identity {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.limit-editor-summary {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.limit-editor-summary-card {
+  gap: 6px;
+  padding: 14px 16px;
+}
+
+.limit-editor-summary-card strong {
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--app-text-tertiary);
+}
+
+.limit-editor-summary-card span {
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: var(--app-text-primary);
+}
+
+.limit-editor-alert {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  padding: 14px 16px;
+  border-radius: 20px;
+  border: 1px solid color-mix(in srgb, var(--ion-color-warning), transparent 56%);
+  background: color-mix(in srgb, var(--ion-color-warning), transparent 92%);
+}
+
+.limit-editor-alert ion-icon {
+  margin-top: 1px;
+  font-size: 1.15rem;
+  color: color-mix(in srgb, var(--ion-color-warning), var(--app-text-primary) 24%);
+}
+
+.limit-editor-alert p {
+  margin-top: 4px;
+}
+
+.limit-editor-panel {
+  gap: 14px;
+  padding: 16px;
+}
+
+.limit-editor-panel-head p {
+  margin-top: 6px;
+}
+
+.limit-editor-help {
+  display: block;
+  font-size: 0.84rem;
+  line-height: 1.45;
+  color: var(--app-text-tertiary);
+}
+
+.limit-editor-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
 }
 
 @media (max-width: 980px) {
@@ -255,20 +288,17 @@
     align-items: start;
   }
 
-  .plans-toolbar-copy,
-  .plans-toolbar-copy p {
-    max-width: none;
-  }
-
   .billing-cycle-switch {
     justify-self: stretch;
+    width: 100%;
   }
 }
 
 @media (max-width: 767px) {
+  .superadmin-hero,
   .billing-status-card,
   .plan-card-head,
-  .admin-limit-head {
+  .limit-editor-hero {
     flex-direction: column;
     align-items: start;
   }
@@ -283,27 +313,78 @@
     gap: 12px;
   }
 
-  .billing-cycle-switch {
-    width: 100%;
-  }
-
-  .admin-limit-badges {
-    justify-content: flex-start;
-  }
-
-  .admin-limit-meta {
+  .plan-reference-grid,
+  .limit-editor-summary {
     grid-template-columns: 1fr;
   }
 
-  .admin-limit-editor {
-    grid-template-columns: 1fr;
+  .billing-table-shell {
+    border: 0;
+    background: transparent;
+    overflow: visible;
   }
 
-  .admin-limit-actions {
+  .billing-admin-table,
+  .billing-admin-table thead,
+  .billing-admin-table tbody,
+  .billing-admin-table th,
+  .billing-admin-table td,
+  .billing-admin-table tr {
+    display: block;
+  }
+
+  .billing-admin-table {
+    min-width: 0;
+    table-layout: auto;
+  }
+
+  .billing-admin-table thead {
+    display: none;
+  }
+
+  .billing-admin-table tbody tr {
+    padding: 16px;
+    margin-bottom: 14px;
+    border: 1px solid var(--app-border-subtle);
+    border-radius: var(--app-radius-md);
+    background: var(--app-surface-1);
+  }
+
+  .billing-admin-table tbody td {
+    padding: 0;
+    border-bottom: 0;
+  }
+
+  .billing-admin-table tbody td + td {
+    margin-top: 14px;
+  }
+
+  .billing-admin-table tbody td::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 6px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--app-text-tertiary);
+  }
+
+  .billing-actions-col {
+    text-align: left;
+  }
+
+  .billing-table-actions {
+    max-width: none;
+    margin-left: 0;
+  }
+
+  .limit-editor-actions {
     justify-content: stretch;
   }
 
-  .admin-limit-actions ion-button {
+  .limit-editor-actions ion-button,
+  .superadmin-hero ion-button {
     flex: 1 1 100%;
   }
 }
