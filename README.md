@@ -26,6 +26,9 @@ La base de datos es **PostgreSQL (SQL)**, no SQLite.
 - [backend](backend)
 - [docker-compose.yml](docker-compose.yml): entorno local
 - [docker-compose.prod.yml](docker-compose.prod.yml): produccion con TLS (Caddy)
+- [docs/deploy-production.md](docs/deploy-production.md): despliegue en servidor propio con Docker Compose
+- [docs/deploy-railway.md](docs/deploy-railway.md): despliegue completo en Railway
+- [docs/deploy-railway-paso-a-paso.md](docs/deploy-railway-paso-a-paso.md): guia Railway detallada para seguir sin experiencia previa
 - [infra/caddy/Caddyfile](infra/caddy/Caddyfile)
 - [scripts](scripts): backup/restore de base de datos
 

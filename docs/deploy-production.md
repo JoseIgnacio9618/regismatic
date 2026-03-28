@@ -2,6 +2,9 @@
 
 Guia para levantar Regismatic con TLS automatico usando Caddy.
 
+Si prefieres desplegarlo en Railway con autoescalado y dominios separados, tienes una guia especifica aqui:
+- [deploy-railway.md](./deploy-railway.md)
+
 ## 1. Requisitos
 - Servidor Linux con Docker + Docker Compose
 - DNS apuntando al servidor:
