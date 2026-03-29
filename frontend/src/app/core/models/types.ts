@@ -69,7 +69,7 @@ export interface BillingSummary {
 
 export interface AttendanceAccessSummary {
   canRecordAttendance: boolean;
-  reason: "OK" | "TEAM_ASSIGNMENT_REQUIRED" | "BILLING_INACTIVE";
+  reason: "OK" | "TEAM_ASSIGNMENT_REQUIRED" | "BILLING_INACTIVE" | "NOT_APPLICABLE";
   managedByAdminId: string | null;
   managedByAdminName: string | null;
   requiresSubscriptionAction: boolean;
@@ -94,6 +94,7 @@ export interface AdminSeatLimitControl {
     trialEndsAt: string | null;
     currentPeriodEnd: string | null;
     cancelAtPeriodEnd: boolean;
+    currentPrice: BillingPriceOption | null;
   };
   seatUsage: {
     used: number;

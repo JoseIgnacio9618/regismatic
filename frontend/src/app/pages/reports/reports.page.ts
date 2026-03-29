@@ -2,7 +2,14 @@ import { Component, OnDestroy, OnInit } from "@angular/core";
 import { ActivatedRoute } from "@angular/router";
 import { ToastController } from "@ionic/angular";
 import { Subscription } from "rxjs";
-import { AttendanceEventRecord, Role, SummaryRow, TeamUser, WorkEventEditRequestRecord } from "src/app/core/models/types";
+import {
+  AttendanceEventRecord,
+  Role,
+  SummaryRow,
+  TeamJoinRequest,
+  TeamUser,
+  WorkEventEditRequestRecord
+} from "src/app/core/models/types";
 import { AttendanceService } from "src/app/core/services/attendance.service";
 import { AuthService } from "src/app/core/services/auth.service";
 import { I18nService } from "src/app/core/services/i18n.service";
@@ -15,26 +22,41 @@ type ReportScopeOption = {
   role?: Role;
 };
 
+type SuperadminAdminOverview = {
+  admin: TeamUser;
+  employees: TeamUser[];
+  pendingEditRequestsCount: number;
+  employeesWithPendingEditsCount: number;
+  pendingJoinRequestsCount: number;
+  totalActiveItems: number;
+};
+
 @Component({
   selector: "app-reports",
   templateUrl: "./reports.page.html",
   styleUrls: ["./reports.page.scss"],
   standalone: false
 })
-export class ReportsPage implements OnInit {
+export class ReportsPage implements OnInit, OnDestroy {
   from = this.getWeekStart();
   to = new Date().toISOString().slice(0, 10);
   selectedUserId = "";
+  selectedManagerId = "";
+  superadminAdminSearch = "";
   users: TeamUser[] = [];
   rows: SummaryRow[] = [];
   events: AttendanceEventRecord[] = [];
   pendingRequests: WorkEventEditRequestRecord[] = [];
+  superadminPendingRequestsPool: WorkEventEditRequestRecord[] = [];
+  superadminJoinRequests: TeamJoinRequest[] = [];
   loading = false;
   summaryPage = 1;
   eventsPage = 1;
   pendingRequestsPage = 1;
+  superadminAdminPage = 1;
   readonly pageSize = 50;
   readonly pendingPageSize = 20;
+  readonly superadminAdminPageSize = 6;
   summaryTotal = 0;
   eventsTotal = 0;
   pendingRequestsTotal = 0;
@@ -42,6 +64,7 @@ export class ReportsPage implements OnInit {
   editingEventId: string | null = null;
   requestingEventId: string | null = null;
   reviewCommentByRequestId: Record<string, string> = {};
+  joinReviewCommentByRequestId: Record<string, string> = {};
 
   adminEditModel = {
     eventAt: "",
@@ -67,28 +90,29 @@ export class ReportsPage implements OnInit {
     private readonly toastController: ToastController
   ) {}
 
-  get scopedFilterUsers(): TeamUser[] {
-    if (this.authService.isSuperadmin) {
-      return this.users;
-    }
+  get isSuperadminView(): boolean {
+    return this.authService.isSuperadmin;
+  }
 
+  get isStandardAdminView(): boolean {
+    return this.authService.isAdmin && !this.authService.isSuperadmin;
+  }
+
+  get adminUsers(): TeamUser[] {
+    return this.users.filter((user) => user.role === "ADMIN");
+  }
+
+  get employeeUsers(): TeamUser[] {
     return this.users.filter((user) => user.role === "EMPLOYEE");
   }
 
-  get reportScopeOptions(): ReportScopeOption[] {
-    if (!this.authService.isAdmin) {
-      return [];
-    }
+  get scopedFilterUsers(): TeamUser[] {
+    return this.isStandardAdminView ? this.employeeUsers : [];
+  }
 
-    if (this.authService.isSuperadmin) {
-      return [
-        { id: "", label: this.i18nService.t("reports.scope_all_platform") },
-        ...this.scopedFilterUsers.map((user) => ({
-          id: user.id,
-          label: `${user.fullName} - ${this.roleLabel(user.role)}`,
-          role: user.role
-        }))
-      ];
+  get reportScopeOptions(): ReportScopeOption[] {
+    if (!this.isStandardAdminView) {
+      return [];
     }
 
     const currentUser = this.authService.user;
@@ -111,11 +135,11 @@ export class ReportsPage implements OnInit {
   }
 
   get scopeTitle(): string {
-    if (this.authService.isSuperadmin) {
+    if (this.isSuperadminView) {
       return this.i18nService.t("reports.scope_superadmin_title");
     }
 
-    if (this.authService.isAdmin) {
+    if (this.isStandardAdminView) {
       return this.i18nService.t("reports.scope_admin_title");
     }
 
@@ -123,11 +147,11 @@ export class ReportsPage implements OnInit {
   }
 
   get scopeDescription(): string {
-    if (this.authService.isSuperadmin) {
+    if (this.isSuperadminView) {
       return this.i18nService.t("reports.scope_superadmin_desc");
     }
 
-    if (this.authService.isAdmin) {
+    if (this.isStandardAdminView) {
       return this.i18nService.t("reports.scope_admin_desc");
     }
 
@@ -141,11 +165,7 @@ export class ReportsPage implements OnInit {
       return option.label;
     }
 
-    if (this.authService.isSuperadmin) {
-      return this.i18nService.t("reports.scope_all_platform");
-    }
-
-    if (this.authService.isAdmin) {
+    if (this.isStandardAdminView) {
       return this.i18nService.t("reports.scope_all_team");
     }
 
@@ -153,11 +173,11 @@ export class ReportsPage implements OnInit {
   }
 
   get scopeBadgeColor(): "medium" | "primary" | "warning" {
-    if (this.authService.isSuperadmin) {
+    if (this.isSuperadminView) {
       return "warning";
     }
 
-    if (this.authService.isAdmin) {
+    if (this.isStandardAdminView) {
       return "primary";
     }
 
@@ -174,6 +194,83 @@ export class ReportsPage implements OnInit {
 
   get pendingRequestsPageCount(): number {
     return Math.max(1, Math.ceil(this.pendingRequestsTotal / this.pendingPageSize));
+  }
+
+  get superadminAdminPageCount(): number {
+    return Math.max(1, Math.ceil(this.filteredSuperadminAdminOverviews.length / this.superadminAdminPageSize));
+  }
+
+  get selectedManagerOverview(): SuperadminAdminOverview | null {
+    return this.superadminAdminOverviews.find((overview) => overview.admin.id === this.selectedManagerId) ?? null;
+  }
+
+  get selectedManagerEmployees(): TeamUser[] {
+    return this.selectedManagerOverview?.employees ?? [];
+  }
+
+  get selectedSuperadminEmployee(): TeamUser | null {
+    return this.selectedManagerEmployees.find((employee) => employee.id === this.selectedUserId) ?? null;
+  }
+
+  get superadminAdminOverviews(): SuperadminAdminOverview[] {
+    return this.adminUsers
+      .map((admin) => {
+        const employees = this.employeeUsers.filter((employee) => employee.manager?.id === admin.id);
+        const employeeIds = new Set(employees.map((employee) => employee.id));
+        const pendingEditRequests = this.superadminPendingRequestsPool.filter((request) => employeeIds.has(request.workEvent.user.id));
+        const pendingJoinRequests = this.superadminJoinRequests.filter((request) => request.targetManager.id === admin.id);
+
+        return {
+          admin,
+          employees,
+          pendingEditRequestsCount: pendingEditRequests.length,
+          employeesWithPendingEditsCount: new Set(pendingEditRequests.map((request) => request.workEvent.user.id)).size,
+          pendingJoinRequestsCount: pendingJoinRequests.length,
+          totalActiveItems: pendingEditRequests.length + pendingJoinRequests.length
+        } satisfies SuperadminAdminOverview;
+      })
+      .sort((left, right) => {
+        const byActivity = right.totalActiveItems - left.totalActiveItems;
+        if (byActivity !== 0) {
+          return byActivity;
+        }
+
+        return left.admin.fullName.localeCompare(right.admin.fullName);
+      });
+  }
+
+  get filteredSuperadminAdminOverviews(): SuperadminAdminOverview[] {
+    const term = this.superadminAdminSearch.trim().toLocaleLowerCase();
+    if (!term) {
+      return this.superadminAdminOverviews;
+    }
+
+    return this.superadminAdminOverviews.filter((overview) => {
+      const searchable = [overview.admin.fullName, overview.admin.email].join(" ").toLocaleLowerCase();
+      return searchable.includes(term);
+    });
+  }
+
+  get paginatedSuperadminAdminOverviews(): SuperadminAdminOverview[] {
+    const start = (this.superadminAdminPage - 1) * this.superadminAdminPageSize;
+    return this.filteredSuperadminAdminOverviews.slice(start, start + this.superadminAdminPageSize);
+  }
+
+  get filteredSuperadminJoinRequests(): TeamJoinRequest[] {
+    if (!this.selectedManagerId) {
+      return [];
+    }
+
+    const requests = this.superadminJoinRequests.filter((request) => request.targetManager.id === this.selectedManagerId);
+    if (!this.selectedUserId) {
+      return requests;
+    }
+
+    return requests.filter((request) => request.employee.id === this.selectedUserId);
+  }
+
+  get canShowDetailedRecords(): boolean {
+    return !this.isSuperadminView || Boolean(this.selectedUserId);
   }
 
   async ngOnInit(): Promise<void> {
@@ -197,6 +294,15 @@ export class ReportsPage implements OnInit {
     if (currentUser) {
       await this.initializeForCurrentUser();
     }
+  }
+
+  async ionViewWillEnter(): Promise<void> {
+    if (!this.authService.user) {
+      this.resetReportState();
+      return;
+    }
+
+    await this.initializeForCurrentUser();
   }
 
   ngOnDestroy(): void {
@@ -244,6 +350,63 @@ export class ReportsPage implements OnInit {
     return this.i18nService.t(`role.${role}`);
   }
 
+  getEmployeePendingEditCount(userId: string): number {
+    return this.superadminPendingRequestsPool.filter((request) => request.workEvent.user.id === userId).length;
+  }
+
+  selectSuperadminManager(managerId: string): void {
+    if (this.selectedManagerId === managerId) {
+      return;
+    }
+
+    this.selectedManagerId = managerId;
+    this.syncSuperadminAdminPage();
+    if (!this.selectedManagerEmployees.some((employee) => employee.id === this.selectedUserId)) {
+      this.selectedUserId = "";
+    }
+
+    void this.loadReport();
+  }
+
+  clearSuperadminManagerSelection(): void {
+    this.selectedManagerId = "";
+    this.selectedUserId = "";
+    this.syncSuperadminAdminPage();
+    void this.loadReport();
+  }
+
+  onSuperadminAdminSearchChange(value: string | null | undefined): void {
+    this.superadminAdminSearch = value ?? "";
+    this.superadminAdminPage = 1;
+    this.syncSuperadminAdminPage();
+  }
+
+  goToSuperadminAdminPage(page: number): void {
+    if (page < 1 || page > this.superadminAdminPageCount || page === this.superadminAdminPage) {
+      return;
+    }
+
+    this.superadminAdminPage = page;
+  }
+
+  selectSuperadminEmployee(userId: string): void {
+    if (this.selectedUserId === userId) {
+      return;
+    }
+
+    this.selectedUserId = userId;
+    void this.loadReport();
+  }
+
+  clearSuperadminEmployeeSelection(): void {
+    if (!this.selectedUserId) {
+      return;
+    }
+
+    this.selectedUserId = "";
+    void this.loadReport();
+  }
+
   async loadReport(): Promise<void> {
     this.loading = true;
     this.summaryPage = 1;
@@ -251,7 +414,18 @@ export class ReportsPage implements OnInit {
     this.pendingRequestsPage = 1;
 
     try {
-      const pendingRequestsPromise = this.authService.isAdmin ? this.loadPendingRequests() : Promise.resolve();
+      if (this.isSuperadminView) {
+        this.applySuperadminPendingRequestsPage();
+        if (!this.selectedUserId) {
+          this.clearDetailedData();
+          return;
+        }
+
+        await Promise.all([this.loadSummaryRows(), this.loadEvents()]);
+        return;
+      }
+
+      const pendingRequestsPromise = this.isStandardAdminView ? this.loadPendingRequests() : Promise.resolve();
       await Promise.all([this.loadSummaryRows(), this.loadEvents(), pendingRequestsPromise]);
     } catch (error) {
       await this.showToast(error instanceof Error ? error.message : this.i18nService.t("reports.toast_load_failed"), "danger");
@@ -292,6 +466,12 @@ export class ReportsPage implements OnInit {
     }
 
     this.pendingRequestsPage = page;
+
+    if (this.isSuperadminView) {
+      this.applySuperadminPendingRequestsPage();
+      return;
+    }
+
     try {
       await this.loadPendingRequests();
     } catch (error) {
@@ -300,6 +480,11 @@ export class ReportsPage implements OnInit {
   }
 
   async downloadExcel(): Promise<void> {
+    if (this.isSuperadminView && !this.selectedUserId) {
+      await this.showToast(this.i18nService.t("reports.superadmin_export_requires_employee"), "danger");
+      return;
+    }
+
     try {
       const workbook = await this.reportService.downloadExcel(this.from, this.to, this.selectedUserId || undefined);
       const url = URL.createObjectURL(workbook);
@@ -401,9 +586,33 @@ export class ReportsPage implements OnInit {
       await this.attendanceService.reviewEditRequest(request.id, action, reviewComment || undefined);
 
       delete this.reviewCommentByRequestId[request.id];
+      if (this.isSuperadminView) {
+        await this.refreshSuperadminCollections();
+      }
       await this.loadReport();
       await this.showToast(
         this.i18nService.t(action === "APPROVE" ? "reports.toast_approve_success" : "reports.toast_reject_success"),
+        "success"
+      );
+    } catch (error) {
+      await this.showToast(error instanceof Error ? error.message : this.i18nService.t("reports.toast_review_failed"), "danger");
+    }
+  }
+
+  async reviewTeamJoinRequest(request: TeamJoinRequest, action: "APPROVE" | "REJECT"): Promise<void> {
+    try {
+      const reviewComment = this.joinReviewCommentByRequestId[request.id]?.trim();
+      await this.userService.reviewTeamJoinRequest(request.id, {
+        action,
+        reviewComment: reviewComment || undefined
+      });
+
+      delete this.joinReviewCommentByRequestId[request.id];
+      this.users = await this.userService.listAllUsers();
+      await this.refreshSuperadminCollections();
+      await this.loadReport();
+      await this.showToast(
+        this.i18nService.t(action === "APPROVE" ? "reports.toast_team_join_approve_success" : "reports.toast_team_join_reject_success"),
         "success"
       );
     } catch (error) {
@@ -449,6 +658,33 @@ export class ReportsPage implements OnInit {
     this.pendingRequestsTotal = response.total;
   }
 
+  private applySuperadminPendingRequestsPage(): void {
+    const filtered = this.superadminPendingRequestsPool.filter((request) => {
+      if (!this.selectedManagerId) {
+        return false;
+      }
+
+      const managerId = this.getUserManagerId(request.workEvent.user.id);
+      if (managerId !== this.selectedManagerId) {
+        return false;
+      }
+
+      if (!this.selectedUserId) {
+        return true;
+      }
+
+      return request.workEvent.user.id === this.selectedUserId;
+    });
+
+    this.pendingRequestsTotal = filtered.length;
+    const start = (this.pendingRequestsPage - 1) * this.pendingPageSize;
+    this.pendingRequests = filtered.slice(start, start + this.pendingPageSize);
+  }
+
+  private getUserManagerId(userId: string): string | null {
+    return this.employeeUsers.find((user) => user.id === userId)?.manager?.id ?? null;
+  }
+
   private toLocalDateTimeValue(iso: string): string {
     const date = new Date(iso);
     const year = date.getFullYear();
@@ -478,7 +714,20 @@ export class ReportsPage implements OnInit {
 
   private applyInitialFocus(): void {
     const focus = this.route.snapshot.queryParamMap.get("focus");
-    if (focus === "incidents" && this.authService.isAdmin) {
+    if (focus !== "incidents") {
+      return;
+    }
+
+    if (this.isSuperadminView && !this.selectedManagerId) {
+      const firstActiveManager = this.superadminAdminOverviews.find((overview) => overview.totalActiveItems > 0);
+      if (firstActiveManager) {
+        this.selectedManagerId = firstActiveManager.admin.id;
+        this.syncSuperadminSelection();
+        this.applySuperadminPendingRequestsPage();
+      }
+    }
+
+    if (this.authService.isAdmin) {
       setTimeout(() => this.scrollToIncidents(), 120);
     }
   }
@@ -489,9 +738,17 @@ export class ReportsPage implements OnInit {
   }
 
   private async initializeForCurrentUser(): Promise<void> {
-    if (this.authService.isAdmin) {
+    if (this.isSuperadminView) {
+      this.users = await this.userService.listAllUsers();
+      await this.refreshSuperadminCollections();
+      await this.loadReport();
+      this.applyInitialFocus();
+      return;
+    }
+
+    if (this.isStandardAdminView) {
       const apiUsers = await this.userService.listAllUsers();
-      this.users = this.authService.isSuperadmin ? apiUsers : apiUsers.filter((user) => user.role === "EMPLOYEE");
+      this.users = apiUsers.filter((user) => user.role === "EMPLOYEE");
     } else {
       this.users = [];
     }
@@ -500,22 +757,93 @@ export class ReportsPage implements OnInit {
     this.applyInitialFocus();
   }
 
+  private async refreshSuperadminCollections(): Promise<void> {
+    const [pendingRequests, joinRequests] = await Promise.all([
+      this.attendanceService.listAllEditRequests("PENDING"),
+      this.userService.listAllTeamJoinRequests({ status: "PENDING" })
+    ]);
+
+    this.superadminPendingRequestsPool = pendingRequests;
+    this.superadminJoinRequests = joinRequests;
+    this.syncSuperadminSelection();
+    this.applySuperadminPendingRequestsPage();
+  }
+
+  private syncSuperadminSelection(): void {
+    if (!this.isSuperadminView) {
+      return;
+    }
+
+    if (this.selectedManagerId && !this.adminUsers.some((user) => user.id === this.selectedManagerId)) {
+      this.selectedManagerId = "";
+    }
+
+    if (this.selectedUserId && !this.employeeUsers.some((user) => user.id === this.selectedUserId)) {
+      this.selectedUserId = "";
+    }
+
+    if (this.selectedUserId && !this.selectedManagerId) {
+      this.selectedManagerId = this.getUserManagerId(this.selectedUserId) ?? "";
+    }
+
+    if (this.selectedUserId && this.getUserManagerId(this.selectedUserId) !== this.selectedManagerId) {
+      this.selectedUserId = "";
+    }
+
+    this.syncSuperadminAdminPage();
+  }
+
+  private syncSuperadminAdminPage(): void {
+    const pageCount = this.superadminAdminPageCount;
+    if (this.superadminAdminPage > pageCount) {
+      this.superadminAdminPage = pageCount;
+    }
+
+    if (this.superadminAdminPage < 1) {
+      this.superadminAdminPage = 1;
+    }
+
+    if (!this.selectedManagerId) {
+      return;
+    }
+
+    const selectedIndex = this.filteredSuperadminAdminOverviews.findIndex((overview) => overview.admin.id === this.selectedManagerId);
+    if (selectedIndex >= 0) {
+      this.superadminAdminPage = Math.floor(selectedIndex / this.superadminAdminPageSize) + 1;
+    }
+  }
+
+  private clearDetailedData(): void {
+    this.rows = [];
+    this.events = [];
+    this.summaryTotal = 0;
+    this.eventsTotal = 0;
+    this.editingEventId = null;
+    this.requestingEventId = null;
+  }
+
   private resetReportState(): void {
     this.selectedUserId = "";
+    this.selectedManagerId = "";
+    this.superadminAdminSearch = "";
     this.users = [];
     this.rows = [];
     this.events = [];
     this.pendingRequests = [];
+    this.superadminPendingRequestsPool = [];
+    this.superadminJoinRequests = [];
     this.loading = false;
     this.summaryPage = 1;
     this.eventsPage = 1;
     this.pendingRequestsPage = 1;
+    this.superadminAdminPage = 1;
     this.summaryTotal = 0;
     this.eventsTotal = 0;
     this.pendingRequestsTotal = 0;
     this.editingEventId = null;
     this.requestingEventId = null;
     this.reviewCommentByRequestId = {};
+    this.joinReviewCommentByRequestId = {};
     this.adminEditModel = {
       eventAt: "",
       note: "",
@@ -528,4 +856,3 @@ export class ReportsPage implements OnInit {
     };
   }
 }
-

@@ -56,6 +56,23 @@ export class BillingService {
     );
   }
 
+  async listAllAdminSeatLimitControls(params?: { search?: string }): Promise<AdminSeatLimitControl[]> {
+    const pageSize = 100;
+    let page = 1;
+    let admins: AdminSeatLimitControl[] = [];
+
+    while (true) {
+      const response = await this.getAdminSeatLimitControls({ ...params, page, pageSize });
+      admins = admins.concat(response.admins);
+
+      if (admins.length >= response.total || response.admins.length === 0) {
+        return admins;
+      }
+
+      page += 1;
+    }
+  }
+
   createCheckoutSession(priceId: string): Promise<{ url: string }> {
     return this.apiService.post<{ url: string }>("/billing/checkout-session", { priceId }, true);
   }

@@ -539,6 +539,10 @@ const getEventForAdmin = async (eventId: string): Promise<WorkEvent> => {
 const assertAttendanceEnabledForUser = async (userId: string): Promise<void> => {
   const access = await getAttendanceAccessForUser(userId);
 
+  if (access.reason === "NOT_APPLICABLE") {
+    throw new AppError("Superadministrators do not have attendance records.", 403);
+  }
+
   if (access.reason === "TEAM_ASSIGNMENT_REQUIRED") {
     throw new AppError("Employees must belong to an administrator before recording attendance.", 403);
   }
@@ -655,7 +659,7 @@ export const updateEventAsAdmin = async (params: UpdateEventByAdminParams): Prom
   }
   const reason = normalizeOptionalText(params.reason);
   if (!reason) {
-    throw new AppError("El motivo de modificacion es obligatorio.", 400);
+    throw new AppError("El motivo de modificación es obligatorio.", 400);
   }
 
   const nextNote = normalizeOptionalText(params.note);
@@ -676,7 +680,7 @@ export const updateEventAsAdmin = async (params: UpdateEventByAdminParams): Prom
       await createNotificationsForUsers({
         userIds: [event.userId],
         type: NotificationType.EVENT_MODIFIED,
-        title: "Registro modificado por administracion",
+        title: "Registro modificado por administración",
         body: "Un administrador ha modificado uno de tus fichajes.",
         i18n: {
           titleKey: "notifications.event_modified_title",
@@ -757,8 +761,8 @@ export const createEditRequest = async (params: CreateEditRequestParams): Promis
   await createNotificationsForUsers({
     userIds: approvers.map((user) => user.id),
     type: NotificationType.EDIT_REQUEST_CREATED,
-    title: "Nueva solicitud de correccion",
-    body: `${created.requestedBy.fullName} ha enviado una solicitud de correccion.`,
+    title: "Nueva solicitud de corrección",
+    body: `${created.requestedBy.fullName} ha enviado una solicitud de corrección.`,
     i18n: {
       titleKey: "notifications.edit_request_created_title",
       bodyKey: "notifications.edit_request_created_body",
@@ -898,8 +902,8 @@ export const reviewEditRequest = async (params: ReviewEditRequestParams): Promis
     await createNotificationsForUsers({
       userIds: [rejected.requestedBy.id],
       type: NotificationType.EDIT_REQUEST_REJECTED,
-      title: "Solicitud de correccion rechazada",
-      body: "Tu solicitud de correccion ha sido rechazada por administracion.",
+      title: "Solicitud de corrección rechazada",
+      body: "Tu solicitud de corrección ha sido rechazada por administración.",
       i18n: {
         titleKey: "notifications.edit_request_rejected_title",
         bodyKey: "notifications.edit_request_rejected_body"
@@ -963,8 +967,8 @@ export const reviewEditRequest = async (params: ReviewEditRequestParams): Promis
   await createNotificationsForUsers({
     userIds: [approved.requestedBy.id],
     type: NotificationType.EDIT_REQUEST_APPROVED,
-    title: "Solicitud de correccion aprobada",
-    body: "Tu solicitud de correccion ha sido aprobada.",
+    title: "Solicitud de corrección aprobada",
+    body: "Tu solicitud de corrección ha sido aprobada.",
     i18n: {
       titleKey: "notifications.edit_request_approved_title",
       bodyKey: "notifications.edit_request_approved_body"

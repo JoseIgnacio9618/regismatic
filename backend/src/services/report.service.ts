@@ -567,7 +567,7 @@ export const detailedReportToExcelBuffer = async (report: DetailedReportExport):
     { header: "Longitud", key: "longitude", width: 14 },
     { header: "Modificado el", key: "modifiedAt", width: 24 },
     { header: "Modificado por", key: "modifiedBy", width: 24 },
-    { header: "Motivo modificacion", key: "modificationReason", width: 34 },
+    { header: "Motivo modificación", key: "modificationReason", width: 34 },
     { header: "Creado el", key: "createdAt", width: 24 }
   ];
 

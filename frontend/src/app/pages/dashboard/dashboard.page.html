@@ -1,5 +1,48 @@
 <app-main-layout [title]="'dashboard.layout_title' | t">
   <ion-grid fixed class="dashboard-grid">
+    <ion-row *ngIf="isSuperadminDashboard; else standardDashboard">
+      <ion-col size="12">
+        <ion-card class="glass-card panel status-panel superadmin-dashboard-panel">
+          <ion-card-content>
+            <div class="summary-metrics-grid superadmin-metrics-grid">
+              <article class="metric-tile summary-metric-card">
+                <strong>{{ "dashboard.superadmin_metric_admins" | t }}</strong>
+                <p>{{ superadminOverview.admins }}</p>
+              </article>
+              <article class="metric-tile summary-metric-card">
+                <strong>{{ "dashboard.superadmin_metric_employees" | t }}</strong>
+                <p>{{ superadminOverview.employees }}</p>
+              </article>
+              <article class="metric-tile summary-metric-card">
+                <strong>{{ "dashboard.superadmin_metric_pending_team" | t }}</strong>
+                <p>{{ superadminOverview.pendingJoinRequests }}</p>
+              </article>
+              <article class="metric-tile summary-metric-card">
+                <strong>{{ "dashboard.superadmin_metric_pending_edits" | t }}</strong>
+                <p>{{ superadminOverview.pendingEditRequests }}</p>
+              </article>
+              <article class="metric-tile summary-metric-card">
+                <strong>{{ "dashboard.superadmin_metric_paid_subscriptions" | t }}</strong>
+                <p>{{ superadminOverview.paidSubscriptions }}</p>
+              </article>
+              <article class="metric-tile summary-metric-card">
+                <strong>{{ "dashboard.superadmin_metric_monthly_revenue" | t }}</strong>
+                <p>{{ formatMoney(superadminOverview.monthlyRecurringRevenueEur) }}</p>
+              </article>
+            </div>
+
+            <section class="empty-state mt-16 status-error" *ngIf="superadminOverviewError">
+              <ion-icon name="cloud-offline-outline" aria-hidden="true"></ion-icon>
+              <h3>{{ "dashboard.error_load_title" | t }}</h3>
+              <p>{{ superadminOverviewError }}</p>
+              <ion-button size="small" fill="outline" (click)="ionViewWillEnter()">{{ "common.retry" | t }}</ion-button>
+            </section>
+          </ion-card-content>
+        </ion-card>
+      </ion-col>
+    </ion-row>
+
+    <ng-template #standardDashboard>
     <ion-row>
       <ion-col size="12" size-md="4">
         <ion-card class="glass-card panel status-panel">
@@ -98,14 +141,24 @@
             <ion-card-title>{{ "dashboard.summary_title" | t }}</ion-card-title>
           </ion-card-header>
           <ion-card-content>
-            <ion-grid class="metrics-grid">
-              <ion-row>
-                <ion-col size="6" size-md="3" class="metric-tile"><strong>{{ "dashboard.metric.worked" | t }}</strong><p>{{ minutesToHuman(status?.totals?.workedMinutes || 0) }}</p></ion-col>
-                <ion-col size="6" size-md="3" class="metric-tile"><strong>{{ "dashboard.metric.break" | t }}</strong><p>{{ minutesToHuman(status?.totals?.breakMinutes || 0) }}</p></ion-col>
-                <ion-col size="6" size-md="3" class="metric-tile"><strong>{{ "dashboard.metric.overtime" | t }}</strong><p>{{ minutesToHuman(status?.totals?.overtimeMinutes || 0) }}</p></ion-col>
-                <ion-col size="6" size-md="3" class="metric-tile"><strong>{{ "dashboard.metric.adjustments" | t }}</strong><p>{{ minutesToHuman(status?.totals?.adjustmentsMinutes || 0) }}</p></ion-col>
-              </ion-row>
-            </ion-grid>
+            <div class="summary-metrics-grid">
+              <article class="metric-tile summary-metric-card">
+                <strong>{{ "dashboard.metric.worked" | t }}</strong>
+                <p>{{ minutesToHuman(status?.totals?.workedMinutes || 0) }}</p>
+              </article>
+              <article class="metric-tile summary-metric-card">
+                <strong>{{ "dashboard.metric.break" | t }}</strong>
+                <p>{{ minutesToHuman(status?.totals?.breakMinutes || 0) }}</p>
+              </article>
+              <article class="metric-tile summary-metric-card">
+                <strong>{{ "dashboard.metric.overtime" | t }}</strong>
+                <p>{{ minutesToHuman(status?.totals?.overtimeMinutes || 0) }}</p>
+              </article>
+              <article class="metric-tile summary-metric-card">
+                <strong>{{ "dashboard.metric.adjustments" | t }}</strong>
+                <p>{{ minutesToHuman(status?.totals?.adjustmentsMinutes || 0) }}</p>
+              </article>
+            </div>
           </ion-card-content>
         </ion-card>
 
@@ -139,5 +192,6 @@
         </ion-card>
       </ion-col>
     </ion-row>
+    </ng-template>
   </ion-grid>
 </app-main-layout>

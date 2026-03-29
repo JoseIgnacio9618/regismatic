@@ -248,23 +248,20 @@ export const listSuperadminUsers = async (): Promise<UserSummary[]> => {
 };
 
 export const listApproverUsersForEmployee = async (employeeId: string): Promise<UserSummary[]> => {
-  const [employee, superadmins] = await Promise.all([
-    prisma.user.findUnique({
-      where: { id: employeeId },
-      select: {
-        manager: {
-          select: {
-            id: true,
-            fullName: true,
-            email: true,
-            role: true,
-            isActive: true
-          }
+  const employee = await prisma.user.findUnique({
+    where: { id: employeeId },
+    select: {
+      manager: {
+        select: {
+          id: true,
+          fullName: true,
+          email: true,
+          role: true,
+          isActive: true
         }
       }
-    }),
-    listSuperadminUsers()
-  ]);
+    }
+  });
 
   const approvers = new Map<string, UserSummary>();
 
@@ -274,10 +271,6 @@ export const listApproverUsersForEmployee = async (employeeId: string): Promise<
       fullName: employee.manager.fullName,
       email: employee.manager.email
     });
-  }
-
-  for (const superadmin of superadmins) {
-    approvers.set(superadmin.id, superadmin);
   }
 
   return Array.from(approvers.values());

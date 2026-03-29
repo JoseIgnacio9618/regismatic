@@ -2,6 +2,7 @@ import { Component, OnDestroy, OnInit } from "@angular/core";
 import { ToastController } from "@ionic/angular";
 import { Subscription } from "rxjs";
 import { AttendanceService } from "src/app/core/services/attendance.service";
+import { BillingService } from "src/app/core/services/billing.service";
 import { TeamJoinRequest, TodayStatus } from "src/app/core/models/types";
 import { AuthService } from "src/app/core/services/auth.service";
 import { I18nService } from "src/app/core/services/i18n.service";
@@ -19,6 +20,16 @@ export class DashboardPage implements OnInit {
   statusLoading = false;
   loadError: string | null = null;
   joinRequests: TeamJoinRequest[] = [];
+  superadminOverview = {
+    admins: 0,
+    employees: 0,
+    pendingJoinRequests: 0,
+    pendingEditRequests: 0,
+    paidSubscriptions: 0,
+    monthlyRecurringRevenueEur: 0
+  };
+  superadminOverviewLoading = false;
+  superadminOverviewError: string | null = null;
   inviteCode = "";
   requestMessage = "";
   joinBusy = false;
@@ -27,6 +38,7 @@ export class DashboardPage implements OnInit {
 
   constructor(
     private readonly attendanceService: AttendanceService,
+    private readonly billingService: BillingService,
     private readonly userService: UserService,
     public readonly authService: AuthService,
     public readonly i18nService: I18nService,
@@ -46,16 +58,23 @@ export class DashboardPage implements OnInit {
         return;
       }
 
-      void this.refreshStatus();
-      void this.refreshJoinRequests();
+      void this.refreshDashboardData();
     });
 
     const currentUser = this.authService.user;
     this.lastUserId = currentUser?.id ?? null;
     if (currentUser) {
-      await this.refreshStatus();
-      await this.refreshJoinRequests();
+      await this.refreshDashboardData();
     }
+  }
+
+  async ionViewWillEnter(): Promise<void> {
+    if (!this.authService.user) {
+      this.resetDashboardState();
+      return;
+    }
+
+    await this.refreshDashboardData();
   }
 
   ngOnDestroy(): void {
@@ -66,8 +85,12 @@ export class DashboardPage implements OnInit {
     return this.authService.user?.role === "EMPLOYEE" && !this.authService.user?.managerId;
   }
 
+  get isSuperadminDashboard(): boolean {
+    return this.authService.user?.role === "SUPERADMIN";
+  }
+
   get isAttendanceLocked(): boolean {
-    return this.authService.user?.attendanceAccess?.canRecordAttendance === false;
+    return !this.isSuperadminDashboard && this.authService.user?.attendanceAccess?.canRecordAttendance === false;
   }
 
   get isBillingLocked(): boolean {
@@ -151,6 +174,14 @@ export class DashboardPage implements OnInit {
     });
   }
 
+  formatMoney(amount: number): string {
+    return new Intl.NumberFormat(this.i18nService.locale, {
+      style: "currency",
+      currency: "EUR",
+      maximumFractionDigits: 2
+    }).format(amount);
+  }
+
   async handleAction(action: "clockIn" | "breakStart" | "breakEnd" | "clockOut"): Promise<void> {
     if (this.isAttendanceLocked) {
       await this.showToast(
@@ -186,6 +217,13 @@ export class DashboardPage implements OnInit {
   }
 
   async refreshStatus(showErrorToast = false): Promise<void> {
+    if (this.isSuperadminDashboard) {
+      this.status = null;
+      this.loadError = null;
+      this.statusLoading = false;
+      return;
+    }
+
     if (this.isAttendanceLocked) {
       this.status = null;
       this.loadError = null;
@@ -269,11 +307,80 @@ export class DashboardPage implements OnInit {
     await toast.present();
   }
 
+  private async refreshDashboardData(): Promise<void> {
+    if (this.isSuperadminDashboard) {
+      await this.refreshSuperadminOverview();
+      return;
+    }
+
+    await this.refreshStatus();
+    await this.refreshJoinRequests();
+  }
+
+  private async refreshSuperadminOverview(): Promise<void> {
+    this.superadminOverviewLoading = true;
+    this.superadminOverviewError = null;
+
+    try {
+      const [users, pendingJoinRequests, pendingEditRequests, adminBillingControls] = await Promise.all([
+        this.userService.listAllUsers(),
+        this.userService.listAllTeamJoinRequests({ status: "PENDING" }),
+        this.attendanceService.listAllEditRequests("PENDING"),
+        this.billingService.listAllAdminSeatLimitControls()
+      ]);
+
+      const paidSubscriptionControls = adminBillingControls.filter((control) => {
+        return (
+          control.billing.seatLimitSource === "SUBSCRIPTION" &&
+          !control.billing.isTrial &&
+          control.billing.status === "ACTIVE" &&
+          Boolean(control.billing.currentPrice?.amountEur)
+        );
+      });
+
+      const monthlyRecurringRevenueEur = paidSubscriptionControls.reduce((sum, control) => {
+        const price = control.billing.currentPrice;
+        if (!price) {
+          return sum;
+        }
+
+        const impliedMonthlyAmount =
+          price.interval === "year" ? (price.monthlyEquivalentEur ?? 0) : (price.amountEur ?? 0);
+
+        return sum + impliedMonthlyAmount;
+      }, 0);
+
+      this.superadminOverview = {
+        admins: users.filter((user) => user.role === "ADMIN").length,
+        employees: users.filter((user) => user.role === "EMPLOYEE").length,
+        pendingJoinRequests: pendingJoinRequests.length,
+        pendingEditRequests: pendingEditRequests.length,
+        paidSubscriptions: paidSubscriptionControls.length,
+        monthlyRecurringRevenueEur: Number(monthlyRecurringRevenueEur.toFixed(2))
+      };
+    } catch (error) {
+      this.superadminOverviewError =
+        error instanceof Error ? error.message : this.i18nService.t("dashboard.superadmin_overview_error");
+    } finally {
+      this.superadminOverviewLoading = false;
+    }
+  }
+
   private resetDashboardState(): void {
     this.status = null;
     this.loadError = null;
     this.statusLoading = false;
     this.joinRequests = [];
+    this.superadminOverview = {
+      admins: 0,
+      employees: 0,
+      pendingJoinRequests: 0,
+      pendingEditRequests: 0,
+      paidSubscriptions: 0,
+      monthlyRecurringRevenueEur: 0
+    };
+    this.superadminOverviewLoading = false;
+    this.superadminOverviewError = null;
     this.inviteCode = "";
     this.requestMessage = "";
     this.joinBusy = false;

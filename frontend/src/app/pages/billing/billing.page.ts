@@ -38,6 +38,7 @@ export class BillingPage implements OnDestroy {
   seatLimitSavingId: string | null = null;
   selectedInterval: BillingInterval = "month";
   adminSearch = "";
+  planReferenceModalOpen = false;
   customSeatLimitDrafts: Record<string, string> = {};
   limitEditorOpen = false;
   limitEditorControl: AdminSeatLimitControl | null = null;
@@ -54,6 +55,14 @@ export class BillingPage implements OnDestroy {
     if (this.adminSearchDebounceHandle) {
       clearTimeout(this.adminSearchDebounceHandle);
     }
+  }
+
+  openPlanReferenceModal(): void {
+    this.planReferenceModalOpen = true;
+  }
+
+  closePlanReferenceModal(): void {
+    this.planReferenceModalOpen = false;
   }
 
   async ionViewWillEnter(): Promise<void> {

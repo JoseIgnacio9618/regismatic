@@ -1,0 +1,29 @@
+<div class="app-date-control" [class.app-date-control-datetime]="mode === 'datetime'">
+  <label class="app-date-control-label" [attr.for]="inputId" *ngIf="label">{{ label }}</label>
+  <p-datepicker
+    #picker
+    [inputId]="inputId"
+    [ngModel]="pickerValue"
+    (ngModelChange)="onPickerChange($event)"
+    (onSelect)="onDateSelect()"
+    [dateFormat]="dateFormat"
+    [showIcon]="true"
+    iconDisplay="input"
+    [showButtonBar]="mode === 'date'"
+    [showTime]="mode === 'datetime'"
+    [showSeconds]="mode === 'datetime'"
+    hourFormat="24"
+    [stepMinute]="1"
+    [stepSecond]="1"
+    [touchUI]="touchUi"
+    [readonlyInput]="true"
+    [appendTo]="'body'"
+    [showClear]="showClear"
+    [hideOnDateTimeSelect]="mode === 'datetime'"
+    [disabled]="disabled"
+    [placeholder]="placeholder"
+    styleClass="app-date-control-picker"
+    inputStyleClass="app-date-control-input"
+    [panelStyleClass]="panelStyleClass"
+  ></p-datepicker>
+</div>

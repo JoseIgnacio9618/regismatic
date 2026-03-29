@@ -78,6 +78,23 @@ export class AttendanceService {
     return this.apiService.get<EditRequestsResponse>(`/attendance/edit-requests${query ? `?${query}` : ""}`, true);
   }
 
+  async listAllEditRequests(status?: EditRequestStatus, userId?: string): Promise<WorkEventEditRequestRecord[]> {
+    const pageSize = 100;
+    let page = 1;
+    let requests: WorkEventEditRequestRecord[] = [];
+
+    while (true) {
+      const response = await this.listEditRequests(status, userId, page, pageSize);
+      requests = requests.concat(response.requests);
+
+      if (requests.length >= response.total || response.requests.length === 0) {
+        return requests;
+      }
+
+      page += 1;
+    }
+  }
+
   reviewEditRequest(requestId: string, action: "APPROVE" | "REJECT", reviewComment?: string): Promise<WorkEventEditRequestRecord> {
     return this.apiService.patch<WorkEventEditRequestRecord>(`/attendance/edit-requests/${requestId}/review`, { action, reviewComment }, true);
   }

@@ -1,53 +1,465 @@
 <app-main-layout [title]="'reports.layout_title' | t">
   <ion-grid fixed class="reports-grid">
-    <ion-row>
-      <ion-col size="12">
-        <ion-card class="glass-card panel scope-panel">
-          <ion-card-content>
-            <div class="reports-scope-shell">
-              <div>
-                <ion-badge [color]="scopeBadgeColor">
-                  {{ authService.isSuperadmin ? ("role.SUPERADMIN" | t) : authService.isAdmin ? ("role.ADMIN" | t) : ("role.EMPLOYEE" | t) }}
-                </ion-badge>
-                <h2>{{ scopeTitle }}</h2>
-                <p>{{ scopeDescription }}</p>
+    <ng-container *ngIf="isSuperadminView; else standardReportsView">
+      <ion-row>
+        <ion-col size="12">
+          <ion-card class="glass-card panel scope-panel">
+            <ion-card-content>
+              <div class="reports-scope-shell reports-scope-shell-superadmin">
+                <div>
+                  <ion-badge color="warning">{{ "role.SUPERADMIN" | t }}</ion-badge>
+                  <h2>{{ scopeTitle }}</h2>
+                  <p>{{ scopeDescription }}</p>
+                </div>
+
+                <div class="scope-selection-card app-inline-panel">
+                  <strong>{{ "reports.superadmin_current_focus" | t }}</strong>
+                  <span *ngIf="selectedManagerOverview; else noSuperadminFocus">
+                    {{ selectedManagerOverview.admin.fullName }}
+                    <small *ngIf="selectedSuperadminEmployee">{{ selectedSuperadminEmployee.fullName }}</small>
+                  </span>
+                  <ng-template #noSuperadminFocus>
+                    <span>{{ "reports.superadmin_focus_none" | t }}</span>
+                  </ng-template>
+                </div>
+              </div>
+            </ion-card-content>
+          </ion-card>
+        </ion-col>
+      </ion-row>
+
+      <ion-row>
+        <ion-col size="12">
+          <ion-card class="glass-card panel superadmin-admins-panel">
+            <ion-card-header>
+              <ion-card-title>{{ "reports.superadmin_admins_title" | t }}</ion-card-title>
+              <p class="microcopy">{{ "reports.superadmin_admins_desc" | t }}</p>
+            </ion-card-header>
+            <ion-card-content>
+              <ng-container *ngIf="superadminAdminOverviews.length > 0; else noAdminOverview">
+                <div class="superadmin-admin-toolbar">
+                  <ion-searchbar
+                    class="superadmin-admin-search"
+                    [placeholder]="'reports.superadmin_admins_search_placeholder' | t"
+                    [debounce]="140"
+                    [ngModel]="superadminAdminSearch"
+                    (ngModelChange)="onSuperadminAdminSearchChange($event)"
+                  ></ion-searchbar>
+                </div>
+
+                <div class="superadmin-admin-grid" *ngIf="paginatedSuperadminAdminOverviews.length > 0; else noAdminMatches">
+                  <button
+                    type="button"
+                    class="superadmin-admin-card"
+                    [class.active]="overview.admin.id === selectedManagerId"
+                    *ngFor="let overview of paginatedSuperadminAdminOverviews"
+                    (click)="selectSuperadminManager(overview.admin.id)"
+                  >
+                    <div class="superadmin-admin-card__header">
+                      <app-avatar [fullName]="overview.admin.fullName" [photoUrl]="overview.admin.profilePhotoUrl" size="md"></app-avatar>
+                      <div>
+                        <strong>{{ overview.admin.fullName }}</strong>
+                        <span>{{ overview.admin.email }}</span>
+                      </div>
+                    </div>
+
+                    <div class="superadmin-admin-card__metrics">
+                      <div>
+                        <small>{{ "reports.superadmin_metric_team" | t }}</small>
+                        <strong>{{ overview.employees.length }}</strong>
+                      </div>
+                      <div>
+                        <small>{{ "reports.superadmin_metric_pending_edits" | t }}</small>
+                        <strong>{{ overview.pendingEditRequestsCount }}</strong>
+                      </div>
+                      <div>
+                        <small>{{ "reports.superadmin_metric_pending_joins" | t }}</small>
+                        <strong>{{ overview.pendingJoinRequestsCount }}</strong>
+                      </div>
+                    </div>
+                  </button>
+                </div>
+
+                <ng-template #noAdminMatches>
+                  <section class="empty-state compact-empty-state">
+                    <ion-icon name="search-outline" aria-hidden="true"></ion-icon>
+                    <h3>{{ "reports.superadmin_admins_search_empty_title" | t }}</h3>
+                    <p>{{ "reports.superadmin_admins_search_empty_desc" | t }}</p>
+                  </section>
+                </ng-template>
+
+                <div class="report-pagination" *ngIf="filteredSuperadminAdminOverviews.length > superadminAdminPageSize">
+                  <ion-button
+                    size="small"
+                    fill="outline"
+                    [disabled]="superadminAdminPage === 1"
+                    (click)="goToSuperadminAdminPage(superadminAdminPage - 1)"
+                  >
+                    {{ "common.previous" | t }}
+                  </ion-button>
+                  <span>{{ "reports.pagination_page" | t: { page: superadminAdminPage, total: superadminAdminPageCount } }}</span>
+                  <ion-button
+                    size="small"
+                    fill="outline"
+                    [disabled]="superadminAdminPage === superadminAdminPageCount"
+                    (click)="goToSuperadminAdminPage(superadminAdminPage + 1)"
+                  >
+                    {{ "common.next" | t }}
+                  </ion-button>
+                </div>
+              </ng-container>
+
+              <ng-template #noAdminOverview>
+                <section class="empty-state">
+                  <ion-icon name="people-outline" aria-hidden="true"></ion-icon>
+                  <h3>{{ "reports.superadmin_admins_empty_title" | t }}</h3>
+                  <p>{{ "reports.superadmin_admins_empty_desc" | t }}</p>
+                </section>
+              </ng-template>
+            </ion-card-content>
+          </ion-card>
+        </ion-col>
+      </ion-row>
+
+      <ion-row *ngIf="selectedManagerOverview">
+        <ion-col size="12">
+          <ion-card class="glass-card panel superadmin-employees-panel">
+            <ion-card-header>
+              <ion-card-title>
+                {{ "reports.superadmin_employees_title" | t: { admin: selectedManagerOverview.admin.fullName } }}
+              </ion-card-title>
+              <p class="microcopy">{{ "reports.superadmin_employees_desc" | t }}</p>
+            </ion-card-header>
+            <ion-card-content>
+              <div class="superadmin-toolbar">
+                <ion-chip color="primary">
+                  <ion-label>{{ "reports.superadmin_chip_pending_edits" | t: { count: selectedManagerOverview.pendingEditRequestsCount } }}</ion-label>
+                </ion-chip>
+                <ion-chip color="warning">
+                  <ion-label>{{ "reports.superadmin_chip_pending_joins" | t: { count: selectedManagerOverview.pendingJoinRequestsCount } }}</ion-label>
+                </ion-chip>
+                <ion-button size="small" fill="clear" (click)="clearSuperadminManagerSelection()">
+                  {{ "reports.superadmin_clear_admin" | t }}
+                </ion-button>
               </div>
 
-              <div class="scope-selection-card app-inline-panel" *ngIf="authService.isAdmin">
-                <strong>{{ "reports.scope_current_label" | t }}</strong>
-                <span>{{ selectedScopeLabel }}</span>
+              <div class="superadmin-employee-grid" *ngIf="selectedManagerEmployees.length > 0; else noManagerEmployees">
+                <button
+                  type="button"
+                  class="superadmin-employee-card"
+                  [class.active]="employee.id === selectedUserId"
+                  *ngFor="let employee of selectedManagerEmployees"
+                  (click)="selectSuperadminEmployee(employee.id)"
+                >
+                  <div class="superadmin-employee-card__header">
+                    <app-avatar [fullName]="employee.fullName" [photoUrl]="employee.profilePhotoUrl" size="md"></app-avatar>
+                    <div>
+                      <strong>{{ employee.fullName }}</strong>
+                      <span>{{ employee.email }}</span>
+                    </div>
+                  </div>
+
+                  <ion-badge color="warning" *ngIf="getEmployeePendingEditCount(employee.id) > 0">
+                    {{ "reports.superadmin_employee_pending_badge" | t: { count: getEmployeePendingEditCount(employee.id) } }}
+                  </ion-badge>
+                </button>
               </div>
-            </div>
-          </ion-card-content>
-        </ion-card>
-      </ion-col>
-    </ion-row>
 
-    <ion-row>
-      <ion-col size="12">
-        <ion-card class="glass-card panel filter-panel">
-          <ion-card-header>
-            <ion-card-title>{{ "reports.filters_title" | t }}</ion-card-title>
-            <p class="microcopy">{{ "reports.filters_microcopy" | t }}</p>
-          </ion-card-header>
-          <ion-card-content>
-            <ion-grid>
-              <ion-row>
-                <ion-col size="12" size-md="3">
-                  <ion-item>
-                    <ion-label position="stacked">{{ "common.from" | t }}</ion-label>
-                    <ion-input type="date" [(ngModel)]="from"></ion-input>
+              <ng-template #noManagerEmployees>
+                <section class="empty-state compact-empty-state">
+                  <ion-icon name="person-outline" aria-hidden="true"></ion-icon>
+                  <h3>{{ "reports.superadmin_employees_empty_title" | t }}</h3>
+                  <p>{{ "reports.superadmin_employees_empty_desc" | t }}</p>
+                </section>
+              </ng-template>
+            </ion-card-content>
+          </ion-card>
+        </ion-col>
+      </ion-row>
+
+      <ion-row *ngIf="selectedManagerOverview">
+        <ion-col size="12">
+          <ion-card class="glass-card panel requests-panel">
+            <ion-card-header>
+              <ion-card-title>{{ "reports.superadmin_join_requests_title" | t: { count: filteredSuperadminJoinRequests.length } }}</ion-card-title>
+              <p class="microcopy">{{ "reports.superadmin_join_requests_desc" | t }}</p>
+            </ion-card-header>
+            <ion-card-content>
+              <ion-list lines="none" class="data-list" *ngIf="filteredSuperadminJoinRequests.length > 0; else noJoinRequests">
+                <ng-container *ngFor="let request of filteredSuperadminJoinRequests">
+                  <ion-item class="data-item app-attached-item">
+                    <app-avatar slot="start" [fullName]="request.employee.fullName" [photoUrl]="request.employee.profilePhotoUrl" size="md"></app-avatar>
+                    <ion-label>
+                      <h3 class="item-title">{{ request.employee.fullName }}</h3>
+                      <ion-note class="item-meta">{{ request.employee.email }}</ion-note>
+                      <ion-note class="item-meta" *ngIf="request.message">{{ "common.note" | t }}: {{ request.message }}</ion-note>
+                      <ion-note class="item-audit">{{ formatDateTime(request.createdAt) }}</ion-note>
+                    </ion-label>
                   </ion-item>
-                </ion-col>
 
-                <ion-col size="12" size-md="3">
-                  <ion-item>
-                    <ion-label position="stacked">{{ "common.to" | t }}</ion-label>
-                    <ion-input type="date" [(ngModel)]="to"></ion-input>
+                  <section class="review-box app-inline-panel app-attached-panel">
+                    <ion-item>
+                      <ion-label position="stacked">{{ "reports.review_comment_optional" | t }}</ion-label>
+                      <ion-textarea rows="2" [(ngModel)]="joinReviewCommentByRequestId[request.id]"></ion-textarea>
+                    </ion-item>
+                    <div class="editor-actions">
+                      <ion-button size="small" color="success" (click)="reviewTeamJoinRequest(request, 'APPROVE')">
+                        {{ "reports.action_approve" | t }}
+                      </ion-button>
+                      <ion-button size="small" color="danger" fill="outline" (click)="reviewTeamJoinRequest(request, 'REJECT')">
+                        {{ "reports.action_reject" | t }}
+                      </ion-button>
+                    </div>
+                  </section>
+                </ng-container>
+              </ion-list>
+
+              <ng-template #noJoinRequests>
+                <section class="empty-state compact-empty-state">
+                  <ion-icon name="person-add-outline" aria-hidden="true"></ion-icon>
+                  <h3>{{ "reports.superadmin_join_requests_empty_title" | t }}</h3>
+                  <p>{{ "reports.superadmin_join_requests_empty_desc" | t }}</p>
+                </section>
+              </ng-template>
+            </ion-card-content>
+          </ion-card>
+        </ion-col>
+      </ion-row>
+
+      <ion-row *ngIf="selectedManagerOverview">
+        <ion-col size="12">
+          <ion-card id="incidents-panel" class="glass-card panel requests-panel">
+            <ion-card-header>
+              <ion-card-title>{{ "reports.pending_title" | t: { count: pendingRequestsTotal } }}</ion-card-title>
+              <p class="microcopy">{{ "reports.superadmin_pending_desc" | t }}</p>
+            </ion-card-header>
+            <ion-card-content>
+              <ion-list lines="none" class="data-list" *ngIf="pendingRequests.length > 0; else noPendingRequestsSuperadmin">
+                <ng-container *ngFor="let request of pendingRequests">
+                  <ion-item class="data-item app-attached-item">
+                    <app-avatar slot="start" [fullName]="request.workEvent.user.fullName" [photoUrl]="request.workEvent.user.profilePhotoUrl" size="md"></app-avatar>
+                    <ion-label>
+                      <h3 class="item-title">{{ request.workEvent.user.fullName }} | {{ eventTypeLabel(request.workEvent.type) }}</h3>
+                      <ion-note class="item-meta">{{ "common.current" | t }}: {{ formatDateTime(request.workEvent.eventAt) }}</ion-note>
+                      <ion-note class="item-meta">{{ "common.requested" | t }}: {{ formatDateTime(request.requestedEventAt) }}</ion-note>
+                      <ion-note class="item-meta" *ngIf="request.requestedNote">{{ "common.note" | t }}: {{ request.requestedNote }}</ion-note>
+                      <ion-note class="item-audit">{{ "common.reason_prefix" | t: { reason: request.reason } }}</ion-note>
+                    </ion-label>
                   </ion-item>
-                </ion-col>
 
-                <ion-col size="12" size-md="4" *ngIf="authService.isAdmin">
+                  <section class="review-box app-inline-panel app-attached-panel">
+                    <ion-item>
+                      <ion-label position="stacked">{{ "reports.review_comment_optional" | t }}</ion-label>
+                      <ion-textarea rows="2" [(ngModel)]="reviewCommentByRequestId[request.id]"></ion-textarea>
+                    </ion-item>
+                    <div class="editor-actions">
+                      <ion-button size="small" color="success" (click)="reviewRequest(request, 'APPROVE')">{{ "reports.action_approve" | t }}</ion-button>
+                      <ion-button size="small" color="danger" fill="outline" (click)="reviewRequest(request, 'REJECT')">{{ "reports.action_reject" | t }}</ion-button>
+                    </div>
+                  </section>
+                </ng-container>
+              </ion-list>
+
+              <ng-template #noPendingRequestsSuperadmin>
+                <section class="empty-state compact-empty-state">
+                  <ion-icon name="checkmark-done-outline" aria-hidden="true"></ion-icon>
+                  <h3>{{ "reports.empty_pending_title" | t }}</h3>
+                  <p>{{ "reports.empty_pending_desc" | t }}</p>
+                </section>
+              </ng-template>
+
+              <div class="report-pagination" *ngIf="pendingRequestsTotal > pendingPageSize">
+                <ion-button size="small" fill="outline" [disabled]="pendingRequestsPage === 1" (click)="goToPendingRequestsPage(pendingRequestsPage - 1)">
+                  {{ "common.previous" | t }}
+                </ion-button>
+                <span>{{ "reports.pagination_page" | t: { page: pendingRequestsPage, total: pendingRequestsPageCount } }}</span>
+                <ion-button size="small" fill="outline" [disabled]="pendingRequestsPage === pendingRequestsPageCount" (click)="goToPendingRequestsPage(pendingRequestsPage + 1)">
+                  {{ "common.next" | t }}
+                </ion-button>
+              </div>
+            </ion-card-content>
+          </ion-card>
+        </ion-col>
+      </ion-row>
+
+      <ion-row *ngIf="selectedManagerOverview && !canShowDetailedRecords">
+        <ion-col size="12">
+          <ion-card class="glass-card panel result-panel">
+            <ion-card-content>
+              <section class="empty-state">
+                <ion-icon name="person-circle-outline" aria-hidden="true"></ion-icon>
+                <h3>{{ "reports.superadmin_select_employee_title" | t }}</h3>
+                <p>{{ "reports.superadmin_select_employee_desc" | t }}</p>
+              </section>
+            </ion-card-content>
+          </ion-card>
+        </ion-col>
+      </ion-row>
+
+      <ng-container *ngIf="canShowDetailedRecords">
+        <ion-row>
+          <ion-col size="12">
+            <ion-card class="glass-card panel result-panel">
+              <ion-card-header>
+                <ion-card-title>{{ "reports.summary_title" | t: { count: summaryTotal } }}</ion-card-title>
+              </ion-card-header>
+              <ion-card-content>
+                <ion-list lines="none" class="data-list" *ngIf="rows.length > 0; else noSummaryRowsSuperadmin">
+                  <ion-item class="data-item" *ngFor="let row of rows">
+                    <ion-label>
+                      <h3 class="item-title">{{ row.employee }}</h3>
+                      <ion-note class="item-meta">
+                        {{
+                          "reports.summary_row"
+                            | t: {
+                                date: row.date,
+                                worked: minutesToHuman(row.workedMinutes),
+                                breakTime: minutesToHuman(row.breakMinutes),
+                                overtime: minutesToHuman(row.overtimeMinutes)
+                              }
+                        }}
+                      </ion-note>
+                    </ion-label>
+                    <ion-badge [color]="row.status === 'OPEN' ? 'warning' : 'success'">{{ dayStatusLabel(row.status) }}</ion-badge>
+                  </ion-item>
+                </ion-list>
+
+                <ng-template #noSummaryRowsSuperadmin>
+                  <section class="empty-state">
+                    <ion-icon name="bar-chart-outline" aria-hidden="true"></ion-icon>
+                    <h3>{{ "reports.empty_summary_title" | t }}</h3>
+                    <p>{{ "reports.empty_summary_desc" | t }}</p>
+                  </section>
+                </ng-template>
+
+                <div class="report-pagination" *ngIf="summaryTotal > pageSize">
+                  <ion-button size="small" fill="outline" [disabled]="summaryPage === 1" (click)="goToSummaryPage(summaryPage - 1)">
+                    {{ "common.previous" | t }}
+                  </ion-button>
+                  <span>{{ "reports.pagination_page" | t: { page: summaryPage, total: summaryPageCount } }}</span>
+                  <ion-button size="small" fill="outline" [disabled]="summaryPage === summaryPageCount" (click)="goToSummaryPage(summaryPage + 1)">
+                    {{ "common.next" | t }}
+                  </ion-button>
+                </div>
+              </ion-card-content>
+            </ion-card>
+          </ion-col>
+        </ion-row>
+
+        <ion-row>
+          <ion-col size="12">
+            <ion-card class="glass-card panel detail-panel">
+              <ion-card-header>
+                <ion-card-title>{{ "reports.detail_title" | t: { count: eventsTotal } }}</ion-card-title>
+                <p class="microcopy">{{ "reports.detail_microcopy" | t }}</p>
+              </ion-card-header>
+              <ion-card-content>
+                <ion-list lines="none" class="data-list" *ngIf="events.length > 0; else noEventsSuperadmin">
+                  <ng-container *ngFor="let event of events">
+                    <ion-item class="data-item event-item" [class.app-attached-item]="editingEventId === event.id || requestingEventId === event.id">
+                      <app-avatar slot="start" [fullName]="event.user.fullName" [photoUrl]="event.user.profilePhotoUrl" size="md"></app-avatar>
+                      <ion-label>
+                        <h3 class="item-title">{{ eventTypeLabel(event.type) }}</h3>
+                        <ion-note class="item-meta">{{ formatDateTime(event.eventAt) }} | {{ "common.source" | t }}: {{ eventSourceLabel(event.source) }}</ion-note>
+                        <ion-note class="item-meta" *ngIf="event.note">{{ "common.note" | t }}: {{ event.note }}</ion-note>
+                        <ion-note class="item-audit" *ngIf="event.modifiedAt && event.modifiedBy">
+                          {{ "common.modified_by" | t: { name: event.modifiedBy.fullName, at: formatDateTime(event.modifiedAt) } }}
+                        </ion-note>
+                        <ion-note class="item-audit" *ngIf="event.modificationReason">
+                          {{ "common.reason_prefix" | t: { reason: event.modificationReason } }}
+                        </ion-note>
+                        <div class="request-chips" *ngIf="event.editRequests.length > 0">
+                          <ion-chip [color]="request.status === 'APPROVED' ? 'success' : request.status === 'REJECTED' ? 'danger' : 'warning'" *ngFor="let request of event.editRequests | slice: 0 : 2">
+                            <ion-label>{{ requestStatusLabel(request.status) }} | {{ formatDateTime(request.createdAt) }}</ion-label>
+                          </ion-chip>
+                        </div>
+                        <ng-container *ngFor="let request of event.editRequests | slice: 0 : 2">
+                          <ion-note class="item-audit rejection-reason" *ngIf="request.status === 'REJECTED' && request.reviewComment">
+                            {{ "reports.rejection_reason" | t: { reason: request.reviewComment } }}
+                          </ion-note>
+                        </ng-container>
+                      </ion-label>
+
+                      <ion-button size="small" fill="outline" (click)="startAdminEdit(event)">{{ "reports.action_edit" | t }}</ion-button>
+                    </ion-item>
+
+                    <section class="event-editor app-inline-panel app-attached-panel" *ngIf="editingEventId === event.id">
+                      <app-date-control [label]="'reports.new_datetime' | t" mode="datetime" [(value)]="adminEditModel.eventAt"></app-date-control>
+
+                      <ion-item>
+                        <ion-label position="stacked">{{ "reports.note_optional" | t }}</ion-label>
+                        <ion-textarea rows="2" [(ngModel)]="adminEditModel.note"></ion-textarea>
+                      </ion-item>
+
+                      <ion-item>
+                        <ion-label position="stacked">{{ "reports.required_reason" | t }}</ion-label>
+                        <ion-textarea rows="2" [(ngModel)]="adminEditModel.reason"></ion-textarea>
+                      </ion-item>
+
+                      <div class="editor-actions">
+                        <ion-button size="small" (click)="saveAdminEdit(event)">{{ "common.save" | t }}</ion-button>
+                        <ion-button size="small" fill="outline" (click)="cancelAdminEdit()">{{ "common.cancel" | t }}</ion-button>
+                      </div>
+                    </section>
+                  </ng-container>
+                </ion-list>
+
+                <ng-template #noEventsSuperadmin>
+                  <section class="empty-state">
+                    <ion-icon name="time-outline" aria-hidden="true"></ion-icon>
+                    <h3>{{ "reports.empty_events_title" | t }}</h3>
+                    <p>{{ "reports.empty_events_desc" | t }}</p>
+                  </section>
+                </ng-template>
+
+                <div class="report-pagination" *ngIf="eventsTotal > pageSize">
+                  <ion-button size="small" fill="outline" [disabled]="eventsPage === 1" (click)="goToEventsPage(eventsPage - 1)">{{ "common.previous" | t }}</ion-button>
+                  <span>{{ "reports.pagination_page" | t: { page: eventsPage, total: eventsPageCount } }}</span>
+                  <ion-button size="small" fill="outline" [disabled]="eventsPage === eventsPageCount" (click)="goToEventsPage(eventsPage + 1)">{{ "common.next" | t }}</ion-button>
+                </div>
+              </ion-card-content>
+            </ion-card>
+          </ion-col>
+        </ion-row>
+      </ng-container>
+    </ng-container>
+
+    <ng-template #standardReportsView>
+      <ion-row>
+        <ion-col size="12">
+          <ion-card class="glass-card panel scope-panel">
+            <ion-card-content>
+              <div class="reports-scope-shell">
+                <div>
+                  <ion-badge [color]="scopeBadgeColor">{{ isStandardAdminView ? ("role.ADMIN" | t) : ("role.EMPLOYEE" | t) }}</ion-badge>
+                  <h2>{{ scopeTitle }}</h2>
+                  <p>{{ scopeDescription }}</p>
+                </div>
+
+                <div class="scope-selection-card app-inline-panel" *ngIf="isStandardAdminView">
+                  <strong>{{ "reports.scope_current_label" | t }}</strong>
+                  <span>{{ selectedScopeLabel }}</span>
+                </div>
+              </div>
+            </ion-card-content>
+          </ion-card>
+        </ion-col>
+      </ion-row>
+
+      <ion-row>
+        <ion-col size="12">
+          <ion-card class="glass-card panel filter-panel">
+            <ion-card-content>
+              <div class="report-filters-shell" [class.report-filters-shell-admin]="isStandardAdminView">
+                <div class="report-filter-field">
+                  <app-date-control [label]="'common.from' | t" [showClear]="false" [(value)]="from"></app-date-control>
+                </div>
+
+                <div class="report-filter-field">
+                  <app-date-control [label]="'common.to' | t" [showClear]="false" [(value)]="to"></app-date-control>
+                </div>
+
+                <div class="report-filter-field report-filter-field-scope" *ngIf="isStandardAdminView">
                   <ion-item>
                     <ion-label position="stacked">{{ "reports.employee_optional" | t }}</ion-label>
                     <ion-select [(ngModel)]="selectedUserId" interface="popover">
@@ -55,263 +467,197 @@
                     </ion-select>
                   </ion-item>
                   <p class="inline-help">{{ "reports.filter_scope_hint" | t }}</p>
-                </ion-col>
+                </div>
 
-                <ion-col size="12" size-md="2" class="actions-col">
-                  <ion-button expand="block" [disabled]="loading" (click)="loadReport()">{{ "reports.action_consult" | t }}</ion-button>
-                  <ion-button expand="block" fill="outline" (click)="downloadExcel()">{{ "reports.action_csv" | t }}</ion-button>
-                  <ion-button expand="block" fill="clear" *ngIf="authService.isAdmin" (click)="scrollToIncidents()">
-                    {{ "reports.action_incidents" | t }}
+                <div class="actions-col report-filter-actions">
+                  <ion-button class="report-action-primary" expand="block" [disabled]="loading" (click)="loadReport()">
+                    <ion-icon slot="start" name="search-outline" aria-hidden="true"></ion-icon>
+                    {{ "reports.action_consult" | t }}
                   </ion-button>
-                </ion-col>
-              </ion-row>
-            </ion-grid>
-          </ion-card-content>
-        </ion-card>
-      </ion-col>
-    </ion-row>
 
-    <ion-row *ngIf="authService.isAdmin">
-      <ion-col size="12">
-        <ion-card id="incidents-panel" class="glass-card panel requests-panel">
-          <ion-card-header>
-            <ion-card-title>{{ "reports.pending_title" | t: { count: pendingRequestsTotal } }}</ion-card-title>
-            <p class="microcopy">{{ "reports.pending_microcopy" | t }}</p>
-          </ion-card-header>
-          <ion-card-content>
-            <ion-list lines="none" class="data-list" *ngIf="pendingRequests.length > 0">
-              <ng-container *ngFor="let request of pendingRequests">
-                <ion-item class="data-item app-attached-item">
-                  <app-avatar slot="start" [fullName]="request.workEvent.user.fullName" [photoUrl]="request.workEvent.user.profilePhotoUrl" size="md"></app-avatar>
-                  <ion-label>
-                    <h3 class="item-title">{{ request.workEvent.user.fullName }} | {{ eventTypeLabel(request.workEvent.type) }}</h3>
-                    <ion-note class="item-meta">{{ "common.current" | t }}: {{ formatDateTime(request.workEvent.eventAt) }}</ion-note>
-                    <ion-note class="item-meta">{{ "common.requested" | t }}: {{ formatDateTime(request.requestedEventAt) }}</ion-note>
-                    <ion-note class="item-meta" *ngIf="request.requestedNote">{{ "common.note" | t }}: {{ request.requestedNote }}</ion-note>
-                    <ion-note class="item-audit">{{ "common.reason_prefix" | t: { reason: request.reason } }}</ion-note>
-                  </ion-label>
-                </ion-item>
-
-                <section class="review-box app-inline-panel app-attached-panel">
-                  <ion-item>
-                    <ion-label position="stacked">{{ "reports.review_comment_optional" | t }}</ion-label>
-                    <ion-textarea rows="2" [(ngModel)]="reviewCommentByRequestId[request.id]"></ion-textarea>
-                  </ion-item>
-                  <div class="editor-actions">
-                    <ion-button size="small" color="success" (click)="reviewRequest(request, 'APPROVE')">{{ "reports.action_approve" | t }}</ion-button>
-                    <ion-button size="small" color="danger" fill="outline" (click)="reviewRequest(request, 'REJECT')">{{ "reports.action_reject" | t }}</ion-button>
+                  <div class="report-action-secondary-grid">
+                    <ion-button class="report-action-secondary" expand="block" fill="outline" (click)="downloadExcel()">
+                      <ion-icon slot="start" name="document-text-outline" aria-hidden="true"></ion-icon>
+                      {{ "reports.action_csv" | t }}
+                    </ion-button>
+                    <ion-button class="report-action-secondary" expand="block" fill="clear" *ngIf="isStandardAdminView" (click)="scrollToIncidents()">
+                      <ion-icon slot="start" name="alert-circle-outline" aria-hidden="true"></ion-icon>
+                      {{ "reports.action_incidents" | t }}
+                    </ion-button>
                   </div>
-                </section>
-              </ng-container>
-            </ion-list>
+                </div>
+              </div>
+            </ion-card-content>
+          </ion-card>
+        </ion-col>
+      </ion-row>
 
-            <section class="empty-state" *ngIf="pendingRequests.length === 0">
-              <ion-icon name="checkmark-done-outline" aria-hidden="true"></ion-icon>
-              <h3>{{ "reports.empty_pending_title" | t }}</h3>
-              <p>{{ "reports.empty_pending_desc" | t }}</p>
-            </section>
+      <ion-row *ngIf="isStandardAdminView">
+        <ion-col size="12">
+          <ion-card id="incidents-panel" class="glass-card panel requests-panel">
+            <ion-card-header>
+              <ion-card-title>{{ "reports.pending_title" | t: { count: pendingRequestsTotal } }}</ion-card-title>
+              <p class="microcopy">{{ "reports.pending_microcopy" | t }}</p>
+            </ion-card-header>
+            <ion-card-content>
+              <ion-list lines="none" class="data-list" *ngIf="pendingRequests.length > 0">
+                <ng-container *ngFor="let request of pendingRequests">
+                  <ion-item class="data-item app-attached-item">
+                    <app-avatar slot="start" [fullName]="request.workEvent.user.fullName" [photoUrl]="request.workEvent.user.profilePhotoUrl" size="md"></app-avatar>
+                    <ion-label>
+                      <h3 class="item-title">{{ request.workEvent.user.fullName }} | {{ eventTypeLabel(request.workEvent.type) }}</h3>
+                      <ion-note class="item-meta">{{ "common.current" | t }}: {{ formatDateTime(request.workEvent.eventAt) }}</ion-note>
+                      <ion-note class="item-meta">{{ "common.requested" | t }}: {{ formatDateTime(request.requestedEventAt) }}</ion-note>
+                      <ion-note class="item-meta" *ngIf="request.requestedNote">{{ "common.note" | t }}: {{ request.requestedNote }}</ion-note>
+                      <ion-note class="item-audit">{{ "common.reason_prefix" | t: { reason: request.reason } }}</ion-note>
+                    </ion-label>
+                  </ion-item>
 
-            <div class="report-pagination" *ngIf="pendingRequestsTotal > pendingPageSize">
-              <ion-button
-                size="small"
-                fill="outline"
-                [disabled]="pendingRequestsPage === 1"
-                (click)="goToPendingRequestsPage(pendingRequestsPage - 1)"
-              >
-                {{ "common.previous" | t }}
-              </ion-button>
-              <span>{{ "reports.pagination_page" | t: { page: pendingRequestsPage, total: pendingRequestsPageCount } }}</span>
-              <ion-button
-                size="small"
-                fill="outline"
-                [disabled]="pendingRequestsPage === pendingRequestsPageCount"
-                (click)="goToPendingRequestsPage(pendingRequestsPage + 1)"
-              >
-                {{ "common.next" | t }}
-              </ion-button>
-            </div>
-          </ion-card-content>
-        </ion-card>
-      </ion-col>
-    </ion-row>
-
-    <ion-row>
-      <ion-col size="12">
-        <ion-card class="glass-card panel result-panel">
-          <ion-card-header>
-            <ion-card-title>{{ "reports.summary_title" | t: { count: summaryTotal } }}</ion-card-title>
-          </ion-card-header>
-          <ion-card-content>
-            <ion-list lines="none" class="data-list" *ngIf="rows.length > 0">
-              <ion-item class="data-item" *ngFor="let row of rows">
-                <ion-label>
-                  <h3 class="item-title">{{ row.employee }}</h3>
-                  <ion-note class="item-meta">
-                    {{
-                      "reports.summary_row"
-                        | t: {
-                            date: row.date,
-                            worked: minutesToHuman(row.workedMinutes),
-                            breakTime: minutesToHuman(row.breakMinutes),
-                            overtime: minutesToHuman(row.overtimeMinutes)
-                          }
-                    }}
-                  </ion-note>
-                </ion-label>
-                <ion-badge [color]="row.status === 'OPEN' ? 'warning' : 'success'">{{ dayStatusLabel(row.status) }}</ion-badge>
-              </ion-item>
-            </ion-list>
-
-            <section class="empty-state" *ngIf="rows.length === 0">
-              <ion-icon name="bar-chart-outline" aria-hidden="true"></ion-icon>
-              <h3>{{ "reports.empty_summary_title" | t }}</h3>
-              <p>{{ "reports.empty_summary_desc" | t }}</p>
-            </section>
-
-            <div class="report-pagination" *ngIf="summaryTotal > pageSize">
-              <ion-button size="small" fill="outline" [disabled]="summaryPage === 1" (click)="goToSummaryPage(summaryPage - 1)">
-                {{ "common.previous" | t }}
-              </ion-button>
-              <span>{{ "reports.pagination_page" | t: { page: summaryPage, total: summaryPageCount } }}</span>
-              <ion-button
-                size="small"
-                fill="outline"
-                [disabled]="summaryPage === summaryPageCount"
-                (click)="goToSummaryPage(summaryPage + 1)"
-              >
-                {{ "common.next" | t }}
-              </ion-button>
-            </div>
-          </ion-card-content>
-        </ion-card>
-      </ion-col>
-    </ion-row>
-
-    <ion-row>
-      <ion-col size="12">
-        <ion-card class="glass-card panel detail-panel">
-          <ion-card-header>
-            <ion-card-title>{{ "reports.detail_title" | t: { count: eventsTotal } }}</ion-card-title>
-            <p class="microcopy">{{ "reports.detail_microcopy" | t }}</p>
-          </ion-card-header>
-          <ion-card-content>
-            <ion-list lines="none" class="data-list" *ngIf="events.length > 0">
-              <ng-container *ngFor="let event of events">
-                <ion-item
-                  class="data-item event-item"
-                  [class.app-attached-item]="editingEventId === event.id || requestingEventId === event.id"
-                >
-                  <app-avatar *ngIf="authService.isAdmin" slot="start" [fullName]="event.user.fullName" [photoUrl]="event.user.profilePhotoUrl" size="md"></app-avatar>
-                  <ion-label>
-                    <h3 class="item-title">
-                      {{ eventTypeLabel(event.type) }}
-                      <span *ngIf="authService.isAdmin" class="event-user">| {{ event.user.fullName }}</span>
-                    </h3>
-                    <ion-note class="item-meta">
-                      {{ formatDateTime(event.eventAt) }} | {{ "common.source" | t }}: {{ eventSourceLabel(event.source) }}
-                    </ion-note>
-                    <ion-note class="item-meta" *ngIf="event.note">{{ "common.note" | t }}: {{ event.note }}</ion-note>
-                    <ion-note class="item-audit" *ngIf="event.modifiedAt && event.modifiedBy">
-                      {{ "common.modified_by" | t: { name: event.modifiedBy.fullName, at: formatDateTime(event.modifiedAt) } }}
-                    </ion-note>
-                    <ion-note class="item-audit" *ngIf="event.modificationReason">
-                      {{ "common.reason_prefix" | t: { reason: event.modificationReason } }}
-                    </ion-note>
-                    <div class="request-chips" *ngIf="event.editRequests.length > 0">
-                      <ion-chip
-                        [color]="request.status === 'APPROVED' ? 'success' : request.status === 'REJECTED' ? 'danger' : 'warning'"
-                        *ngFor="let request of event.editRequests | slice: 0 : 2"
-                      >
-                        <ion-label>{{ requestStatusLabel(request.status) }} | {{ formatDateTime(request.createdAt) }}</ion-label>
-                      </ion-chip>
+                  <section class="review-box app-inline-panel app-attached-panel">
+                    <ion-item>
+                      <ion-label position="stacked">{{ "reports.review_comment_optional" | t }}</ion-label>
+                      <ion-textarea rows="2" [(ngModel)]="reviewCommentByRequestId[request.id]"></ion-textarea>
+                    </ion-item>
+                    <div class="editor-actions">
+                      <ion-button size="small" color="success" (click)="reviewRequest(request, 'APPROVE')">{{ "reports.action_approve" | t }}</ion-button>
+                      <ion-button size="small" color="danger" fill="outline" (click)="reviewRequest(request, 'REJECT')">{{ "reports.action_reject" | t }}</ion-button>
                     </div>
-                    <ng-container *ngFor="let request of event.editRequests | slice: 0 : 2">
-                      <ion-note class="item-audit rejection-reason" *ngIf="request.status === 'REJECTED' && request.reviewComment">
-                        {{ "reports.rejection_reason" | t: { reason: request.reviewComment } }}
-                      </ion-note>
-                    </ng-container>
+                  </section>
+                </ng-container>
+              </ion-list>
+
+              <section class="empty-state" *ngIf="pendingRequests.length === 0">
+                <ion-icon name="checkmark-done-outline" aria-hidden="true"></ion-icon>
+                <h3>{{ "reports.empty_pending_title" | t }}</h3>
+                <p>{{ "reports.empty_pending_desc" | t }}</p>
+              </section>
+
+              <div class="report-pagination" *ngIf="pendingRequestsTotal > pendingPageSize">
+                <ion-button size="small" fill="outline" [disabled]="pendingRequestsPage === 1" (click)="goToPendingRequestsPage(pendingRequestsPage - 1)">{{ "common.previous" | t }}</ion-button>
+                <span>{{ "reports.pagination_page" | t: { page: pendingRequestsPage, total: pendingRequestsPageCount } }}</span>
+                <ion-button size="small" fill="outline" [disabled]="pendingRequestsPage === pendingRequestsPageCount" (click)="goToPendingRequestsPage(pendingRequestsPage + 1)">{{ "common.next" | t }}</ion-button>
+              </div>
+            </ion-card-content>
+          </ion-card>
+        </ion-col>
+      </ion-row>
+
+      <ion-row>
+        <ion-col size="12">
+          <ion-card class="glass-card panel result-panel">
+            <ion-card-header>
+              <ion-card-title>{{ "reports.summary_title" | t: { count: summaryTotal } }}</ion-card-title>
+            </ion-card-header>
+            <ion-card-content>
+              <ion-list lines="none" class="data-list" *ngIf="rows.length > 0">
+                <ion-item class="data-item" *ngFor="let row of rows">
+                  <ion-label>
+                    <h3 class="item-title">{{ row.employee }}</h3>
+                    <ion-note class="item-meta">
+                      {{ "reports.summary_row" | t: { date: row.date, worked: minutesToHuman(row.workedMinutes), breakTime: minutesToHuman(row.breakMinutes), overtime: minutesToHuman(row.overtimeMinutes) } }}
+                    </ion-note>
                   </ion-label>
-
-                  <ion-button size="small" fill="outline" *ngIf="authService.isAdmin" (click)="startAdminEdit(event)">
-                    {{ "reports.action_edit" | t }}
-                  </ion-button>
-
-                  <ion-button
-                    size="small"
-                    fill="outline"
-                    *ngIf="!authService.isAdmin"
-                    [disabled]="hasPendingRequest(event)"
-                    (click)="startRequestEdit(event)"
-                  >
-                    {{ "reports.action_request_change" | t }}
-                  </ion-button>
+                  <ion-badge [color]="row.status === 'OPEN' ? 'warning' : 'success'">{{ dayStatusLabel(row.status) }}</ion-badge>
                 </ion-item>
+              </ion-list>
 
-                <section class="event-editor app-inline-panel app-attached-panel" *ngIf="editingEventId === event.id">
-                  <ion-item>
-                    <ion-label position="stacked">{{ "reports.new_datetime" | t }}</ion-label>
-                    <ion-input type="datetime-local" step="1" [(ngModel)]="adminEditModel.eventAt"></ion-input>
+              <section class="empty-state" *ngIf="rows.length === 0">
+                <ion-icon name="bar-chart-outline" aria-hidden="true"></ion-icon>
+                <h3>{{ "reports.empty_summary_title" | t }}</h3>
+                <p>{{ "reports.empty_summary_desc" | t }}</p>
+              </section>
+
+              <div class="report-pagination" *ngIf="summaryTotal > pageSize">
+                <ion-button size="small" fill="outline" [disabled]="summaryPage === 1" (click)="goToSummaryPage(summaryPage - 1)">{{ "common.previous" | t }}</ion-button>
+                <span>{{ "reports.pagination_page" | t: { page: summaryPage, total: summaryPageCount } }}</span>
+                <ion-button size="small" fill="outline" [disabled]="summaryPage === summaryPageCount" (click)="goToSummaryPage(summaryPage + 1)">{{ "common.next" | t }}</ion-button>
+              </div>
+            </ion-card-content>
+          </ion-card>
+        </ion-col>
+      </ion-row>
+
+      <ion-row>
+        <ion-col size="12">
+          <ion-card class="glass-card panel detail-panel">
+            <ion-card-header>
+              <ion-card-title>{{ "reports.detail_title" | t: { count: eventsTotal } }}</ion-card-title>
+              <p class="microcopy">{{ "reports.detail_microcopy" | t }}</p>
+            </ion-card-header>
+            <ion-card-content>
+              <ion-list lines="none" class="data-list" *ngIf="events.length > 0">
+                <ng-container *ngFor="let event of events">
+                  <ion-item class="data-item event-item" [class.app-attached-item]="editingEventId === event.id || requestingEventId === event.id">
+                    <app-avatar *ngIf="isStandardAdminView" slot="start" [fullName]="event.user.fullName" [photoUrl]="event.user.profilePhotoUrl" size="md"></app-avatar>
+                    <ion-label>
+                      <h3 class="item-title">{{ eventTypeLabel(event.type) }} <span *ngIf="isStandardAdminView" class="event-user">| {{ event.user.fullName }}</span></h3>
+                      <ion-note class="item-meta">{{ formatDateTime(event.eventAt) }} | {{ "common.source" | t }}: {{ eventSourceLabel(event.source) }}</ion-note>
+                      <ion-note class="item-meta" *ngIf="event.note">{{ "common.note" | t }}: {{ event.note }}</ion-note>
+                      <ion-note class="item-audit" *ngIf="event.modifiedAt && event.modifiedBy">{{ "common.modified_by" | t: { name: event.modifiedBy.fullName, at: formatDateTime(event.modifiedAt) } }}</ion-note>
+                      <ion-note class="item-audit" *ngIf="event.modificationReason">{{ "common.reason_prefix" | t: { reason: event.modificationReason } }}</ion-note>
+                      <div class="request-chips" *ngIf="event.editRequests.length > 0">
+                        <ion-chip [color]="request.status === 'APPROVED' ? 'success' : request.status === 'REJECTED' ? 'danger' : 'warning'" *ngFor="let request of event.editRequests | slice: 0 : 2">
+                          <ion-label>{{ requestStatusLabel(request.status) }} | {{ formatDateTime(request.createdAt) }}</ion-label>
+                        </ion-chip>
+                      </div>
+                      <ng-container *ngFor="let request of event.editRequests | slice: 0 : 2">
+                        <ion-note class="item-audit rejection-reason" *ngIf="request.status === 'REJECTED' && request.reviewComment">{{ "reports.rejection_reason" | t: { reason: request.reviewComment } }}</ion-note>
+                      </ng-container>
+                    </ion-label>
+
+                    <ion-button size="small" fill="outline" *ngIf="isStandardAdminView" (click)="startAdminEdit(event)">{{ "reports.action_edit" | t }}</ion-button>
+                    <ion-button size="small" fill="outline" *ngIf="!authService.isAdmin" [disabled]="hasPendingRequest(event)" (click)="startRequestEdit(event)">{{ "reports.action_request_change" | t }}</ion-button>
                   </ion-item>
 
-                  <ion-item>
-                    <ion-label position="stacked">{{ "reports.note_optional" | t }}</ion-label>
-                    <ion-textarea rows="2" [(ngModel)]="adminEditModel.note"></ion-textarea>
-                  </ion-item>
+                  <section class="event-editor app-inline-panel app-attached-panel" *ngIf="editingEventId === event.id">
+                    <app-date-control [label]="'reports.new_datetime' | t" mode="datetime" [(value)]="adminEditModel.eventAt"></app-date-control>
+                    <ion-item>
+                      <ion-label position="stacked">{{ "reports.note_optional" | t }}</ion-label>
+                      <ion-textarea rows="2" [(ngModel)]="adminEditModel.note"></ion-textarea>
+                    </ion-item>
+                    <ion-item>
+                      <ion-label position="stacked">{{ "reports.required_reason" | t }}</ion-label>
+                      <ion-textarea rows="2" [(ngModel)]="adminEditModel.reason"></ion-textarea>
+                    </ion-item>
+                    <div class="editor-actions">
+                      <ion-button size="small" (click)="saveAdminEdit(event)">{{ "common.save" | t }}</ion-button>
+                      <ion-button size="small" fill="outline" (click)="cancelAdminEdit()">{{ "common.cancel" | t }}</ion-button>
+                    </div>
+                  </section>
 
-                  <ion-item>
-                    <ion-label position="stacked">{{ "reports.required_reason" | t }}</ion-label>
-                    <ion-textarea rows="2" [(ngModel)]="adminEditModel.reason"></ion-textarea>
-                  </ion-item>
+                  <section class="event-editor app-inline-panel app-attached-panel" *ngIf="requestingEventId === event.id">
+                    <app-date-control [label]="'reports.requested_datetime' | t" mode="datetime" [(value)]="requestModel.requestedEventAt"></app-date-control>
+                    <ion-item>
+                      <ion-label position="stacked">{{ "reports.requested_note_optional" | t }}</ion-label>
+                      <ion-textarea rows="2" [(ngModel)]="requestModel.requestedNote"></ion-textarea>
+                    </ion-item>
+                    <ion-item>
+                      <ion-label position="stacked">{{ "reports.request_reason" | t }}</ion-label>
+                      <ion-textarea rows="2" [(ngModel)]="requestModel.reason"></ion-textarea>
+                    </ion-item>
+                    <div class="editor-actions">
+                      <ion-button size="small" (click)="submitRequest(event)">{{ "reports.send_request" | t }}</ion-button>
+                      <ion-button size="small" fill="outline" (click)="cancelRequestEdit()">{{ "common.cancel" | t }}</ion-button>
+                    </div>
+                  </section>
+                </ng-container>
+              </ion-list>
 
-                  <div class="editor-actions">
-                    <ion-button size="small" (click)="saveAdminEdit(event)">{{ "common.save" | t }}</ion-button>
-                    <ion-button size="small" fill="outline" (click)="cancelAdminEdit()">{{ "common.cancel" | t }}</ion-button>
-                  </div>
-                </section>
+              <section class="empty-state" *ngIf="events.length === 0">
+                <ion-icon name="time-outline" aria-hidden="true"></ion-icon>
+                <h3>{{ "reports.empty_events_title" | t }}</h3>
+                <p>{{ "reports.empty_events_desc" | t }}</p>
+              </section>
 
-                <section class="event-editor app-inline-panel app-attached-panel" *ngIf="requestingEventId === event.id">
-                  <ion-item>
-                    <ion-label position="stacked">{{ "reports.requested_datetime" | t }}</ion-label>
-                    <ion-input type="datetime-local" step="1" [(ngModel)]="requestModel.requestedEventAt"></ion-input>
-                  </ion-item>
-
-                  <ion-item>
-                    <ion-label position="stacked">{{ "reports.requested_note_optional" | t }}</ion-label>
-                    <ion-textarea rows="2" [(ngModel)]="requestModel.requestedNote"></ion-textarea>
-                  </ion-item>
-
-                  <ion-item>
-                    <ion-label position="stacked">{{ "reports.request_reason" | t }}</ion-label>
-                    <ion-textarea rows="2" [(ngModel)]="requestModel.reason"></ion-textarea>
-                  </ion-item>
-
-                  <div class="editor-actions">
-                    <ion-button size="small" (click)="submitRequest(event)">{{ "reports.send_request" | t }}</ion-button>
-                    <ion-button size="small" fill="outline" (click)="cancelRequestEdit()">{{ "common.cancel" | t }}</ion-button>
-                  </div>
-                </section>
-              </ng-container>
-            </ion-list>
-
-            <section class="empty-state" *ngIf="events.length === 0">
-              <ion-icon name="time-outline" aria-hidden="true"></ion-icon>
-              <h3>{{ "reports.empty_events_title" | t }}</h3>
-              <p>{{ "reports.empty_events_desc" | t }}</p>
-            </section>
-
-            <div class="report-pagination" *ngIf="eventsTotal > pageSize">
-              <ion-button size="small" fill="outline" [disabled]="eventsPage === 1" (click)="goToEventsPage(eventsPage - 1)">
-                {{ "common.previous" | t }}
-              </ion-button>
-              <span>{{ "reports.pagination_page" | t: { page: eventsPage, total: eventsPageCount } }}</span>
-              <ion-button size="small" fill="outline" [disabled]="eventsPage === eventsPageCount" (click)="goToEventsPage(eventsPage + 1)">
-                {{ "common.next" | t }}
-              </ion-button>
-            </div>
-          </ion-card-content>
-        </ion-card>
-      </ion-col>
-    </ion-row>
-
+              <div class="report-pagination" *ngIf="eventsTotal > pageSize">
+                <ion-button size="small" fill="outline" [disabled]="eventsPage === 1" (click)="goToEventsPage(eventsPage - 1)">{{ "common.previous" | t }}</ion-button>
+                <span>{{ "reports.pagination_page" | t: { page: eventsPage, total: eventsPageCount } }}</span>
+                <ion-button size="small" fill="outline" [disabled]="eventsPage === eventsPageCount" (click)="goToEventsPage(eventsPage + 1)">{{ "common.next" | t }}</ion-button>
+              </div>
+            </ion-card-content>
+          </ion-card>
+        </ion-col>
+      </ion-row>
+    </ng-template>
   </ion-grid>
 </app-main-layout>

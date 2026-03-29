@@ -1,0 +1,18 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.app-date-control {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.app-date-control-label {
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--app-text-tertiary);
+}

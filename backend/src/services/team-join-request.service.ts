@@ -2,7 +2,7 @@ import { Prisma, TeamJoinRequestStatus, type NotificationType } from "@prisma/cl
 import { prisma } from "../config/prisma";
 import { AppError } from "../middlewares/error.middleware";
 import { nowUtc } from "../utils/dates";
-import { createNotificationsForUsers, listSuperadminUsers } from "./notification.service";
+import { createNotificationsForUsers } from "./notification.service";
 import { getScopedUserById } from "./access.service";
 import { assertAdminSeatAvailability } from "./billing.service";
 import { buildProfilePhotoApiPath } from "./profile-photo.service";
@@ -144,10 +144,8 @@ export const createTeamJoinRequestForEmployee = async (params: {
     select: teamJoinRequestSelect
   });
 
-  const superadmins = await listSuperadminUsers();
-  const notificationUserIds = Array.from(new Set([targetManager.id, ...superadmins.map((user) => user.id)]));
   await createNotificationsForUsers({
-    userIds: notificationUserIds,
+    userIds: [targetManager.id],
     type: "TEAM_JOIN_REQUEST_CREATED",
     title: "Nueva solicitud de acceso a equipo",
     body: `${employee.fullName} ha solicitado unirse al equipo de ${targetManager.fullName}.`,
