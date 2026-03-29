@@ -53,6 +53,10 @@ export class UserService {
     return this.apiService.patch<TeamUser>(`/users/${userId}/manager`, { managerId }, true);
   }
 
+  resetUserPassword(userId: string, password: string): Promise<TeamUser> {
+    return this.apiService.patch<TeamUser>(`/users/${userId}/password`, { password }, true);
+  }
+
   uploadOwnProfilePhoto(file: File): Promise<TeamUser> {
     const formData = new FormData();
     formData.append("photo", file);

@@ -8,8 +8,10 @@ import {
   createUser,
   deleteUser,
   getUserProfilePhotoFile,
+  impersonateUserSession,
   listUsers,
   removeUserProfilePhoto,
+  resetUserPassword,
   updateUserProfilePhoto
 } from "../services/user.service";
 import {
@@ -48,6 +50,16 @@ const createUserSchema = strictObject({
 
 const assignManagerSchema = strictObject({
   managerId: z.string().min(1)
+});
+
+const resetUserPasswordSchema = strictObject({
+  password: z
+    .string()
+    .min(10)
+    .regex(/[a-z]/, "Password must include lowercase letters.")
+    .regex(/[A-Z]/, "Password must include uppercase letters.")
+    .regex(/[0-9]/, "Password must include at least one number.")
+    .regex(/[^a-zA-Z0-9]/, "Password must include at least one special character.")
 });
 
 const createTeamJoinRequestSchema = strictObject({
@@ -176,6 +188,36 @@ export const assignEmployeeManagerController = async (req: Request, res: Respons
   });
 
   return res.json(user);
+};
+
+export const resetUserPasswordController = async (req: Request, res: Response) => {
+  if (!req.user) {
+    throw new AppError("Not authenticated.", 401);
+  }
+
+  const payload = resetUserPasswordSchema.parse(req.body);
+  const userId = z.string().min(1).parse(req.params.userId);
+  const user = await resetUserPassword({
+    requesterId: req.user.id,
+    targetUserId: userId,
+    password: payload.password
+  });
+
+  return res.json(user);
+};
+
+export const impersonateUserController = async (req: Request, res: Response) => {
+  if (!req.user) {
+    throw new AppError("Not authenticated.", 401);
+  }
+
+  const userId = z.string().min(1).parse(req.params.userId);
+  const session = await impersonateUserSession({
+    requesterId: req.user.id,
+    targetUserId: userId
+  });
+
+  return res.json(session);
 };
 
 export const updateOwnProfilePhotoController = async (req: Request, res: Response) => {

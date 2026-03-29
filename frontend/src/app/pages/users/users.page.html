@@ -53,13 +53,14 @@
             [placeholder]="'users.manager_picker_search_label' | t"
             [(ngModel)]="managerSearchTerm"
             showClearButton="focus"
+            (ionInput)="onManagerSearchChange()"
           ></ion-searchbar>
 
-          <div class="manager-picker-list" *ngIf="filteredManagerUsers.length > 0; else emptyManagerResults">
+          <div class="manager-picker-list" *ngIf="paginatedManagerUsers.length > 0; else emptyManagerResults">
             <button
               type="button"
               class="manager-picker-option app-choice-card"
-              *ngFor="let manager of filteredManagerUsers; trackBy: trackUser"
+              *ngFor="let manager of paginatedManagerUsers; trackBy: trackUser"
               [class.manager-picker-option-active]="isSelectedManager(managerPickerUser, manager)"
               [disabled]="savingManagerUserId === managerPickerUser.id"
               (click)="selectManagerForCurrentUser(manager.id)"
@@ -70,6 +71,21 @@
               </div>
               <ion-badge color="primary" *ngIf="isSelectedManager(managerPickerUser, manager)">{{ "common.selected" | t }}</ion-badge>
             </button>
+          </div>
+
+          <div class="report-pagination" *ngIf="managerPickerTotal > managerPickerPageSize">
+            <ion-button size="small" fill="outline" [disabled]="managerPickerPage === 1" (click)="goToManagerPickerPage(managerPickerPage - 1)">
+              {{ "common.previous" | t }}
+            </ion-button>
+            <span>{{ "reports.pagination_page" | t: { page: managerPickerPage, total: managerPickerPageCount } }}</span>
+            <ion-button
+              size="small"
+              fill="outline"
+              [disabled]="managerPickerPage === managerPickerPageCount"
+              (click)="goToManagerPickerPage(managerPickerPage + 1)"
+            >
+              {{ "common.next" | t }}
+            </ion-button>
           </div>
 
           <ng-template #emptyManagerResults>
@@ -287,7 +303,7 @@
             <p class="microcopy">{{ "users.team_microcopy" | t }}</p>
           </ion-card-header>
           <ion-card-content>
-            <section class="join-requests-panel" *ngIf="pendingJoinRequests.length > 0">
+            <section class="join-requests-panel" *ngIf="!isSuperadmin && pendingJoinRequests.length > 0">
               <div class="team-section-head">
                 <div>
                   <h3>{{ "users.join_requests_title" | t }}</h3>
@@ -442,6 +458,25 @@
                         </td>
                         <td class="team-actions-col" [attr.data-label]="'users.table_actions' | t">
                           <div class="table-actions">
+                            <ion-button
+                              size="small"
+                              fill="outline"
+                              *ngIf="canResetPassword(user)"
+                              [disabled]="resettingPasswordUserId === user.id"
+                              (click)="openPasswordResetPrompt(user)"
+                            >
+                              {{ "users.action_password" | t }}
+                            </ion-button>
+                            <ion-button
+                              size="small"
+                              fill="outline"
+                              color="primary"
+                              *ngIf="canImpersonateUser(user)"
+                              [disabled]="impersonatingUserId === user.id"
+                              (click)="confirmImpersonation(user)"
+                            >
+                              {{ "users.action_impersonate" | t }}
+                            </ion-button>
                             <ion-button
                               size="small"
                               fill="outline"

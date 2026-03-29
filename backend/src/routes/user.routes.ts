@@ -5,10 +5,12 @@ import {
   createUserController,
   deleteUserController,
   getUserProfilePhotoController,
+  impersonateUserController,
   listTeamJoinRequestsController,
   listUsersController,
   removeOwnProfilePhotoController,
   removeUserProfilePhotoController,
+  resetUserPasswordController,
   reviewTeamJoinRequestController,
   updateOwnProfilePhotoController,
   updateUserProfilePhotoController
@@ -32,6 +34,8 @@ userRouter.use(requireRole(["ADMIN", "SUPERADMIN"]));
 userRouter.get("/", asyncHandler(listUsersController));
 userRouter.post("/", asyncHandler(createUserController));
 userRouter.patch("/:userId/manager", asyncHandler(assignEmployeeManagerController));
+userRouter.patch("/:userId/password", requireRole(["ADMIN", "SUPERADMIN"]), asyncHandler(resetUserPasswordController));
+userRouter.post("/:userId/impersonate", requireRole(["SUPERADMIN"]), asyncHandler(impersonateUserController));
 userRouter.post("/:userId/photo", profilePhotoUpload.single("photo"), asyncHandler(updateUserProfilePhotoController));
 userRouter.delete("/:userId/photo", asyncHandler(removeUserProfilePhotoController));
 userRouter.delete("/:userId", asyncHandler(deleteUserController));

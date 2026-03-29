@@ -64,6 +64,12 @@ export class AuthService {
     await this.persistSession(response);
   }
 
+  async impersonateAsUser(userId: string): Promise<void> {
+    const response = await this.apiService.post<LoginResponse>(`/users/${userId}/impersonate`, {}, true);
+    await this.persistSession(response);
+    await this.router.navigateByUrl("/dashboard", { replaceUrl: true });
+  }
+
   async refreshCurrentUser(): Promise<void> {
     if (!this.hasToken) {
       return;

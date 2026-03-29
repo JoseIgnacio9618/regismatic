@@ -4,8 +4,9 @@ import { access } from "node:fs/promises";
 import { prisma } from "../config/prisma";
 import { AppError } from "../middlewares/error.middleware";
 import { assertCanManageUser, assertCanViewUser, getScopedUserById, isElevatedRole } from "./access.service";
-import { generateUniqueAdminInviteCode } from "./admin-invite.service";
+import { ensureAdminInviteCode, generateUniqueAdminInviteCode } from "./admin-invite.service";
 import { assertAdminSeatAvailability, ensureAdminBillingProfile } from "./billing.service";
+import { buildAuthResponse } from "./auth.service";
 import {
   buildProfilePhotoApiPath,
   deleteStoredProfilePhoto,
@@ -332,6 +333,74 @@ export const assignEmployeeManager = async (params: {
   });
 
   return mapTeamUser(updated);
+};
+
+export const resetUserPassword = async (params: {
+  requesterId: string;
+  targetUserId: string;
+  password: string;
+}) => {
+  const { requester, target } = await assertCanManageUser(params.requesterId, params.targetUserId);
+
+  if (requester.role === "ADMIN" && target.role !== "EMPLOYEE") {
+    throw new AppError("Administrators can only change employee passwords.", 403);
+  }
+
+  if (requester.role === "SUPERADMIN" && target.role === "SUPERADMIN") {
+    throw new AppError("Superadministrator passwords cannot be changed from this screen.", 400);
+  }
+
+  const passwordHash = await bcrypt.hash(params.password, 12);
+  const updated = await prisma.user.update({
+    where: { id: params.targetUserId },
+    data: {
+      passwordHash
+    },
+    select: teamUserSelect
+  });
+
+  return mapTeamUser(updated);
+};
+
+export const impersonateUserSession = async (params: {
+  requesterId: string;
+  targetUserId: string;
+}) => {
+  const requester = await getScopedUserById(params.requesterId);
+  if (requester.role !== "SUPERADMIN") {
+    throw new AppError("Only superadministrators can start a session as another user.", 403);
+  }
+
+  const target = await prisma.user.findUnique({
+    where: { id: params.targetUserId },
+    select: {
+      id: true,
+      email: true,
+      fullName: true,
+      profilePhotoPath: true,
+      role: true,
+      adminInviteCode: true,
+      isActive: true
+    }
+  });
+
+  if (!target) {
+    throw new AppError("User not found.", 404);
+  }
+
+  if (target.role === "SUPERADMIN") {
+    throw new AppError("You can only start a session as administrators or employees.", 400);
+  }
+
+  if (!target.isActive) {
+    throw new AppError("You cannot start a session as an inactive user.", 400);
+  }
+
+  const adminInviteCode = await ensureAdminInviteCode(target);
+  return buildAuthResponse({
+    ...target,
+    adminInviteCode
+  });
 };
 
 export const updateUserProfilePhoto = async (params: {

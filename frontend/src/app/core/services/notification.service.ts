@@ -17,6 +17,8 @@ export class NotificationService implements OnDestroy {
   private activeUserId: string | null = null;
   private pushReady = false;
   private pushListenersRegistered = false;
+  private currentPushToken: string | null = null;
+  private currentPushPlatform: PushPlatform | null = null;
 
   readonly notifications$ = this.notificationsState.asObservable();
   readonly unreadCount$ = this.unreadCountState.asObservable();
@@ -106,6 +108,15 @@ export class NotificationService implements OnDestroy {
     this.seenIds.clear();
     await this.refresh(true);
     this.startPolling();
+    if (this.pushReady && this.currentPushToken && this.currentPushPlatform) {
+      try {
+        await this.registerPushToken(this.currentPushToken, this.currentPushPlatform);
+      } catch {
+        // Ignore token rebind errors to avoid breaking the session switch flow.
+      }
+      return;
+    }
+
     await this.initPushIfNeeded();
   }
 
@@ -136,7 +147,10 @@ export class NotificationService implements OnDestroy {
     const { PushNotifications } = await import("@capacitor/push-notifications");
     if (!this.pushListenersRegistered) {
       await PushNotifications.addListener("registration", (token) => {
-        void this.registerPushToken(token.value, this.getPushPlatform(Capacitor.getPlatform()));
+        const platform = this.getPushPlatform(Capacitor.getPlatform());
+        this.currentPushToken = token.value;
+        this.currentPushPlatform = platform;
+        void this.registerPushToken(token.value, platform);
       });
 
       await PushNotifications.addListener("pushNotificationReceived", (notification) => {

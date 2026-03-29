@@ -8,7 +8,7 @@ import { ensureAdminBillingProfile } from "./billing.service";
 import { buildProfilePhotoApiPath } from "./profile-photo.service";
 import { createTeamJoinRequestForEmployee } from "./team-join-request.service";
 
-const buildAuthResponse = (user: {
+export const buildAuthResponse = (user: {
   id: string;
   email: string;
   fullName: string;

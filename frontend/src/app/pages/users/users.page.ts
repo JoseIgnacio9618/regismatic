@@ -78,6 +78,8 @@ export class UsersPage implements OnInit, OnDestroy {
   savingManagerUserId: string | null = null;
   photoTargetUserId: string | null = null;
   photoLoadingUserId: string | null = null;
+  resettingPasswordUserId: string | null = null;
+  impersonatingUserId: string | null = null;
   reviewingJoinRequestId: string | null = null;
   photoCropperOpen = false;
   photoCropSourceUrl: string | null = null;
@@ -90,6 +92,11 @@ export class UsersPage implements OnInit, OnDestroy {
   managerPickerOpen = false;
   managerPickerUser: TeamUser | null = null;
   managerSearchTerm = "";
+  managerPickerResults: TeamUser[] = [];
+  managerPickerPage = 1;
+  readonly managerPickerPageSize = 8;
+  managerPickerTotal = 0;
+  private managerSearchDebounceHandle: ReturnType<typeof setTimeout> | null = null;
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -121,14 +128,27 @@ export class UsersPage implements OnInit, OnDestroy {
         return;
       }
 
+      if (!this.authService.isAdmin) {
+        return;
+      }
+
       void this.loadUsers();
     });
 
     const currentUser = this.authService.user;
     this.lastUserId = currentUser?.id ?? null;
-    if (currentUser) {
+    if (currentUser && this.authService.isAdmin) {
       await this.loadUsers();
     }
+  }
+
+  async ionViewWillEnter(): Promise<void> {
+    if (!this.authService.user || !this.authService.isAdmin) {
+      this.resetUsersState();
+      return;
+    }
+
+    await this.loadUsers();
   }
 
   ngOnDestroy(): void {
@@ -136,6 +156,9 @@ export class UsersPage implements OnInit, OnDestroy {
     this.authSubscription?.unsubscribe();
     if (this.teamSearchDebounceHandle) {
       clearTimeout(this.teamSearchDebounceHandle);
+    }
+    if (this.managerSearchDebounceHandle) {
+      clearTimeout(this.managerSearchDebounceHandle);
     }
     this.clearCreatePhotoPreview();
     this.clearPhotoCropSource();
@@ -268,16 +291,12 @@ export class UsersPage implements OnInit, OnDestroy {
     return Math.max(1, Math.ceil(this.joinRequestsTotal / this.joinRequestsPageSize));
   }
 
-  get filteredManagerUsers(): TeamUser[] {
-    const term = this.managerSearchTerm.trim().toLowerCase();
-    if (!term) {
-      return this.availableManagerUsers;
-    }
+  get paginatedManagerUsers(): TeamUser[] {
+    return this.managerPickerResults;
+  }
 
-    return this.availableManagerUsers.filter((manager) => {
-      const haystack = [manager.fullName, manager.email].join(" ").toLowerCase();
-      return haystack.includes(term);
-    });
+  get managerPickerPageCount(): number {
+    return Math.max(1, Math.ceil(this.managerPickerTotal / this.managerPickerPageSize));
   }
 
   get selectedRoleOption(): RoleOption {
@@ -389,6 +408,18 @@ export class UsersPage implements OnInit, OnDestroy {
     return this.authService.user?.id !== user.id;
   }
 
+  canResetPassword(user: TeamUser): boolean {
+    if (this.isSuperadmin) {
+      return user.role !== "SUPERADMIN";
+    }
+
+    return user.role === "EMPLOYEE";
+  }
+
+  canImpersonateUser(user: TeamUser): boolean {
+    return this.isSuperadmin && user.isActive && user.role !== "SUPERADMIN";
+  }
+
   canManagePhoto(user: TeamUser): boolean {
     if (this.isSuperadmin) {
       return true;
@@ -493,13 +524,38 @@ export class UsersPage implements OnInit, OnDestroy {
 
     this.managerPickerUser = user;
     this.managerSearchTerm = "";
+    this.managerPickerPage = 1;
     this.managerPickerOpen = true;
+    void this.loadManagerPickerResults();
   }
 
   closeManagerPicker(): void {
     this.managerPickerOpen = false;
     this.managerPickerUser = null;
     this.managerSearchTerm = "";
+    this.managerPickerResults = [];
+    this.managerPickerPage = 1;
+    this.managerPickerTotal = 0;
+  }
+
+  onManagerSearchChange(): void {
+    if (this.managerSearchDebounceHandle) {
+      clearTimeout(this.managerSearchDebounceHandle);
+    }
+
+    this.managerSearchDebounceHandle = setTimeout(() => {
+      this.managerPickerPage = 1;
+      void this.loadManagerPickerResults();
+    }, 250);
+  }
+
+  async goToManagerPickerPage(page: number): Promise<void> {
+    if (page < 1 || page > this.managerPickerPageCount || page === this.managerPickerPage) {
+      return;
+    }
+
+    this.managerPickerPage = page;
+    await this.loadManagerPickerResults();
   }
 
   isSelectedManager(user: TeamUser, manager: TeamUser): boolean {
@@ -557,6 +613,85 @@ export class UsersPage implements OnInit, OnDestroy {
           role: "destructive",
           handler: () => {
             void this.deleteUser(user.id);
+          }
+        }
+      ]
+    });
+
+    await alert.present();
+  }
+
+  async openPasswordResetPrompt(user: TeamUser): Promise<void> {
+    if (!this.canResetPassword(user) || this.resettingPasswordUserId) {
+      return;
+    }
+
+    const alert = await this.alertController.create({
+      header: this.i18nService.t("users.password_reset_title"),
+      message: this.i18nService.t("users.password_reset_message", { name: user.fullName }),
+      inputs: [
+        {
+          name: "password",
+          type: "password",
+          placeholder: this.i18nService.t("users.password_reset_field"),
+          attributes: {
+            minlength: 10,
+            autocomplete: "new-password"
+          }
+        },
+        {
+          name: "confirmPassword",
+          type: "password",
+          placeholder: this.i18nService.t("users.password_reset_confirm_field"),
+          attributes: {
+            minlength: 10,
+            autocomplete: "new-password"
+          }
+        }
+      ],
+      buttons: [
+        {
+          text: this.i18nService.t("common.cancel"),
+          role: "cancel"
+        },
+        {
+          text: this.i18nService.t("common.save"),
+          handler: (value) => {
+            const password = typeof value?.password === "string" ? value.password.trim() : "";
+            const confirmPassword = typeof value?.confirmPassword === "string" ? value.confirmPassword.trim() : "";
+
+            if (!password || password !== confirmPassword) {
+              void this.showToast(this.i18nService.t("users.password_reset_mismatch"), "danger");
+              return false;
+            }
+
+            void this.resetUserPassword(user, password);
+            return true;
+          }
+        }
+      ]
+    });
+
+    await alert.present();
+  }
+
+  async confirmImpersonation(user: TeamUser): Promise<void> {
+    if (!this.canImpersonateUser(user) || this.impersonatingUserId) {
+      return;
+    }
+
+    const alert = await this.alertController.create({
+      header: this.i18nService.t("users.impersonation_title"),
+      message: this.i18nService.t("users.impersonation_message", { name: user.fullName }),
+      buttons: [
+        {
+          text: this.i18nService.t("common.cancel"),
+          role: "cancel"
+        },
+        {
+          text: this.i18nService.t("users.impersonation_accept"),
+          handler: () => {
+            void this.impersonateUser(user);
           }
         }
       ]
@@ -658,6 +793,30 @@ export class UsersPage implements OnInit, OnDestroy {
     }
   }
 
+  private async resetUserPassword(user: TeamUser, password: string): Promise<void> {
+    this.resettingPasswordUserId = user.id;
+    try {
+      await this.userService.resetUserPassword(user.id, password);
+      await this.showToast(this.i18nService.t("users.password_reset_success"), "success");
+    } catch (error) {
+      await this.showToast(error instanceof Error ? error.message : this.i18nService.t("users.password_reset_failed"), "danger");
+    } finally {
+      this.resettingPasswordUserId = null;
+    }
+  }
+
+  private async impersonateUser(user: TeamUser): Promise<void> {
+    this.impersonatingUserId = user.id;
+    try {
+      await this.authService.impersonateAsUser(user.id);
+      await this.showToast(this.i18nService.t("users.impersonation_success", { name: user.fullName }), "success");
+    } catch (error) {
+      await this.showToast(error instanceof Error ? error.message : this.i18nService.t("users.impersonation_failed"), "danger");
+    } finally {
+      this.impersonatingUserId = null;
+    }
+  }
+
   private clearCreatePhotoPreview(): void {
     if (this.createPhotoPreviewUrl) {
       URL.revokeObjectURL(this.createPhotoPreviewUrl);
@@ -734,6 +893,11 @@ export class UsersPage implements OnInit, OnDestroy {
   }
 
   private async loadUsers(): Promise<void> {
+    if (!this.authService.isAdmin) {
+      this.resetUsersState();
+      return;
+    }
+
     const roleFilter = this.isSuperadmin && this.teamRoleFilter !== "ALL" ? this.teamRoleFilter : undefined;
     const [usersResponse, joinRequestsResponse, managerUsers] = await Promise.all([
       this.userService.listUsers({
@@ -786,6 +950,30 @@ export class UsersPage implements OnInit, OnDestroy {
     }
   }
 
+  private async loadManagerPickerResults(): Promise<void> {
+    if (!this.isSuperadmin || !this.managerPickerOpen) {
+      this.managerPickerResults = [];
+      this.managerPickerTotal = 0;
+      return;
+    }
+
+    const response = await this.userService.listUsers({
+      page: this.managerPickerPage,
+      pageSize: this.managerPickerPageSize,
+      search: this.managerSearchTerm,
+      role: "ADMIN"
+    });
+
+    if (this.managerPickerPage > 1 && response.users.length === 0 && response.total > 0) {
+      this.managerPickerPage -= 1;
+      await this.loadManagerPickerResults();
+      return;
+    }
+
+    this.managerPickerResults = response.users;
+    this.managerPickerTotal = response.total;
+  }
+
   async reviewJoinRequest(request: TeamJoinRequest, action: "APPROVE" | "REJECT"): Promise<void> {
     this.reviewingJoinRequestId = request.id;
     try {
@@ -827,10 +1015,14 @@ export class UsersPage implements OnInit, OnDestroy {
     this.savingManagerUserId = null;
     this.photoTargetUserId = null;
     this.photoLoadingUserId = null;
+    this.resettingPasswordUserId = null;
     this.reviewingJoinRequestId = null;
     this.managerPickerOpen = false;
     this.managerPickerUser = null;
     this.managerSearchTerm = "";
+    this.managerPickerResults = [];
+    this.managerPickerPage = 1;
+    this.managerPickerTotal = 0;
     this.photoViewerOpen = false;
     this.photoViewerUser = null;
     this.clearPhotoViewerResolvedUrl();
