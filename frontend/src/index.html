@@ -12,6 +12,15 @@
   <meta name="format-detection" content="telephone=no" />
   <meta name="msapplication-tap-highlight" content="no" />
 
+  <script>
+    (() => {
+      const storageKey = "regismatic_theme";
+      const saved = localStorage.getItem(storageKey);
+      const mode = saved === "light" || saved === "dark" ? saved : "dark";
+      document.documentElement.classList.add(mode === "dark" ? "dark-theme" : "light-theme");
+    })();
+  </script>
+
   <link rel="icon" type="image/svg+xml" href="assets/icon/favicon.svg" />
   <link rel="alternate icon" type="image/png" href="assets/icon/favicon.png" />
 

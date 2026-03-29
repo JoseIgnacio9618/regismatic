@@ -36,3 +36,17 @@
 .mt-16 {
   margin-top: 18px;
 }
+
+@media (max-width: 767px) {
+  .register-wrap::before {
+    width: 232px;
+    height: 232px;
+    top: 4%;
+  }
+
+  .register-wrap::after {
+    width: 206px;
+    height: 206px;
+    bottom: 4%;
+  }
+}

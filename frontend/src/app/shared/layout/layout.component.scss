@@ -19,7 +19,7 @@ ion-title {
   width: 8px;
   height: 16px;
   margin-right: 10px;
-  border-radius: 3px;
+  border-radius: var(--app-radius-pill);
   background: var(--app-accent-strong);
   vertical-align: middle;
 }
@@ -29,6 +29,7 @@ ion-title {
   align-items: center;
   gap: 6px;
   flex-wrap: nowrap;
+  min-width: 0;
 }
 
 .toolbar-actions ion-button {
@@ -36,10 +37,10 @@ ion-title {
   --padding-end: 12px;
   --background: transparent;
   --color: var(--app-text-secondary);
-  --border-radius: 12px;
+  --border-radius: var(--app-radius-control);
   min-width: 40px;
   overflow: hidden;
-  border-radius: 12px;
+  border-radius: var(--app-radius-control);
   font-size: 0.9rem;
 }
 
@@ -102,12 +103,12 @@ ion-title {
 }
 
 .header-menu-list ion-item {
-  --app-item-radius: 12px;
+  --app-item-radius: var(--app-radius-control);
   --background: transparent;
   --inner-border-width: 0;
   border: 0;
   box-shadow: none;
-  border-radius: 12px;
+  border-radius: var(--app-radius-control);
   margin-bottom: 4px;
 }
 
@@ -202,6 +203,7 @@ ion-title {
   padding: calc(var(--app-toolbar-height) + 28px) var(--app-page-padding) 40px;
   max-width: var(--app-page-max-width);
   margin: 0 auto;
+  width: min(100%, var(--app-page-max-width));
 }
 
 .notification-button {
@@ -249,6 +251,14 @@ ion-title {
 .notification-item ion-label {
   padding-top: 2px;
   padding-bottom: 2px;
+}
+
+.notification-item h3,
+.notification-item ion-note,
+.menu-user ion-label,
+.menu-profile-card ion-label,
+.menu-scope ion-label {
+  overflow-wrap: anywhere;
 }
 
 .unread-item {
@@ -300,6 +310,16 @@ ion-title {
     max-width: calc(100vw - 108px);
   }
 
+  .app-toolbar {
+    --padding-start: 8px;
+    --padding-end: 8px;
+  }
+
+  .mobile-actions ion-button {
+    --padding-start: 10px;
+    --padding-end: 10px;
+  }
+
   .header-menu-popover {
     --width: min(94vw, 336px);
   }
@@ -307,5 +327,9 @@ ion-title {
   .page-shell {
     padding-top: calc(var(--app-toolbar-height) + 18px);
     padding-bottom: 28px;
+  }
+
+  .menu-profile-actions {
+    flex-direction: column;
   }
 }

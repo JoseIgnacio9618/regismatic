@@ -59,14 +59,6 @@
   color: var(--app-text-secondary);
 }
 
-.billing-notice,
-.scope-metric,
-.fixed-role-summary,
-.invite-code-panel,
-.join-request-card {
-  padding: 16px 18px;
-}
-
 .billing-notice {
   display: flex;
   flex-direction: column;
@@ -249,11 +241,22 @@
   margin-top: 22px;
 }
 
+.team-table-shell {
+  margin-inline: -16px;
+  overflow-x: auto;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  scrollbar-gutter: auto;
+}
+
 .team-toolbar {
   display: grid;
   grid-template-columns: minmax(0, 1.4fr) minmax(220px, 0.6fr);
   gap: 14px;
   margin-bottom: 16px;
+  align-items: start;
 }
 
 .team-searchbar,
@@ -295,8 +298,18 @@
 }
 
 .team-table {
-  min-width: 860px;
+  min-width: 920px;
   table-layout: fixed;
+}
+
+.team-table thead th:first-child,
+.team-table tbody td:first-child {
+  padding-left: 24px;
+}
+
+.team-table thead th:last-child,
+.team-table tbody td:last-child {
+  padding-right: 24px;
 }
 
 .team-col-name {
@@ -439,6 +452,16 @@
   cursor: default;
 }
 
+.team-section-head,
+.join-request-copy,
+.team-user-copy,
+.manager-cell,
+.scope-copy,
+.invite-code-panel,
+.billing-notice {
+  overflow-wrap: anywhere;
+}
+
 @media (hover: hover) and (pointer: fine) {
   .team-table tbody tr:hover {
     background: color-mix(in srgb, var(--ion-color-primary), transparent 96%);
@@ -487,55 +510,7 @@
   }
 
   .team-table-shell {
-    border: 0;
-    background: transparent;
-    overflow: visible;
-  }
-
-  .team-table,
-  .team-table thead,
-  .team-table tbody,
-  .team-table th,
-  .team-table td,
-  .team-table tr {
-    display: block;
-  }
-
-  .team-table {
-    min-width: 0;
-    table-layout: auto;
-  }
-
-  .team-table thead {
-    display: none;
-  }
-
-  .team-table tbody tr {
-    padding: 16px;
-    margin-bottom: 14px;
-    border: 1px solid var(--app-border-subtle);
-    border-radius: var(--app-radius-md);
-    background: var(--app-surface-1);
-  }
-
-  .team-table tbody td {
-    padding: 0;
-    border-bottom: 0;
-  }
-
-  .team-table tbody td + td {
-    margin-top: 14px;
-  }
-
-  .team-table tbody td::before {
-    content: attr(data-label);
-    display: block;
-    margin-bottom: 6px;
-    font-size: 0.78rem;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: var(--app-text-tertiary);
+    margin-inline: 0;
   }
 
   .team-actions-col {

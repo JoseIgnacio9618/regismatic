@@ -14,15 +14,20 @@
   --app-radius-sm: 12px;
   --app-radius-md: 16px;
   --app-radius-lg: 20px;
+  --app-radius-xl: 24px;
   --app-radius-pill: 999px;
+  --app-radius-control: var(--app-radius-md);
+  --app-radius-shell: var(--app-radius-lg);
+  --app-radius-overlay: var(--app-radius-lg);
+  --app-radius-media: var(--app-radius-xl);
 
   --app-transition-fast: 140ms cubic-bezier(0.2, 0.8, 0.2, 1);
   --app-transition-base: 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
   --app-transition-slow: 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-body.light-theme,
-body:not(.dark-theme) {
+html.light-theme body,
+body.light-theme {
   color-scheme: light;
 
   --ion-background-color: #f4f3f0;
@@ -171,7 +176,9 @@ body:not(.dark-theme) {
   --app-shadow-md: 0 10px 24px rgba(18, 27, 21, 0.08);
 }
 
-body.dark-theme {
+html.dark-theme body,
+body.dark-theme,
+html:not(.light-theme):not(.dark-theme) body {
   color-scheme: dark;
 
   --ion-background-color: #0f1315;

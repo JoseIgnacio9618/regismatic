@@ -47,19 +47,29 @@
 
 .role-hint {
   margin-bottom: 16px;
-  padding: 14px 16px;
 }
 
 .role-hint p {
   margin-top: 8px;
 }
 
-.metrics-grid {
+.summary-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
   margin-top: 2px;
 }
 
-.metrics-grid ion-row {
-  row-gap: 10px;
+.summary-metric-card {
+  min-width: 0;
+}
+
+.summary-metric-card p {
+  font-size: clamp(1.05rem, 1.6vw, 1.32rem);
+}
+
+.superadmin-dashboard-panel .summary-metrics-grid {
+  margin-top: 0;
 }
 
 .status-error {
@@ -79,7 +89,6 @@
 .pending-join-card {
   display: grid;
   gap: 4px;
-  padding: 14px 16px;
 }
 
 .pending-join-card span {
@@ -110,6 +119,39 @@
 
 ion-button + ion-button {
   margin-top: 10px;
+}
+
+.join-team-panel ion-card-content,
+.status-panel ion-card-content {
+  align-content: start;
+}
+
+.pending-join-list strong {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 767px) {
+  .dashboard-grid ion-col > ion-card + ion-card {
+    margin-top: 14px;
+  }
+
+  .summary-metrics-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .summary-metric-card {
+    padding: 14px 12px;
+  }
+
+  .summary-metric-card p {
+    font-size: 1.02rem;
+  }
+}
+
+@media (max-width: 420px) {
+  .summary-metrics-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (min-width: 768px) {

@@ -42,3 +42,21 @@
   font-size: 0.85rem;
   color: var(--app-text-tertiary);
 }
+
+@media (max-width: 767px) {
+  .app-auth-card {
+    width: 100%;
+  }
+
+  .login-wrap::before {
+    width: 220px;
+    height: 220px;
+    top: 4%;
+  }
+
+  .login-wrap::after {
+    width: 200px;
+    height: 200px;
+    bottom: 4%;
+  }
+}

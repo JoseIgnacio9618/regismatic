@@ -8,15 +8,23 @@
   align-items: start;
   justify-content: space-between;
   gap: 16px;
-  padding: 16px 18px;
   margin-bottom: 18px;
 }
 
 .superadmin-hero-copy,
 .billing-status-copy,
 .plans-toolbar-copy,
-.limit-editor-copy {
+.limit-editor-copy,
+.plan-reference-intro {
   min-width: 0;
+}
+
+.superadmin-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-shrink: 0;
 }
 
 .superadmin-hero-badges,
@@ -34,17 +42,17 @@
 }
 
 .superadmin-hero-copy p,
-.limit-editor-copy p {
+.limit-editor-copy p,
+.plan-reference-intro p {
   margin-top: 8px;
   max-width: 56ch;
 }
 
 .superadmin-metrics-grid {
-  margin-top: 2px;
-}
-
-.superadmin-metrics-grid ion-row {
-  row-gap: 10px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 14px;
 }
 
 .plans-toolbar {
@@ -59,6 +67,15 @@
 .superadmin-catalog-toolbar,
 .superadmin-controls-toolbar {
   margin-bottom: 18px;
+}
+
+.billing-table-shell {
+  margin-inline: -16px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  scrollbar-gutter: auto;
 }
 
 .billing-cycle-switch {
@@ -173,7 +190,6 @@
 }
 
 .price-callout {
-  padding: 14px 16px;
 }
 
 .price-callout-current {
@@ -204,6 +220,28 @@
   padding: 18px;
 }
 
+.plan-reference-content {
+  --background:
+    radial-gradient(circle at top, color-mix(in srgb, var(--ion-color-primary), transparent 90%) 0%, transparent 32%),
+    linear-gradient(180deg, var(--app-surface-1) 0%, var(--app-surface-0) 100%);
+}
+
+.plan-reference-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 18px;
+}
+
+.plan-reference-intro {
+  margin: 0;
+}
+
+.plan-reference-intro strong {
+  display: block;
+  font-size: 1.02rem;
+}
+
 .limit-editor-hero {
   margin: 0;
 }
@@ -221,7 +259,6 @@
 
 .limit-editor-summary-card {
   gap: 6px;
-  padding: 14px 16px;
 }
 
 .limit-editor-summary-card strong {
@@ -243,8 +280,7 @@
   grid-template-columns: auto minmax(0, 1fr);
   gap: 12px;
   align-items: start;
-  padding: 14px 16px;
-  border-radius: 20px;
+  border-radius: var(--app-radius-shell);
   border: 1px solid color-mix(in srgb, var(--ion-color-warning), transparent 56%);
   background: color-mix(in srgb, var(--ion-color-warning), transparent 92%);
 }
@@ -261,7 +297,6 @@
 
 .limit-editor-panel {
   gap: 14px;
-  padding: 16px;
 }
 
 .limit-editor-panel-head p {
@@ -282,7 +317,19 @@
   flex-wrap: wrap;
 }
 
+.billing-grid .microcopy,
+.billing-grid p,
+.billing-grid span,
+.billing-grid ion-note,
+.admin-table-user-copy {
+  overflow-wrap: anywhere;
+}
+
 @media (max-width: 980px) {
+  .superadmin-metrics-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .plans-toolbar {
     grid-template-columns: 1fr;
     align-items: start;
@@ -295,6 +342,14 @@
 }
 
 @media (max-width: 767px) {
+  .superadmin-metrics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .billing-table-shell {
+    margin-inline: 0;
+  }
+
   .superadmin-hero,
   .billing-status-card,
   .plan-card-head,
@@ -318,58 +373,6 @@
     grid-template-columns: 1fr;
   }
 
-  .billing-table-shell {
-    border: 0;
-    background: transparent;
-    overflow: visible;
-  }
-
-  .billing-admin-table,
-  .billing-admin-table thead,
-  .billing-admin-table tbody,
-  .billing-admin-table th,
-  .billing-admin-table td,
-  .billing-admin-table tr {
-    display: block;
-  }
-
-  .billing-admin-table {
-    min-width: 0;
-    table-layout: auto;
-  }
-
-  .billing-admin-table thead {
-    display: none;
-  }
-
-  .billing-admin-table tbody tr {
-    padding: 16px;
-    margin-bottom: 14px;
-    border: 1px solid var(--app-border-subtle);
-    border-radius: var(--app-radius-md);
-    background: var(--app-surface-1);
-  }
-
-  .billing-admin-table tbody td {
-    padding: 0;
-    border-bottom: 0;
-  }
-
-  .billing-admin-table tbody td + td {
-    margin-top: 14px;
-  }
-
-  .billing-admin-table tbody td::before {
-    content: attr(data-label);
-    display: block;
-    margin-bottom: 6px;
-    font-size: 0.78rem;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: var(--app-text-tertiary);
-  }
-
   .billing-actions-col {
     text-align: left;
   }
@@ -384,7 +387,12 @@
   }
 
   .limit-editor-actions ion-button,
-  .superadmin-hero ion-button {
+  .superadmin-hero-actions ion-button {
     flex: 1 1 100%;
+  }
+
+  .superadmin-hero-actions {
+    width: 100%;
+    justify-content: stretch;
   }
 }

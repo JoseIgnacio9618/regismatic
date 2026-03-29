@@ -10,6 +10,7 @@
 @import "@ionic/angular/css/text-alignment.css";
 @import "@ionic/angular/css/text-transformation.css";
 @import "@ionic/angular/css/flex-utils.css";
+@import "primeicons/primeicons.css";
 
 *,
 *::before,
@@ -170,7 +171,7 @@ ion-menu::part(container) {
 }
 
 ion-list {
-  --app-list-radius: var(--app-radius-md);
+  --app-list-radius: var(--app-radius-shell);
   margin: 0;
   padding: 10px;
   border-radius: var(--app-list-radius);
@@ -181,7 +182,7 @@ ion-list {
 }
 
 ion-item {
-  --app-item-radius: var(--app-radius-md);
+  --app-item-radius: var(--app-radius-control);
   --background: var(--app-field-background);
   --color: var(--app-text-primary);
   --border-color: transparent;
@@ -317,7 +318,7 @@ ion-select::part(placeholder) {
 
 ion-searchbar {
   --background: var(--app-field-background);
-  --border-radius: var(--app-radius-md);
+  --border-radius: var(--app-radius-control);
   --box-shadow: 0 0 0 1px var(--app-field-border);
   --color: var(--app-text-primary);
   --placeholder-color: var(--app-text-tertiary);
@@ -365,7 +366,7 @@ ion-range {
 }
 
 ion-button {
-  --border-radius: 12px;
+  --border-radius: var(--app-radius-control);
   --box-shadow: none;
   --padding-top: 12px;
   --padding-bottom: 12px;
@@ -374,7 +375,7 @@ ion-button {
   min-height: 44px;
   overflow: hidden;
   isolation: isolate;
-  border-radius: var(--border-radius, 12px);
+  border-radius: var(--border-radius, var(--app-radius-control));
   font-weight: 700;
   letter-spacing: 0.01em;
 }
@@ -476,7 +477,7 @@ ion-badge[color="light"] {
 ion-card {
   margin: 0;
   color: var(--app-text-primary);
-  border-radius: var(--app-radius-lg);
+  border-radius: var(--app-radius-shell);
 }
 
 ion-card-header {
@@ -499,7 +500,7 @@ ion-card-content {
   isolation: isolate;
   overflow: hidden;
   border: 1px solid var(--app-border-subtle);
-  border-radius: var(--app-radius-lg);
+  border-radius: var(--app-radius-shell);
   background: linear-gradient(
     180deg,
     color-mix(in srgb, var(--app-surface-1), var(--ion-color-secondary) 6%) 0%,
@@ -659,7 +660,7 @@ ion-card-content {
 
 .app-inline-panel {
   border: 1px solid var(--app-border-subtle);
-  border-radius: var(--app-radius-md);
+  border-radius: var(--app-radius-shell);
   background: linear-gradient(
     180deg,
     color-mix(in srgb, var(--app-surface-2), var(--ion-color-secondary) 10%) 0%,
@@ -668,6 +669,7 @@ ion-card-content {
   overflow: hidden;
   isolation: isolate;
   box-shadow: var(--app-shadow-xs);
+  padding: 16px 18px;
 }
 
 .app-attached-item {
@@ -726,14 +728,16 @@ ion-card-content {
 .app-table-shell {
   overflow-x: auto;
   border: 1px solid var(--app-border-subtle);
-  border-radius: var(--app-radius-md);
+  border-radius: var(--app-radius-shell);
   background: var(--app-surface-1);
   box-shadow: var(--app-shadow-xs);
+  scrollbar-gutter: stable both-edges;
 }
 
 .app-data-table {
   width: 100%;
   border-collapse: collapse;
+  min-width: 100%;
 }
 
 .app-data-table th,
@@ -745,6 +749,12 @@ ion-card-content {
 
 .app-data-table tbody tr:last-child td {
   border-bottom: 0;
+}
+
+.app-data-table tbody tr {
+  transition:
+    background var(--app-transition-fast),
+    transform var(--app-transition-fast);
 }
 
 .app-data-table th {
@@ -952,7 +962,7 @@ ion-card-content {
 
 .admin-limits-search {
   --background: color-mix(in srgb, var(--app-surface-2), white 10%);
-  --border-radius: 18px;
+  --border-radius: var(--app-radius-control);
   --box-shadow: none;
   --color: var(--app-text-primary);
   --placeholder-color: var(--app-text-tertiary);
@@ -1027,6 +1037,79 @@ ion-card-content {
   padding: 28px;
 }
 
+.glass-card.panel ion-card-header,
+.glass-card.panel ion-card-content {
+  position: relative;
+  z-index: 1;
+}
+
+.glass-card.panel ion-card-header {
+  padding-bottom: 10px;
+}
+
+.glass-card.panel ion-card-content {
+  display: grid;
+  gap: 14px;
+}
+
+.glass-card.panel ion-card-content > :last-child {
+  margin-bottom: 0;
+}
+
+ion-grid > ion-row {
+  row-gap: 18px;
+}
+
+ion-item {
+  --padding-start: 14px;
+  --padding-end: 14px;
+  --inner-padding-end: 0;
+  --inner-padding-start: 0;
+  --min-height: 58px;
+}
+
+ion-item ion-label[position="stacked"] {
+  margin-bottom: 8px;
+}
+
+ion-input,
+ion-textarea,
+ion-select,
+ion-searchbar {
+  --border-radius: 16px;
+}
+
+ion-searchbar {
+  --background: color-mix(in srgb, var(--app-surface-2), white 10%);
+  --box-shadow: none;
+  --color: var(--app-text-primary);
+  --placeholder-color: var(--app-text-tertiary);
+  --border-radius: var(--app-radius-control);
+}
+
+.app-inline-panel ion-item,
+.glass-card.panel ion-item {
+  margin: 0;
+}
+
+.app-inline-panel ion-item + ion-item,
+.glass-card.panel ion-item + ion-item {
+  margin-top: 12px;
+}
+
+.glass-card.panel .microcopy,
+.app-inline-panel p,
+.app-inline-panel span,
+.app-inline-panel ion-note {
+  overflow-wrap: anywhere;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .app-data-table tbody tr:hover {
+    background: color-mix(in srgb, var(--ion-color-primary), transparent 96%);
+  }
+}
+
 .app-photo-panel {
   margin-top: 16px;
   padding: 16px 18px;
@@ -1072,7 +1155,7 @@ ion-popover {
 
 ion-popover::part(content) {
   border: 1px solid var(--app-border-subtle);
-  border-radius: var(--app-radius-md);
+  border-radius: var(--app-radius-shell);
 }
 
 ion-popover.header-menu-popover {
@@ -1100,7 +1183,7 @@ ion-modal {
   --background: var(--app-surface-overlay);
   --width: min(720px, 94vw);
   --height: min(88vh, 820px);
-  --border-radius: 20px;
+  --border-radius: var(--app-radius-overlay);
   --box-shadow: var(--app-shadow-md);
   --backdrop-opacity: 0.32;
 }
@@ -1109,7 +1192,7 @@ ion-modal::part(content) {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border-radius: var(--border-radius, 20px);
+  border-radius: var(--border-radius, var(--app-radius-overlay));
   border: 1px solid var(--app-border-subtle);
   background: var(--background);
 }
@@ -1160,7 +1243,7 @@ ion-modal.profile-photo-viewer-modal ion-content::part(scroll) {
   width: min(100%, 380px);
   max-height: min(70vh, 540px);
   object-fit: cover;
-  border-radius: 24px;
+  border-radius: var(--app-radius-media);
   border: 1px solid var(--app-border-subtle);
   box-shadow: var(--app-shadow-md);
 }
@@ -1326,6 +1409,330 @@ ion-datetime {
   --wheel-highlight-background: color-mix(in srgb, var(--ion-color-primary), transparent 82%);
 }
 
+.app-date-control {
+  min-width: 0;
+}
+
+.app-date-control .p-datepicker {
+  position: relative;
+  width: 100%;
+}
+
+.app-date-control .app-date-control-picker {
+  display: block;
+}
+
+.app-date-control .p-datepicker-input-icon-container,
+.app-date-control .p-datepicker-dropdown {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.app-date-control .p-inputtext {
+  width: 100%;
+  min-height: 54px;
+  padding: 15px 44px 15px 15px;
+  border: 1px solid var(--app-field-border);
+  border-radius: var(--app-radius-md);
+  background: var(--app-field-background);
+  color: var(--app-text-primary);
+  box-shadow: var(--app-shadow-xs);
+  font-size: 0.96rem;
+  transition:
+    border-color var(--app-transition-fast),
+    background var(--app-transition-fast),
+    box-shadow var(--app-transition-fast);
+}
+
+.app-date-control .p-inputtext::placeholder {
+  color: var(--app-text-tertiary);
+}
+
+.app-date-control .p-inputtext:enabled:hover {
+  border-color: var(--app-field-border-strong);
+  background: var(--app-field-background-hover);
+}
+
+.app-date-control .p-inputtext:enabled:focus,
+.app-date-control .p-datepicker.p-focus .p-inputtext {
+  border-color: var(--app-focus-ring);
+  background: var(--app-field-background-focus);
+  box-shadow:
+    0 0 0 3px var(--app-focus-shadow),
+    var(--app-shadow-xs);
+  outline: none;
+}
+
+.app-date-control .p-datepicker-dropdown,
+.app-date-control .p-datepicker-input-icon-container {
+  color: var(--app-text-tertiary);
+}
+
+.app-date-control .p-datepicker-input-icon-container {
+  top: 50%;
+  inset-inline-end: 14px;
+  transform: translateY(-50%);
+}
+
+.app-date-control .p-datepicker-input-icon {
+  font-size: 0.96rem;
+  line-height: 1;
+  transform: translateY(0);
+}
+
+.app-date-control .p-datepicker-dropdown {
+  width: 44px;
+  border: 0;
+  background: transparent;
+}
+
+.app-date-control .p-datepicker-clear-icon,
+.app-date-control .p-datepicker-clear-button {
+  display: none !important;
+}
+
+.app-date-control-overlay.p-datepicker-panel {
+  width: min(20rem, calc(100vw - 24px));
+  min-width: 18rem;
+  max-width: calc(100vw - 24px);
+  border: 1px solid var(--app-border-subtle);
+  border-radius: var(--app-radius-shell);
+  background: var(--app-surface-overlay);
+  color: var(--app-text-primary);
+  box-shadow: var(--app-shadow-md);
+  overflow: hidden;
+}
+
+.app-date-control-overlay-datetime.p-datepicker-panel {
+  width: min(24rem, calc(100vw - 24px));
+  min-width: 21rem;
+}
+
+.app-date-control-overlay,
+.app-date-control-overlay * {
+  box-sizing: border-box;
+}
+
+.app-date-control-overlay button,
+.app-date-control-overlay select {
+  font: inherit;
+}
+
+.app-date-control-overlay .p-datepicker-header {
+  padding: 14px 14px 10px;
+  border-bottom: 1px solid color-mix(in srgb, var(--app-border-subtle), transparent 12%);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--app-surface-2), var(--ion-color-secondary) 8%) 0%,
+    var(--app-surface-1) 100%
+  );
+}
+
+.app-date-control-overlay .p-datepicker-title button,
+.app-date-control-overlay .p-datepicker-prev-button,
+.app-date-control-overlay .p-datepicker-next-button,
+.app-date-control-overlay .p-datepicker-month,
+.app-date-control-overlay .p-datepicker-year {
+  color: var(--app-text-primary);
+}
+
+.app-date-control-overlay .p-datepicker-title {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  min-width: 0;
+  line-height: 1.15;
+}
+
+.app-date-control-overlay .p-datepicker-title button,
+.app-date-control-overlay .p-datepicker-prev-button,
+.app-date-control-overlay .p-datepicker-next-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: 0;
+  background: transparent;
+  border-radius: 999px;
+  cursor: pointer;
+  transition:
+    background var(--app-transition-fast),
+    color var(--app-transition-fast),
+    box-shadow var(--app-transition-fast);
+}
+
+.app-date-control-overlay .p-datepicker-month,
+.app-date-control-overlay .p-datepicker-year,
+.app-date-control-overlay .p-datepicker-select-month,
+.app-date-control-overlay .p-datepicker-select-year {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
+  border: 0;
+  background: transparent;
+  border-radius: 999px;
+  cursor: pointer;
+  min-width: 0;
+  max-width: 100%;
+  white-space: nowrap;
+  line-height: 1.15;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+.app-date-control-overlay .p-datepicker-select-month {
+  margin-inline-end: 2px;
+}
+
+.app-date-control-overlay .p-datepicker-select-year {
+  margin-inline-start: 2px;
+}
+
+.app-date-control-overlay .p-datepicker-calendar-container {
+  padding: 12px 12px 6px;
+}
+
+.app-date-control-overlay .p-datepicker-calendar,
+.app-date-control-overlay .p-datepicker-day-view,
+.app-date-control-overlay .p-datepicker-month-view,
+.app-date-control-overlay .p-datepicker-year-view {
+  width: 100%;
+}
+
+.app-date-control-overlay table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 6px;
+}
+
+.app-date-control-overlay table th {
+  color: var(--app-text-tertiary);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.app-date-control-overlay .p-datepicker-day,
+.app-date-control-overlay .p-datepicker-month,
+.app-date-control-overlay .p-datepicker-year {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.2rem;
+  min-height: 2.2rem;
+  border-radius: var(--app-radius-control);
+  color: var(--app-text-primary);
+}
+
+.app-date-control-overlay .p-datepicker-day {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.app-date-control-overlay .p-datepicker-day:hover,
+.app-date-control-overlay .p-datepicker-month:hover,
+.app-date-control-overlay .p-datepicker-year:hover,
+.app-date-control-overlay .p-datepicker-prev-button:hover,
+.app-date-control-overlay .p-datepicker-next-button:hover {
+  background: color-mix(in srgb, var(--ion-color-primary), transparent 90%);
+}
+
+.app-date-control-overlay .p-datepicker-day-selected,
+.app-date-control-overlay .p-datepicker-month-selected,
+.app-date-control-overlay .p-datepicker-year-selected {
+  background: var(--ion-color-primary);
+  color: var(--ion-color-primary-contrast);
+}
+
+.app-date-control-overlay .p-datepicker-today > .p-datepicker-day,
+.app-date-control-overlay .p-datepicker-today > span,
+.app-date-control-overlay .p-datepicker-today > button {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ion-color-primary), transparent 42%);
+}
+
+.app-date-control-overlay .p-datepicker-buttonbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 12px 14px 14px;
+  border-top: 1px solid color-mix(in srgb, var(--app-border-subtle), transparent 12%);
+  background: linear-gradient(180deg, var(--app-surface-1) 0%, var(--app-surface-0) 100%);
+}
+
+.app-date-control-overlay .p-button,
+.app-date-control-overlay .p-datepicker-buttonbar button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid color-mix(in srgb, var(--ion-color-primary), transparent 58%);
+  border-radius: var(--app-radius-control);
+  background: color-mix(in srgb, var(--ion-color-primary), transparent 93%);
+  color: var(--ion-color-primary);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.app-date-control-overlay .p-datepicker-buttonbar .p-button {
+  min-height: 38px;
+  padding-inline: 14px;
+}
+
+.app-date-control-overlay .p-datepicker-time-picker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: nowrap;
+  padding: 12px 12px 14px;
+  border-top: 1px solid color-mix(in srgb, var(--app-border-subtle), transparent 12%);
+}
+
+.app-date-control-overlay .p-datepicker-hour-picker,
+.app-date-control-overlay .p-datepicker-minute-picker,
+.app-date-control-overlay .p-datepicker-second-picker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.app-date-control-overlay .p-datepicker-time-picker button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: 0;
+  background: color-mix(in srgb, var(--app-surface-2), transparent 10%);
+  border-radius: 10px;
+  color: var(--app-text-primary);
+  cursor: pointer;
+  transition: background var(--app-transition-fast), color var(--app-transition-fast);
+}
+
+.app-date-control-overlay .p-datepicker-time-picker span {
+  color: var(--app-text-primary);
+  font-weight: 700;
+}
+
+.app-date-control-overlay .p-datepicker-time-picker button:hover {
+  background: color-mix(in srgb, var(--ion-color-primary), transparent 88%);
+}
+
+.app-date-control-overlay .p-disabled {
+  opacity: 0.56;
+}
+
 @media (hover: hover) and (pointer: fine) {
   ion-item:hover {
     border-color: var(--app-field-border-strong);
@@ -1382,14 +1789,61 @@ ion-datetime {
     padding: 22px;
   }
 
+  .glass-card.panel ion-card-header {
+    padding-bottom: 6px;
+  }
+
+  .glass-card.panel ion-card-content,
+  .app-inline-panel {
+    gap: 12px;
+    padding: 14px;
+  }
+
+  ion-grid {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  ion-item {
+    --padding-start: 12px;
+    --padding-end: 12px;
+    --min-height: 54px;
+  }
+
+  .app-date-control .p-inputtext {
+    min-height: 50px;
+    padding-left: 14px;
+    padding-right: 42px;
+  }
+
+  .app-date-control-overlay.p-datepicker-panel,
+  .app-date-control-overlay-datetime.p-datepicker-panel {
+    width: min(24rem, calc(100vw - 16px));
+    min-width: 0;
+    max-width: calc(100vw - 16px);
+  }
+
+  .app-date-control-overlay .p-datepicker-calendar-container {
+    padding-inline: 10px;
+  }
+
+  .app-date-control-overlay table {
+    border-spacing: 4px;
+  }
+
+  .app-date-control-overlay .p-datepicker-time-picker {
+    gap: 8px;
+    padding-inline: 10px;
+  }
+
   .profile-photo-viewer-shell {
     padding: 18px 14px 24px;
   }
 
-  .profile-photo-viewer-shell img {
+.profile-photo-viewer-shell img {
     width: min(100%, 320px);
     max-height: 58vh;
-    border-radius: 20px;
+    border-radius: var(--app-radius-shell);
   }
 
   .app-photo-panel-head,
@@ -1406,6 +1860,65 @@ ion-datetime {
   .manager-picker-option {
     align-items: start;
     flex-direction: column;
+  }
+
+  .app-table-shell {
+    border-width: 0;
+    background: transparent;
+    box-shadow: none;
+    overflow: visible;
+  }
+
+  .app-data-table,
+  .app-data-table thead,
+  .app-data-table tbody,
+  .app-data-table th,
+  .app-data-table td,
+  .app-data-table tr {
+    display: block;
+  }
+
+  .app-data-table {
+    min-width: 0;
+    table-layout: auto;
+  }
+
+  .app-data-table thead {
+    display: none;
+  }
+
+  .app-data-table tbody {
+    display: grid;
+    gap: 14px;
+  }
+
+  .app-data-table tbody tr {
+    padding: 16px;
+    border: 1px solid var(--app-border-subtle);
+    border-radius: var(--app-radius-md);
+    background: var(--app-surface-1);
+    box-shadow: var(--app-shadow-xs);
+  }
+
+  .app-data-table tbody td {
+    padding: 0;
+    border-bottom: 0;
+    text-align: left !important;
+  }
+
+  .app-data-table tbody td + td {
+    margin-top: 14px;
+  }
+
+  .app-data-table tbody td::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 6px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--app-text-tertiary);
   }
 }
 

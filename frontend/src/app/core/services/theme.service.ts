@@ -6,7 +6,7 @@ type ThemeMode = "light" | "dark";
 @Injectable({ providedIn: "root" })
 export class ThemeService {
   private static readonly STORAGE_KEY = "regismatic_theme";
-  private mode: ThemeMode = "light";
+  private mode: ThemeMode = "dark";
 
   constructor(@Inject(DOCUMENT) private readonly document: Document) {}
 
@@ -18,8 +18,7 @@ export class ThemeService {
       return;
     }
 
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    this.apply(prefersDark ? "dark" : "light");
+    this.apply("dark");
   }
 
   toggle(): void {
@@ -37,8 +36,11 @@ export class ThemeService {
   private apply(mode: ThemeMode): void {
     this.mode = mode;
 
+    const root = this.document.documentElement;
     const body = this.document.body;
+    root.classList.remove("light-theme", "dark-theme");
     body.classList.remove("light-theme", "dark-theme");
+    root.classList.add(mode === "dark" ? "dark-theme" : "light-theme");
     body.classList.add(mode === "dark" ? "dark-theme" : "light-theme");
 
     localStorage.setItem(ThemeService.STORAGE_KEY, mode);

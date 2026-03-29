@@ -31,7 +31,7 @@
 
 .history-searchbar {
   --background: color-mix(in srgb, var(--app-surface-2), white 10%);
-  --border-radius: 18px;
+  --border-radius: var(--app-radius-control);
   --box-shadow: none;
   --color: var(--app-text-primary);
   --placeholder-color: var(--app-text-tertiary);
@@ -47,7 +47,6 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  padding: 16px;
 }
 
 .account-head {
@@ -94,6 +93,14 @@
 
 .empty-inline p {
   color: var(--app-text-secondary);
+}
+
+.history-toolbar-copy,
+.account-head,
+.metric-chip,
+.account-info-list,
+.payments-table {
+  overflow-wrap: anywhere;
 }
 
 @media (max-width: 980px) {
