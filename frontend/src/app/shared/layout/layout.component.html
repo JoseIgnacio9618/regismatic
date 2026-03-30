@@ -1,4 +1,4 @@
-<ion-header translucent="true">
+<ion-header>
   <input #profilePhotoInput type="file" accept="image/png,image/jpeg,image/webp,image/gif" class="hidden-file-input" (change)="onOwnPhotoSelected($event)" />
   <app-photo-cropper
     [isOpen]="photoCropperOpen"
@@ -257,7 +257,7 @@
   </ng-template>
 </ion-popover>
 
-<ion-content fullscreen="true">
+<ion-content class="app-main-content">
   <div class="page-shell">
     <ng-content></ng-content>
   </div>

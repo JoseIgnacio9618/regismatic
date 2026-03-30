@@ -1,3 +1,7 @@
+.app-main-page {
+  background: transparent;
+}
+
 .app-toolbar {
   --min-height: var(--app-toolbar-height);
   --padding-start: 12px;
@@ -200,7 +204,7 @@ ion-title {
 }
 
 .page-shell {
-  padding: calc(var(--app-toolbar-height) + 28px) var(--app-page-padding) 40px;
+  padding: 18px var(--app-page-padding) 40px;
   max-width: var(--app-page-max-width);
   margin: 0 auto;
   width: min(100%, var(--app-page-max-width));
@@ -325,8 +329,8 @@ ion-title {
   }
 
   .page-shell {
-    padding-top: calc(var(--app-toolbar-height) + 18px);
-    padding-bottom: 28px;
+    padding-top: 12px;
+    padding-bottom: 24px;
   }
 
   .menu-profile-actions {

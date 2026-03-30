@@ -13,6 +13,9 @@ import { UserService } from "src/app/core/services/user.service";
   selector: "app-main-layout",
   templateUrl: "./layout.component.html",
   styleUrls: ["./layout.component.scss"],
+  host: {
+    class: "ion-page app-main-page"
+  },
   standalone: false
 })
 export class LayoutComponent implements OnDestroy {
