@@ -15,7 +15,7 @@ ion-title {
   min-width: 0;
   text-align: left;
   justify-content: flex-start;
-  padding-inline-start: 0;
+  padding-inline-start: 35px;
   padding-inline-end: 12px;
   overflow: visible;
   white-space: normal;
@@ -315,6 +315,10 @@ ion-title {
 }
 
 @media (max-width: 767px) {
+  ion-title {
+    padding-inline-start: 4px;
+  }
+
   .app-toolbar {
     --padding-start: 8px;
     --padding-end: 8px;
