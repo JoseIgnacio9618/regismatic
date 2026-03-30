@@ -12,10 +12,15 @@
 }
 
 ion-title {
-  max-width: min(46vw, 540px);
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  min-width: 0;
+  text-align: left;
+  justify-content: flex-start;
+  padding-inline-start: 0;
+  padding-inline-end: 12px;
+  overflow: visible;
+  white-space: normal;
+  text-overflow: clip;
+  line-height: 1.22;
 }
 
 .title-mark {
@@ -204,7 +209,7 @@ ion-title {
 }
 
 .page-shell {
-  padding: 18px var(--app-page-padding) 40px;
+  padding: 18px var(--app-page-padding) calc(56px + env(safe-area-inset-bottom, 0px));
   max-width: var(--app-page-max-width);
   margin: 0 auto;
   width: min(100%, var(--app-page-max-width));
@@ -310,10 +315,6 @@ ion-title {
 }
 
 @media (max-width: 767px) {
-  ion-title {
-    max-width: calc(100vw - 108px);
-  }
-
   .app-toolbar {
     --padding-start: 8px;
     --padding-end: 8px;
@@ -330,7 +331,7 @@ ion-title {
 
   .page-shell {
     padding-top: 12px;
-    padding-bottom: 24px;
+    padding-bottom: calc(44px + env(safe-area-inset-bottom, 0px));
   }
 
   .menu-profile-actions {
