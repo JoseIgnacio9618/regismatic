@@ -25,15 +25,18 @@ export class LayoutComponent implements OnDestroy {
   @ViewChild("profilePhotoInput") profilePhotoInput?: ElementRef<HTMLInputElement>;
   desktopMenuOpen = false;
   mobileMenuOpen = false;
+  mobileAccountOpen = false;
   photoLoading = false;
   photoCropperOpen = false;
   photoCropSourceUrl: string | null = null;
   readonly desktopTriggerId = `header-actions-trigger-${++LayoutComponent.nextInstanceId}`;
   readonly mobileTriggerId = `header-menu-trigger-${LayoutComponent.nextInstanceId}`;
+  readonly mobileAccountTriggerId = `header-account-trigger-${LayoutComponent.nextInstanceId}`;
   readonly desktopNotificationsTriggerId = `header-desktop-notifications-trigger-${LayoutComponent.nextInstanceId}`;
   readonly mobileNotificationsTriggerId = `header-mobile-notifications-trigger-${LayoutComponent.nextInstanceId}`;
   readonly desktopPopoverId = `desktop-menu-popover-${LayoutComponent.nextInstanceId}`;
   readonly mobilePopoverId = `mobile-menu-popover-${LayoutComponent.nextInstanceId}`;
+  readonly mobileAccountPopoverId = `mobile-account-popover-${LayoutComponent.nextInstanceId}`;
   readonly desktopNotificationsPopoverId = `desktop-notifications-popover-${LayoutComponent.nextInstanceId}`;
   readonly mobileNotificationsPopoverId = `mobile-notifications-popover-${LayoutComponent.nextInstanceId}`;
 
@@ -144,6 +147,14 @@ export class LayoutComponent implements OnDestroy {
     this.mobileMenuOpen = false;
   }
 
+  onMobileAccountDidPresent(): void {
+    this.mobileAccountOpen = true;
+  }
+
+  onMobileAccountDidDismiss(): void {
+    this.mobileAccountOpen = false;
+  }
+
   formatNotificationDate(iso: string): string {
     return new Date(iso).toLocaleString(this.i18nService.locale, {
       day: "2-digit",
@@ -220,9 +231,11 @@ export class LayoutComponent implements OnDestroy {
   private async closeMenus(): Promise<void> {
     this.desktopMenuOpen = false;
     this.mobileMenuOpen = false;
+    this.mobileAccountOpen = false;
     await Promise.all([
       this.popoverController.dismiss(undefined, undefined, this.desktopPopoverId).catch(() => undefined),
       this.popoverController.dismiss(undefined, undefined, this.mobilePopoverId).catch(() => undefined),
+      this.popoverController.dismiss(undefined, undefined, this.mobileAccountPopoverId).catch(() => undefined),
       this.popoverController.dismiss(undefined, undefined, this.desktopNotificationsPopoverId).catch(() => undefined),
       this.popoverController.dismiss(undefined, undefined, this.mobileNotificationsPopoverId).catch(() => undefined)
     ]);

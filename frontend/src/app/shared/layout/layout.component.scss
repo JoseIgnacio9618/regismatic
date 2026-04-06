@@ -105,6 +105,8 @@ ion-title {
 .header-menu-list {
   min-width: 272px;
   max-width: min(92vw, 344px);
+  max-height: min(72vh, 560px);
+  overflow: auto;
   padding: 8px;
   margin: 0;
   background: transparent;
@@ -119,6 +121,32 @@ ion-title {
   box-shadow: none;
   border-radius: var(--app-radius-control);
   margin-bottom: 4px;
+}
+
+.menu-nav-item {
+  --min-height: 52px;
+  border: 1px solid color-mix(in srgb, var(--app-border-subtle), transparent 12%) !important;
+  background: color-mix(in srgb, var(--app-surface-1), var(--ion-color-secondary) 4%) !important;
+}
+
+.menu-nav-item ion-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+  padding: 7px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--app-surface-2), var(--ion-color-primary) 8%);
+  color: var(--app-text-primary);
+  font-size: 1.02rem;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--app-border-subtle), transparent 18%);
+}
+
+.menu-nav-item ion-label {
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
 
 .header-menu-list ion-item:last-child {
@@ -192,10 +220,17 @@ ion-title {
 .header-menu-list .active-item {
   --background: color-mix(in srgb, var(--ion-color-primary), transparent 88%);
   --color: var(--ion-color-primary);
+  border-color: color-mix(in srgb, var(--ion-color-primary), transparent 62%) !important;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ion-color-primary), transparent 76%);
+}
+
+.header-menu-list .active-item ion-icon {
+  color: var(--ion-color-primary);
 }
 
 .more-button,
-.mobile-menu-button {
+.mobile-menu-button,
+.mobile-account-button {
   --background: var(--app-surface-1);
   --color: var(--app-text-primary);
   --border-color: var(--app-border-subtle);
@@ -203,9 +238,25 @@ ion-title {
   --border-style: solid;
 }
 
+.mobile-menu-button ion-icon,
+.mobile-account-button ion-icon,
+.notification-button ion-icon {
+  display: block;
+  opacity: 1;
+  color: currentColor;
+}
+
 .header-menu-popover {
   --width: min(92vw, 344px);
   --max-width: 344px;
+}
+
+.mobile-popover::part(content) {
+  width: min(92vw, 360px);
+}
+
+.mobile-account-popover::part(content) {
+  width: min(92vw, 360px);
 }
 
 .page-shell {
@@ -294,6 +345,16 @@ ion-title {
   .mobile-actions {
     display: flex;
   }
+
+  .mobile-popover::part(content) {
+    width: min(54vw, 392px);
+    max-height: min(78vh, 680px);
+  }
+
+  .mobile-account-popover::part(content) {
+    width: min(54vw, 392px);
+    max-height: min(78vh, 680px);
+  }
 }
 
 @media (max-width: 900px) {
@@ -317,6 +378,7 @@ ion-title {
 @media (max-width: 767px) {
   ion-title {
     padding-inline-start: 4px;
+    padding-inline-end: 4px;
   }
 
   .app-toolbar {
@@ -324,13 +386,54 @@ ion-title {
     --padding-end: 8px;
   }
 
+  .mobile-actions {
+    gap: 4px;
+  }
+
   .mobile-actions ion-button {
-    --padding-start: 10px;
-    --padding-end: 10px;
+    --padding-start: 0;
+    --padding-end: 0;
+    width: 40px;
+    min-width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
+  }
+
+  .mobile-actions .menu-toggle-icon {
+    width: 20px;
+    height: 20px;
+    font-size: 1.22rem;
   }
 
   .header-menu-popover {
     --width: min(94vw, 336px);
+  }
+
+  .mobile-popover::part(content) {
+    width: min(94vw, 368px);
+  }
+
+  .mobile-account-popover::part(content) {
+    width: min(94vw, 368px);
+  }
+
+  .header-menu-list {
+    min-width: 0;
+    max-width: 100%;
+    max-height: min(76vh, 620px);
+    padding: 10px;
+  }
+
+  .header-menu-list ion-item {
+    --padding-start: 10px;
+    --padding-end: 10px;
+    --inner-padding-start: 0;
+    --inner-padding-end: 0;
+  }
+
+  .menu-nav-item {
+    --min-height: 54px;
+    margin-bottom: 8px;
   }
 
   .page-shell {
@@ -340,5 +443,19 @@ ion-title {
 
   .menu-profile-actions {
     flex-direction: column;
+  }
+
+  .menu-language {
+    --align-items: start;
+  }
+
+  .menu-language ion-label {
+    margin-bottom: 8px;
+  }
+
+  .menu-language-select {
+    min-width: 0;
+    max-width: none;
+    width: 100%;
   }
 }

@@ -107,13 +107,13 @@
                     </thead>
                     <tbody>
                       <tr *ngFor="let payment of account.payments">
-                        <td>{{ formatDate(payment.paidAt || payment.createdAt) }}</td>
-                        <td>
+                        <td [attr.data-label]="'billing_history.table_date' | t">{{ formatDate(payment.paidAt || payment.createdAt) }}</td>
+                        <td [attr.data-label]="'billing_history.table_status' | t">
                           <ion-badge [color]="paymentStatusColor(payment.status)">{{ payment.status }}</ion-badge>
                         </td>
-                        <td>{{ formatMoney(payment.amountDueEur, payment.currency) }}</td>
-                        <td>{{ formatMoney(payment.amountPaidEur, payment.currency) }}</td>
-                        <td>
+                        <td [attr.data-label]="'billing_history.table_due' | t">{{ formatMoney(payment.amountDueEur, payment.currency) }}</td>
+                        <td [attr.data-label]="'billing_history.table_paid' | t">{{ formatMoney(payment.amountPaidEur, payment.currency) }}</td>
+                        <td [attr.data-label]="'billing_history.table_link' | t">
                           <a *ngIf="invoicePrimaryLink(payment) as paymentLink" [href]="paymentLink" target="_blank" rel="noreferrer">
                             {{ "billing_history.open_invoice" | t }}
                           </a>

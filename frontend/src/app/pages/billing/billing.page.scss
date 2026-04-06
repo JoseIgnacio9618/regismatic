@@ -341,6 +341,12 @@
   }
 }
 
+@media (max-width: 1024px) {
+  .billing-admin-table {
+    min-width: 900px;
+  }
+}
+
 @media (max-width: 767px) {
   .superadmin-metrics-grid {
     grid-template-columns: 1fr;
@@ -348,6 +354,32 @@
 
   .billing-table-shell {
     margin-inline: 0;
+  }
+
+  .billing-admin-table {
+    min-width: 0;
+    table-layout: auto;
+  }
+
+  .billing-admin-table tbody tr {
+    border-radius: var(--app-radius-shell);
+  }
+
+  .admin-table-user {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+    gap: 12px;
+  }
+
+  .admin-table-status {
+    display: grid;
+    gap: 6px;
+    justify-items: start;
+  }
+
+  .admin-limit-progress-track {
+    width: 100%;
   }
 
   .superadmin-hero,
@@ -378,8 +410,16 @@
   }
 
   .billing-table-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
     max-width: none;
     margin-left: 0;
+    gap: 10px;
+  }
+
+  .billing-table-actions ion-button {
+    min-height: 44px;
   }
 
   .limit-editor-actions {
@@ -394,5 +434,11 @@
   .superadmin-hero-actions {
     width: 100%;
     justify-content: stretch;
+  }
+}
+
+@media (max-width: 420px) {
+  .admin-table-user {
+    grid-template-columns: 1fr;
   }
 }

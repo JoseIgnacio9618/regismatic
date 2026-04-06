@@ -766,6 +766,17 @@ ion-card-content {
   background: color-mix(in srgb, var(--app-surface-3), var(--ion-color-secondary) 10%);
 }
 
+@media (max-width: 1024px) {
+  .app-table-shell {
+    border-radius: var(--app-radius-md);
+  }
+
+  .app-data-table th,
+  .app-data-table td {
+    padding: 12px 14px;
+  }
+}
+
 .billing-results-summary,
 .admin-limit-avatar {
   display: inline-flex;
@@ -1872,6 +1883,7 @@ ion-datetime {
   }
 
   .app-data-table,
+  .app-data-table colgroup,
   .app-data-table thead,
   .app-data-table tbody,
   .app-data-table th,
@@ -1885,6 +1897,10 @@ ion-datetime {
     table-layout: auto;
   }
 
+  .app-data-table colgroup {
+    display: none;
+  }
+
   .app-data-table thead {
     display: none;
   }
@@ -1895,32 +1911,102 @@ ion-datetime {
   }
 
   .app-data-table tbody tr {
-    padding: 16px;
+    display: block;
+    position: relative;
+    overflow: hidden;
+    padding: 0;
     border: 1px solid var(--app-border-subtle);
-    border-radius: var(--app-radius-md);
-    background: var(--app-surface-1);
-    box-shadow: var(--app-shadow-xs);
+    border-radius: var(--app-radius-shell);
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--app-surface-1), var(--ion-color-secondary) 5%) 0%,
+      var(--app-surface-0) 100%
+    );
+    box-shadow:
+      var(--app-shadow-xs),
+      inset 0 1px 0 color-mix(in srgb, white, transparent 92%);
   }
 
   .app-data-table tbody td {
-    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    min-width: 0;
+    padding: 14px 16px;
     border-bottom: 0;
     text-align: left !important;
   }
 
+  .app-data-table tbody td:first-child {
+    padding-top: 18px;
+  }
+
+  .app-data-table tbody td:last-child {
+    padding-bottom: 18px;
+  }
+
   .app-data-table tbody td + td {
-    margin-top: 14px;
+    border-top: 1px solid color-mix(in srgb, var(--app-border-subtle), transparent 24%);
+  }
+
+  .app-data-table tbody td > * {
+    min-width: 0;
+    max-width: 100%;
   }
 
   .app-data-table tbody td::before {
     content: attr(data-label);
     display: block;
-    margin-bottom: 6px;
-    font-size: 0.78rem;
+    font-size: 0.74rem;
     font-weight: 700;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
     color: var(--app-text-tertiary);
+  }
+
+  .app-data-table tbody td ion-badge,
+  .app-data-table tbody td ion-chip,
+  .app-data-table tbody td .created-at,
+  .app-data-table tbody td .manager-name,
+  .app-data-table tbody td .team-results-summary,
+  .app-data-table tbody td .billing-results-summary {
+    width: fit-content;
+    max-width: 100%;
+    justify-self: start;
+  }
+
+  .app-data-table tbody td .table-actions,
+  .app-data-table tbody td .billing-table-actions,
+  .app-data-table tbody td .admin-table-status,
+  .app-data-table tbody td .admin-table-usage,
+  .app-data-table tbody td .admin-table-meta,
+  .app-data-table tbody td .manager-cell,
+  .app-data-table tbody td .team-user-cell {
+    width: 100%;
+  }
+
+  .app-data-table tbody td .table-actions ion-button,
+  .app-data-table tbody td .billing-table-actions ion-button {
+    width: 100%;
+  }
+
+  .app-data-table tbody td .table-actions ion-button::part(native),
+  .app-data-table tbody td .billing-table-actions ion-button::part(native) {
+    justify-content: center;
+    padding-inline: 12px;
+  }
+
+  .app-data-table tbody td a,
+  .app-data-table tbody td span,
+  .app-data-table tbody td strong {
+    overflow-wrap: anywhere;
+  }
+}
+
+@media (max-width: 480px) {
+  .app-data-table tbody td::before {
+    font-size: 0.72rem;
   }
 }
 

@@ -110,9 +110,35 @@
   }
 }
 
+@media (max-width: 1024px) {
+  .payments-table {
+    min-width: 560px;
+  }
+}
+
 @media (max-width: 767px) {
   .account-head {
     flex-direction: column;
     align-items: start;
+  }
+
+  .payments-table {
+    min-width: 0;
+    table-layout: auto;
+  }
+
+  .payments-table tbody tr {
+    border-radius: var(--app-radius-shell);
+  }
+
+  .payments-table tbody td a,
+  .payments-table tbody td span {
+    overflow-wrap: anywhere;
+  }
+}
+
+@media (max-width: 480px) {
+  .account-metrics {
+    grid-template-columns: 1fr;
   }
 }

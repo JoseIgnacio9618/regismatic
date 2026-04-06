@@ -44,9 +44,10 @@
         </ng-container>
       </ion-button>
       <ion-button fill="clear" [id]="mobileTriggerId" class="mobile-menu-button" [attr.aria-label]="'nav.menu' | t">
-        <ion-icon slot="start" class="menu-toggle-icon" [name]="mobileMenuOpen ? 'close-outline' : 'menu-outline'" aria-hidden="true"></ion-icon>
-        <span class="menu-button-label">{{ "nav.menu" | t }}</span>
-        <ion-icon slot="end" class="menu-caret-icon" [name]="mobileMenuOpen ? 'chevron-up-outline' : 'chevron-down-outline'" aria-hidden="true"></ion-icon>
+        <ion-icon slot="icon-only" class="menu-toggle-icon" [name]="mobileMenuOpen ? 'close-outline' : 'menu-outline'" aria-hidden="true"></ion-icon>
+      </ion-button>
+      <ion-button fill="clear" [id]="mobileAccountTriggerId" class="mobile-account-button" [attr.aria-label]="'nav.account' | t">
+        <ion-icon slot="icon-only" class="menu-toggle-icon" [name]="mobileAccountOpen ? 'close-outline' : 'person-circle-outline'" aria-hidden="true"></ion-icon>
       </ion-button>
     </ion-buttons>
   </ion-toolbar>
@@ -200,21 +201,42 @@
 >
   <ng-template>
     <ion-list lines="none" class="header-menu-list">
-      <ion-item button detail="false" (click)="go('/dashboard')" [class.active-item]="isActive('/dashboard')">
+      <ion-item button detail="false" class="menu-nav-item" (click)="go('/dashboard')" [class.active-item]="isActive('/dashboard')">
+        <ion-icon slot="start" name="grid-outline" aria-hidden="true"></ion-icon>
         <ion-label>{{ "nav.dashboard" | t }}</ion-label>
       </ion-item>
-      <ion-item button detail="false" *ngIf="canAccessReports" (click)="go('/reports')" [class.active-item]="isActive('/reports')">
+      <ion-item button detail="false" class="menu-nav-item" *ngIf="canAccessReports" (click)="go('/reports')" [class.active-item]="isActive('/reports')">
+        <ion-icon slot="start" name="bar-chart-outline" aria-hidden="true"></ion-icon>
         <ion-label>{{ "nav.reports" | t }}</ion-label>
       </ion-item>
-      <ion-item button detail="false" *ngIf="canAccessTeam" (click)="go('/users')" [class.active-item]="isActive('/users')">
+      <ion-item button detail="false" class="menu-nav-item" *ngIf="canAccessTeam" (click)="go('/users')" [class.active-item]="isActive('/users')">
+        <ion-icon slot="start" name="people-outline" aria-hidden="true"></ion-icon>
         <ion-label>{{ "nav.team" | t }}</ion-label>
       </ion-item>
-      <ion-item button detail="false" *ngIf="canAccessBilling" (click)="go('/billing')" [class.active-item]="isActive('/billing')">
+      <ion-item button detail="false" class="menu-nav-item" *ngIf="canAccessBilling" (click)="go('/billing')" [class.active-item]="isActive('/billing')">
+        <ion-icon slot="start" name="card-outline" aria-hidden="true"></ion-icon>
         <ion-label>{{ "nav.billing" | t }}</ion-label>
       </ion-item>
-      <ion-item button detail="false" *ngIf="canAccessBillingHistory" (click)="go('/billing-history')" [class.active-item]="isActive('/billing-history')">
+      <ion-item button detail="false" class="menu-nav-item" *ngIf="canAccessBillingHistory" (click)="go('/billing-history')" [class.active-item]="isActive('/billing-history')">
+        <ion-icon slot="start" name="receipt-outline" aria-hidden="true"></ion-icon>
         <ion-label>{{ "nav.payments" | t }}</ion-label>
       </ion-item>
+    </ion-list>
+  </ng-template>
+</ion-popover>
+
+<ion-popover
+  [id]="mobileAccountPopoverId"
+  [trigger]="mobileAccountTriggerId"
+  side="bottom"
+  alignment="end"
+  [dismissOnSelect]="false"
+  class="header-menu-popover mobile-account-popover"
+  (didPresent)="onMobileAccountDidPresent()"
+  (didDismiss)="onMobileAccountDidDismiss()"
+>
+  <ng-template>
+    <ion-list lines="none" class="header-menu-list">
       <ion-item class="menu-language">
         <ion-label>{{ "common.language" | t }}</ion-label>
         <ion-select class="menu-language-select app-compact-select" interface="popover" [value]="i18nService.language" (ionChange)="setLanguage($event.detail.value)">
@@ -250,7 +272,8 @@
       <ion-item *ngIf="authService.user" class="menu-scope">
         <ion-label>{{ currentScopeHint }}</ion-label>
       </ion-item>
-      <ion-item button detail="false" class="danger-item" (click)="logout()">
+      <ion-item button detail="false" class="danger-item menu-nav-item" (click)="logout()">
+        <ion-icon slot="start" name="log-out-outline" aria-hidden="true"></ion-icon>
         <ion-label>{{ "nav.logout" | t }}</ion-label>
       </ion-item>
     </ion-list>
