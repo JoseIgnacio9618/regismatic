@@ -10,6 +10,7 @@ import {
   SimpleChanges,
   ViewChild
 } from "@angular/core";
+import { RequestLoadingService } from "src/app/core/services/request-loading.service";
 
 type CropResult = {
   file: File;
@@ -56,6 +57,9 @@ export class PhotoCropperComponent implements AfterViewInit, OnChanges, OnDestro
   private resizeHandler = () => this.syncStageAndPreview();
   private previewFrame: number | null = null;
   private syncRetryTimer: ReturnType<typeof setTimeout> | null = null;
+  private cropperLoadingRequestId: number | null = null;
+
+  constructor(private readonly requestLoadingService: RequestLoadingService) {}
 
   ngAfterViewInit(): void {
     window.addEventListener("resize", this.resizeHandler);
@@ -65,7 +69,13 @@ export class PhotoCropperComponent implements AfterViewInit, OnChanges, OnDestro
   ngOnChanges(changes: SimpleChanges): void {
     if (changes["isOpen"]?.currentValue) {
       this.resetState();
+      this.beginCropperLoading();
       queueMicrotask(() => this.scheduleInitialSync());
+      return;
+    }
+
+    if (changes["isOpen"] && !changes["isOpen"].currentValue) {
+      this.finishCropperLoading();
     }
   }
 
@@ -78,6 +88,7 @@ export class PhotoCropperComponent implements AfterViewInit, OnChanges, OnDestro
     if (this.syncRetryTimer) {
       clearTimeout(this.syncRetryTimer);
     }
+    this.finishCropperLoading();
   }
 
   get imageTransform(): string {
@@ -109,7 +120,12 @@ export class PhotoCropperComponent implements AfterViewInit, OnChanges, OnDestro
     this.naturalWidth = image.naturalWidth;
     this.naturalHeight = image.naturalHeight;
     this.imageLoaded = true;
+    this.finishCropperLoading();
     this.scheduleInitialSync(true);
+  }
+
+  onImageError(): void {
+    this.finishCropperLoading();
   }
 
   onZoomChange(): void {
@@ -118,15 +134,17 @@ export class PhotoCropperComponent implements AfterViewInit, OnChanges, OnDestro
   }
 
   onPointerDown(event: PointerEvent): void {
-    if (!this.imageLoaded) {
+    if (!this.imageLoaded || (event.button !== 0 && event.button !== 2)) {
       return;
     }
 
+    event.preventDefault();
     this.pointerId = event.pointerId;
     this.dragStartX = event.clientX;
     this.dragStartY = event.clientY;
     this.dragOriginX = this.offsetX;
     this.dragOriginY = this.offsetY;
+    this.stageRef?.nativeElement.setPointerCapture(event.pointerId);
   }
 
   onPointerMove(event: PointerEvent): void {
@@ -142,11 +160,13 @@ export class PhotoCropperComponent implements AfterViewInit, OnChanges, OnDestro
 
   onPointerUp(event: PointerEvent): void {
     if (this.pointerId === event.pointerId) {
+      this.stageRef?.nativeElement.releasePointerCapture(event.pointerId);
       this.pointerId = null;
     }
   }
 
   close(): void {
+    this.finishCropperLoading();
     this.cancel.emit();
   }
 
@@ -298,6 +318,8 @@ export class PhotoCropperComponent implements AfterViewInit, OnChanges, OnDestro
   }
 
   private resetState(): void {
+    this.finishCropperLoading();
+
     if (this.syncRetryTimer) {
       clearTimeout(this.syncRetryTimer);
       this.syncRetryTimer = null;
@@ -309,5 +331,19 @@ export class PhotoCropperComponent implements AfterViewInit, OnChanges, OnDestro
     this.offsetY = 0;
     this.naturalWidth = 0;
     this.naturalHeight = 0;
+  }
+
+  private beginCropperLoading(): void {
+    this.finishCropperLoading();
+    this.cropperLoadingRequestId = this.requestLoadingService.beginRequest();
+  }
+
+  private finishCropperLoading(): void {
+    if (this.cropperLoadingRequestId === null) {
+      return;
+    }
+
+    this.requestLoadingService.endRequest(this.cropperLoadingRequestId);
+    this.cropperLoadingRequestId = null;
   }
 }

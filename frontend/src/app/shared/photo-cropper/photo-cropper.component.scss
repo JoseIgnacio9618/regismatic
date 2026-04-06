@@ -55,6 +55,8 @@
   max-width: none;
   max-height: none;
   will-change: width, height, left, top;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
 .crop-frame {

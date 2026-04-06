@@ -21,18 +21,22 @@
             (pointerup)="onPointerUp($event)"
             (pointerleave)="onPointerUp($event)"
             (pointercancel)="onPointerUp($event)"
+            (contextmenu)="$event.preventDefault()"
           >
             <img
               #image
               *ngIf="sourceUrl"
               [src]="sourceUrl"
               [alt]="fullName"
+              draggable="false"
               [style.transform]="imageTransform"
               [style.width.px]="displayedImageWidth"
               [style.height.px]="displayedImageHeight"
               [style.left.px]="imageLeft"
               [style.top.px]="imageTop"
               (load)="onImageLoad()"
+              (error)="onImageError()"
+              (dragstart)="$event.preventDefault()"
             />
             <div class="crop-frame"></div>
           </div>
