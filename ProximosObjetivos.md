@@ -2,3 +2,4 @@
 -Definir cuales son las restricciones de estar o no con tu suscripcion activada, asi como el limite manual (el superadmin debe poder dar y quitar todos los privilegios que se establezcan de forma manual y la forma manual debe ser prioritaria sobre la suscripcion de stripe).
 -Existe bien la eliminacion de suscripciones y los restos de sub correspondiente (hacer pruebas)
 -Para la pesaña reportes del admin no deben estar seleccionadas fechas automaticamente sino por defecto que lleguen todo de todas las categorias, paginado eso si, y si se seleccionan fechas entonces ya si que usamos el filtro fecha 
+- Meter el sistema de cuadrantes y hacer que las suscripciones incluyan un paquete de cuadrantes 
