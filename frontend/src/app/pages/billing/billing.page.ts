@@ -160,12 +160,20 @@ export class BillingPage implements OnDestroy {
     return plan.pricingOptions.find((price) => price.interval === this.selectedInterval) ?? null;
   }
 
+  private hasLockedCurrentPaidPlan(): boolean {
+    if (!this.summary || this.summary.isTrial) {
+      return false;
+    }
+
+    return this.activeBillingStatuses.has(this.summary.status as BillingSubscriptionStatus);
+  }
+
   isCurrentPlan(plan: BillingPlan): boolean {
-    return this.summary?.plan.code === plan.code;
+    return this.hasLockedCurrentPaidPlan() && this.summary?.plan.code === plan.code;
   }
 
   isCurrentPrice(price: BillingPriceOption | null | undefined): boolean {
-    return !!price?.priceId && this.summary?.currentPrice?.priceId === price.priceId;
+    return this.hasLockedCurrentPaidPlan() && !!price?.priceId && this.summary?.currentPrice?.priceId === price.priceId;
   }
 
   planNameForCode(code: string): string {
@@ -231,6 +239,15 @@ export class BillingPage implements OnDestroy {
       days: diffDays,
       date: formattedDate
     });
+  }
+
+  billingPeriodValueText(billing: BillingSummary): string {
+    const referenceDate = billing.isTrial ? billing.trialEndsAt : billing.currentPeriodEnd;
+    if (!referenceDate) {
+      return this.i18nService.t("billing.period_pending_sync");
+    }
+
+    return this.formatDate(referenceDate);
   }
 
   planStatusLabel(): string {

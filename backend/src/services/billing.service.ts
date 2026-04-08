@@ -496,6 +496,56 @@ const ensureStripeReady = (): Stripe => {
   return stripe;
 };
 
+const findMostRelevantStripeSubscriptionIdForCustomer = async (customerId: string): Promise<string | null> => {
+  const stripeClient = ensureStripeReady();
+  const subscriptions = await stripeClient.subscriptions.list({
+    customer: customerId,
+    status: "all",
+    limit: 10
+  });
+
+  if (subscriptions.data.length === 0) {
+    return null;
+  }
+
+  const preferredStatuses: Stripe.Subscription.Status[] = ["active", "trialing", "past_due", "unpaid", "incomplete"];
+  const preferred = subscriptions.data.find((item) => preferredStatuses.includes(item.status));
+  return (preferred ?? subscriptions.data[0]).id;
+};
+
+const maybeRefreshSubscriptionFromStripe = async (subscription: BillingSubscriptionRecord): Promise<BillingSubscriptionRecord> => {
+  if (!stripe || !subscription.stripeCustomerId) {
+    return subscription;
+  }
+
+  const needsRefresh =
+    subscription.isTrial || !subscription.stripeSubscriptionId || !subscription.stripePriceId || !subscription.currentPeriodEnd;
+
+  if (!needsRefresh) {
+    return subscription;
+  }
+
+  try {
+    const stripeSubscriptionId =
+      subscription.stripeSubscriptionId ?? (await findMostRelevantStripeSubscriptionIdForCustomer(subscription.stripeCustomerId));
+
+    if (!stripeSubscriptionId) {
+      return subscription;
+    }
+
+    await syncBillingSubscriptionFromStripe(stripeSubscriptionId);
+
+    const refreshed = await prisma.billingSubscription.findUnique({
+      where: { adminId: subscription.adminId },
+      select: BILLING_SUBSCRIPTION_SELECT
+    });
+
+    return refreshed ?? subscription;
+  } catch {
+    return subscription;
+  }
+};
+
 const getPlanByPriceId = (priceId: string | null | undefined): BillingPlanDefinition | null => {
   if (!priceId) {
     return null;
@@ -565,7 +615,7 @@ const loadOrCreateAdminSubscription = async (adminId: string): Promise<BillingSu
   });
 
   if (existing) {
-    return existing;
+    return maybeRefreshSubscriptionFromStripe(existing);
   }
 
   return createDefaultTrialSubscription(adminId);
