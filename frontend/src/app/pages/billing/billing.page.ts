@@ -200,6 +200,39 @@ export class BillingPage implements OnDestroy {
     });
   }
 
+  billingPeriodTitle(billing: BillingSummary): string {
+    if (billing.isTrial) {
+      return this.i18nService.t("billing.trial_ends");
+    }
+
+    return billing.cancelAtPeriodEnd
+      ? this.i18nService.t("billing.access_until")
+      : this.i18nService.t("billing.period_ends");
+  }
+
+  billingPeriodHelpText(billing: BillingSummary): string | null {
+    const referenceDate = billing.isTrial ? billing.trialEndsAt : billing.currentPeriodEnd;
+    if (!referenceDate) {
+      return null;
+    }
+
+    const diffDays = this.getDaysUntil(referenceDate);
+    const formattedDate = this.formatDate(referenceDate);
+
+    if (diffDays <= 0) {
+      return this.i18nService.t("billing.remaining_today", { date: formattedDate });
+    }
+
+    if (diffDays === 1) {
+      return this.i18nService.t("billing.remaining_one_day", { date: formattedDate });
+    }
+
+    return this.i18nService.t("billing.remaining_days", {
+      days: diffDays,
+      date: formattedDate
+    });
+  }
+
   planStatusLabel(): string {
     const status = this.summary?.status;
     if (!status) {
@@ -231,6 +264,16 @@ export class BillingPage implements OnDestroy {
     }
 
     return this.formatDate(control.billing.currentPeriodEnd);
+  }
+
+  private getDaysUntil(value: string): number {
+    const target = new Date(value);
+    const now = new Date();
+
+    const targetUtc = Date.UTC(target.getUTCFullYear(), target.getUTCMonth(), target.getUTCDate());
+    const nowUtc = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+
+    return Math.ceil((targetUtc - nowUtc) / (1000 * 60 * 60 * 24));
   }
 
   initialsFor(fullName: string): string {
