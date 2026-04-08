@@ -1,0 +1,4 @@
+-Cambiar endpoint de los webhooks en stripe, mirar los eventos que se envian (customer.suscription event)
+-Cambiar precios y claves de stripe
+-Borrar base de datos y hacer aleatoria la clave del 
+-Ver lo del endpoint de vuelta cuadno se paga una sub 

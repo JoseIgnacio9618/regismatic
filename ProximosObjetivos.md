@@ -1,4 +1,5 @@
--Implementar un sistema de suscripciones con stipe para que se realicen pagos en funcion de los usuarios que pueda crear un admin siguiedo la tabla de precios que creamos antes y añadiendo una version demo que durara 1 semana y dectectara tu ip para que no crees multicuentas y te permitira crear solo 10 usuarios, ten en cuenta que en estos usuarios tambien entran aquellos que se crean a si mismos y son aceptados en el equipo por el administrador (cada admin pagara x dinero y prodra crear a x usuarios) TODO: CONTINUAR IMPLEMENTACION
 -Definir cuales son las restricciones de estar o no con tu suscripcion activada, asi como el limite manual (el superadmin debe poder dar y quitar todos los privilegios que se establezcan de forma manual y la forma manual debe ser prioritaria sobre la suscripcion de stripe).
 -Existe bien la eliminacion de suscripciones y los restos de sub correspondiente para que el usuario use el tiempo que le resta cuadno cancele?  (hacer pruebas)
 - Meter el sistema de cuadrantes y hacer que las suscripciones incluyan un paquete de cuadrantes 
+-Cuando se compra un sub hay que poner bien a donde quiero que se vuelva cuando se paga asi qcomo hacer un modal o algo para que diga algo tipo felicidades tu sub esta comprada
+-El fin de periodo actual de la sub no se ve, probar en railway 
