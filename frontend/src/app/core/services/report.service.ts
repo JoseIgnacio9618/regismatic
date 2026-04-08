@@ -13,8 +13,14 @@ export type SummaryReportResponse = {
 export class ReportService {
   constructor(private readonly apiService: ApiService) {}
 
-  getSummary(from: string, to: string, userId?: string, page = 1, pageSize = 50): Promise<SummaryReportResponse> {
-    const params = new URLSearchParams({ from, to });
+  getSummary(from?: string, to?: string, userId?: string, page = 1, pageSize = 50): Promise<SummaryReportResponse> {
+    const params = new URLSearchParams();
+    if (from) {
+      params.set("from", from);
+    }
+    if (to) {
+      params.set("to", to);
+    }
     if (userId) {
       params.set("userId", userId);
     }
@@ -23,8 +29,14 @@ export class ReportService {
     return this.apiService.get<SummaryReportResponse>(`/reports/summary?${params.toString()}`, true);
   }
 
-  downloadExcel(from: string, to: string, userId?: string): Promise<Blob> {
-    const params = new URLSearchParams({ from, to });
+  downloadExcel(from?: string, to?: string, userId?: string): Promise<Blob> {
+    const params = new URLSearchParams();
+    if (from) {
+      params.set("from", from);
+    }
+    if (to) {
+      params.set("to", to);
+    }
     if (userId) {
       params.set("userId", userId);
     }

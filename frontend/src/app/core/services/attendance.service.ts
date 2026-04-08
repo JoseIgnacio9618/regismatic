@@ -40,8 +40,14 @@ export class AttendanceService {
     return this.apiService.post<WorkEvent>("/attendance/clock-out", { source: "WEB", ...payload }, true);
   }
 
-  listEvents(from: string, to: string, userId?: string, page = 1, pageSize = 50): Promise<AttendanceEventsResponse> {
-    const params = new URLSearchParams({ from, to });
+  listEvents(from?: string, to?: string, userId?: string, page = 1, pageSize = 50): Promise<AttendanceEventsResponse> {
+    const params = new URLSearchParams();
+    if (from) {
+      params.set("from", from);
+    }
+    if (to) {
+      params.set("to", to);
+    }
     if (userId) {
       params.set("userId", userId);
     }

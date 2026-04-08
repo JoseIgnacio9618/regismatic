@@ -30,8 +30,8 @@ type EventInput = {
 };
 
 type ListEventsParams = {
-  fromUtc: Date;
-  toUtc: Date;
+  fromUtc?: Date;
+  toUtc?: Date;
   requesterRole: Role;
   requesterUserId: string;
   userId?: string;
@@ -623,10 +623,14 @@ export const listEvents = async (params: ListEventsParams): Promise<AttendanceEv
   const skip = (page - 1) * pageSize;
 
   const where: Prisma.WorkEventWhereInput = {
-    eventAt: {
-      gte: params.fromUtc,
-      lte: params.toUtc
-    },
+    ...(params.fromUtc && params.toUtc
+      ? {
+          eventAt: {
+            gte: params.fromUtc,
+            lte: params.toUtc
+          }
+        }
+      : {}),
     ...scopedUserWhere
   };
 

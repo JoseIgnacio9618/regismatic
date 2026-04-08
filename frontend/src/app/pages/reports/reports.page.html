@@ -452,11 +452,11 @@
             <ion-card-content>
               <div class="report-filters-shell" [class.report-filters-shell-admin]="isStandardAdminView">
                 <div class="report-filter-field">
-                  <app-date-control [label]="'common.from' | t" [showClear]="false" [(value)]="from"></app-date-control>
+                  <app-date-control [label]="'common.from' | t" [showClear]="isStandardAdminView" [(value)]="from"></app-date-control>
                 </div>
 
                 <div class="report-filter-field">
-                  <app-date-control [label]="'common.to' | t" [showClear]="false" [(value)]="to"></app-date-control>
+                  <app-date-control [label]="'common.to' | t" [showClear]="isStandardAdminView" [(value)]="to"></app-date-control>
                 </div>
 
                 <div class="report-filter-field report-filter-field-scope" *ngIf="isStandardAdminView">

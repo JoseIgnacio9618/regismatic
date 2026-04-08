@@ -3,12 +3,12 @@ import { z } from "zod";
 import { AppError } from "../middlewares/error.middleware";
 import { detailedReportToExcelBuffer, getDetailedReportExport, getSummaryReport, summaryToCsv } from "../services/report.service";
 import { assertNonBillingFeatureAccessForUser } from "../services/billing.service";
-import { parseReportRange } from "../utils/report-range";
+import { parseOptionalReportRange } from "../utils/report-range";
 import { strictObject } from "../utils/validation";
 
 const reportQuerySchema = strictObject({
-  from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   userId: z.string().optional(),
   page: z.coerce.number().int().min(1).optional(),
   pageSize: z.coerce.number().int().min(1).max(100).optional()
@@ -22,7 +22,7 @@ const getParsedReportQuery = async (req: Request) => {
   await assertNonBillingFeatureAccessForUser(req.user.id);
 
   const query = reportQuerySchema.parse(req.query);
-  const range = parseReportRange(query.from, query.to);
+  const range = parseOptionalReportRange(query.from, query.to);
 
   return {
     requesterRole: req.user.role,

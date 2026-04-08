@@ -292,6 +292,7 @@ export class ReportsPage implements OnInit, OnDestroy {
     const currentUser = this.authService.user;
     this.lastUserId = currentUser?.id ?? null;
     if (currentUser) {
+      this.applyDefaultDateFiltersForRole(currentUser.role);
       await this.initializeForCurrentUser();
     }
   }
@@ -408,6 +409,11 @@ export class ReportsPage implements OnInit, OnDestroy {
   }
 
   async loadReport(): Promise<void> {
+    if (this.hasPartialDateFilter()) {
+      await this.showToast(this.i18nService.t("reports.toast_date_range_incomplete"), "danger");
+      return;
+    }
+
     this.loading = true;
     this.summaryPage = 1;
     this.eventsPage = 1;
@@ -485,12 +491,17 @@ export class ReportsPage implements OnInit, OnDestroy {
       return;
     }
 
+    if (this.hasPartialDateFilter()) {
+      await this.showToast(this.i18nService.t("reports.toast_date_range_incomplete"), "danger");
+      return;
+    }
+
     try {
       const workbook = await this.reportService.downloadExcel(this.from, this.to, this.selectedUserId || undefined);
       const url = URL.createObjectURL(workbook);
       const anchor = document.createElement("a");
       anchor.href = url;
-      anchor.download = `regismatic-${this.from}-${this.to}.xlsx`;
+      anchor.download = this.hasCompleteDateFilter() ? `regismatic-${this.from}-${this.to}.xlsx` : "regismatic-all.xlsx";
       anchor.click();
       URL.revokeObjectURL(url);
     } catch (error) {
@@ -712,6 +723,18 @@ export class ReportsPage implements OnInit, OnDestroy {
     return now.toISOString().slice(0, 10);
   }
 
+  private getTodayDate(): string {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  private hasCompleteDateFilter(): boolean {
+    return Boolean(this.from && this.to);
+  }
+
+  private hasPartialDateFilter(): boolean {
+    return Boolean(this.from) !== Boolean(this.to);
+  }
+
   private applyInitialFocus(): void {
     const focus = this.route.snapshot.queryParamMap.get("focus");
     if (focus !== "incidents") {
@@ -823,6 +846,7 @@ export class ReportsPage implements OnInit, OnDestroy {
   }
 
   private resetReportState(): void {
+    this.applyDefaultDateFiltersForRole(this.authService.user?.role);
     this.selectedUserId = "";
     this.selectedManagerId = "";
     this.superadminAdminSearch = "";
@@ -854,5 +878,16 @@ export class ReportsPage implements OnInit, OnDestroy {
       requestedNote: "",
       reason: ""
     };
+  }
+
+  private applyDefaultDateFiltersForRole(role?: Role): void {
+    if (role === "ADMIN") {
+      this.from = "";
+      this.to = "";
+      return;
+    }
+
+    this.from = this.getWeekStart();
+    this.to = this.getTodayDate();
   }
 }

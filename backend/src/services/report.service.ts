@@ -6,8 +6,8 @@ import { diffMinutes, madridDateKey } from "../utils/dates";
 import { assertCanViewUser, getScopedUserById, listVisibleUserIds } from "./access.service";
 
 type ReportParams = {
-  fromUtc: Date;
-  toUtc: Date;
+  fromUtc?: Date;
+  toUtc?: Date;
   requesterRole: Role;
   requesterUserId: string;
   userId?: string;
@@ -160,10 +160,14 @@ export const getSummaryReport = async (params: ReportParams): Promise<SummaryRep
 
   const events = await prisma.workEvent.findMany({
     where: {
-      eventAt: {
-        gte: params.fromUtc,
-        lte: params.toUtc
-      },
+      ...(params.fromUtc && params.toUtc
+        ? {
+            eventAt: {
+              gte: params.fromUtc,
+              lte: params.toUtc
+            }
+          }
+        : {}),
       ...userWhere
     },
     include: {
@@ -464,10 +468,14 @@ export const getDetailedReportExport = async (params: ReportParams): Promise<Det
 
   const events = await prisma.workEvent.findMany({
     where: {
-      eventAt: {
-        gte: params.fromUtc,
-        lte: params.toUtc
-      },
+      ...(params.fromUtc && params.toUtc
+        ? {
+            eventAt: {
+              gte: params.fromUtc,
+              lte: params.toUtc
+            }
+          }
+        : {}),
       ...userWhere
     },
     include: {

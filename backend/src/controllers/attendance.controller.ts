@@ -13,7 +13,7 @@ import {
   updateEventAsAdmin
 } from "../services/attendance.service";
 import { assertNonBillingFeatureAccessForUser } from "../services/billing.service";
-import { parseReportRange } from "../utils/report-range";
+import { parseOptionalReportRange } from "../utils/report-range";
 import { strictObject } from "../utils/validation";
 
 const eventInputSchema = strictObject({
@@ -30,8 +30,8 @@ const adjustmentSchema = strictObject({
 });
 
 const listEventsQuerySchema = strictObject({
-  from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   userId: z.string().optional(),
   page: z.coerce.number().int().min(1).optional(),
   pageSize: z.coerce.number().int().min(1).max(100).optional()
@@ -154,7 +154,7 @@ export const listEventsController = async (req: Request, res: Response) => {
   await assertNonBillingFeatureAccessForUser(req.user.id);
 
   const query = listEventsQuerySchema.parse(req.query);
-  const range = parseReportRange(query.from, query.to);
+  const range = parseOptionalReportRange(query.from, query.to);
   const result = await listEvents({
     fromUtc: range.fromUtc,
     toUtc: range.toUtc,

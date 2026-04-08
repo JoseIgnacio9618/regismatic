@@ -24,3 +24,18 @@ export const parseReportRange = (from: string, to: string) => {
     toUtc: toDt.toUTC().toJSDate()
   };
 };
+
+export const parseOptionalReportRange = (from?: string, to?: string) => {
+  if (!from && !to) {
+    return {
+      fromUtc: undefined,
+      toUtc: undefined
+    };
+  }
+
+  if (!from || !to) {
+    throw new AppError("Both 'from' and 'to' dates are required when filtering by date.", 400);
+  }
+
+  return parseReportRange(from, to);
+};
