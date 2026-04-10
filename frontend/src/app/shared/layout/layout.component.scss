@@ -4,30 +4,31 @@
 
 .app-toolbar {
   --min-height: var(--app-toolbar-height);
-  --padding-start: 12px;
-  --padding-end: 12px;
-  --background: color-mix(in srgb, var(--ion-toolbar-background), transparent 2%);
+  --padding-start: 14px;
+  --padding-end: 14px;
+  --background: color-mix(in srgb, var(--ion-toolbar-background), transparent 4%);
   box-shadow: none;
-  backdrop-filter: blur(14px) saturate(140%);
+  backdrop-filter: blur(18px) saturate(120%);
 }
 
 ion-title {
   min-width: 0;
   text-align: left;
   justify-content: flex-start;
-  padding-inline-start: 35px;
+  padding-inline-start: 24px;
   padding-inline-end: 12px;
   overflow: visible;
   white-space: normal;
   text-overflow: clip;
   line-height: 1.22;
+  font-size: 1.05rem;
 }
 
 .title-mark {
   display: inline-block;
-  width: 8px;
-  height: 16px;
-  margin-right: 10px;
+  width: 7px;
+  height: 7px;
+  margin-right: 8px;
   border-radius: var(--app-radius-pill);
   background: var(--app-accent-strong);
   vertical-align: middle;
@@ -36,14 +37,14 @@ ion-title {
 .toolbar-actions {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   flex-wrap: nowrap;
   min-width: 0;
 }
 
 .toolbar-actions ion-button {
-  --padding-start: 12px;
-  --padding-end: 12px;
+  --padding-start: 10px;
+  --padding-end: 10px;
   --background: transparent;
   --color: var(--app-text-secondary);
   --border-radius: var(--app-radius-control);
@@ -51,6 +52,7 @@ ion-title {
   overflow: hidden;
   border-radius: var(--app-radius-control);
   font-size: 0.9rem;
+  font-weight: 600;
 }
 
 .toolbar-actions ion-button::part(native) {
@@ -67,10 +69,10 @@ ion-title {
 }
 
 .toolbar-role-chip {
-  margin: 0 4px 0 0;
+  margin: 0;
   font-size: 0.72rem;
-  letter-spacing: 0.04em;
   text-transform: uppercase;
+  border: 1px solid var(--app-border-subtle);
 }
 
 .mobile-actions {
@@ -93,13 +95,13 @@ ion-title {
 
 .menu-button-label {
   font-weight: 600;
-  letter-spacing: 0.01em;
+  letter-spacing: 0;
 }
 
 .active-nav {
-  --background: color-mix(in srgb, var(--ion-color-primary), transparent 88%) !important;
+  --background: color-mix(in srgb, var(--ion-color-primary), transparent 93%) !important;
   --color: var(--ion-color-primary) !important;
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ion-color-primary), transparent 72%);
+  box-shadow: inset 0 -2px 0 var(--ion-color-primary);
 }
 
 .header-menu-list {
@@ -146,7 +148,7 @@ ion-title {
 
 .menu-nav-item ion-label {
   font-weight: 700;
-  letter-spacing: -0.01em;
+  letter-spacing: 0;
 }
 
 .header-menu-list ion-item:last-child {
@@ -231,7 +233,7 @@ ion-title {
 .more-button,
 .mobile-menu-button,
 .mobile-account-button {
-  --background: var(--app-surface-1);
+  --background: color-mix(in srgb, var(--app-surface-1), var(--ion-color-primary) 2%);
   --color: var(--app-text-primary);
   --border-color: var(--app-border-subtle);
   --border-width: 1px;
@@ -260,7 +262,7 @@ ion-title {
 }
 
 .page-shell {
-  padding: 18px var(--app-page-padding) calc(56px + env(safe-area-inset-bottom, 0px));
+  padding: 22px var(--app-page-padding) calc(64px + env(safe-area-inset-bottom, 0px));
   max-width: var(--app-page-max-width);
   margin: 0 auto;
   width: min(100%, var(--app-page-max-width));
@@ -268,8 +270,8 @@ ion-title {
 
 .notification-button {
   position: relative;
-  --padding-start: 10px;
-  --padding-end: 10px;
+  --padding-start: 8px;
+  --padding-end: 8px;
   min-width: 40px;
 }
 
@@ -280,8 +282,8 @@ ion-title {
 
 .notification-button .notification-badge {
   position: absolute;
-  top: -1px;
-  right: -1px;
+  top: 1px;
+  right: 1px;
   transform: translate(22%, -22%);
   min-width: 18px;
   height: 18px;
@@ -328,7 +330,7 @@ ion-title {
 
 @media (hover: hover) and (pointer: fine) {
   .toolbar-actions ion-button:hover {
-    --background: var(--app-surface-2);
+    --background: color-mix(in srgb, var(--app-surface-1), var(--ion-color-primary) 5%);
     --color: var(--app-text-primary);
   }
 
@@ -377,7 +379,7 @@ ion-title {
 
 @media (max-width: 767px) {
   ion-title {
-    padding-inline-start: 4px;
+    padding-inline-start: 6px;
     padding-inline-end: 4px;
   }
 
@@ -437,8 +439,8 @@ ion-title {
   }
 
   .page-shell {
-    padding-top: 12px;
-    padding-bottom: calc(44px + env(safe-area-inset-bottom, 0px));
+    padding-top: 14px;
+    padding-bottom: calc(48px + env(safe-area-inset-bottom, 0px));
   }
 
   .menu-profile-actions {

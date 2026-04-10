@@ -1,25 +1,3 @@
-.register-wrap::before,
-.register-wrap::after {
-  border-radius: 50%;
-  opacity: 0.92;
-}
-
-.register-wrap::before {
-  width: 300px;
-  height: 300px;
-  top: 7%;
-  left: max(3%, 14px);
-  background: radial-gradient(circle, color-mix(in srgb, var(--ion-color-tertiary), transparent 78%) 0%, transparent 70%);
-}
-
-.register-wrap::after {
-  width: 250px;
-  height: 250px;
-  right: max(3%, 14px);
-  bottom: 5%;
-  background: radial-gradient(circle, color-mix(in srgb, var(--app-brand-base), transparent 80%) 0%, transparent 70%);
-}
-
 .app-auth-card ion-card-content {
   display: grid;
   gap: 14px;
@@ -35,18 +13,4 @@
 
 .mt-16 {
   margin-top: 18px;
-}
-
-@media (max-width: 767px) {
-  .register-wrap::before {
-    width: 232px;
-    height: 232px;
-    top: 4%;
-  }
-
-  .register-wrap::after {
-    width: 206px;
-    height: 206px;
-    bottom: 4%;
-  }
 }

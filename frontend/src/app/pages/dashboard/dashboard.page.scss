@@ -2,62 +2,108 @@
   row-gap: 20px;
 }
 
-.dashboard-grid > ion-row {
-  align-items: flex-start;
+.workday-panel,
+.join-team-panel,
+.events-panel,
+.superadmin-overview {
+  display: grid;
+  gap: 18px;
+  padding: 22px;
 }
 
-.dashboard-grid > ion-row > ion-col {
-  align-self: flex-start;
+.panel-head,
+.superadmin-overview-head,
+.workday-copy {
+  display: grid;
+  gap: 8px;
 }
 
-.dashboard-grid ion-col > ion-card + ion-card {
-  margin-top: 18px;
+.superadmin-overview-head,
+.panel-head,
+.workday-panel-main {
+  min-width: 0;
 }
 
-.panel {
-  position: relative;
+.workday-panel {
+  grid-template-columns: minmax(0, 1.6fr) minmax(260px, 0.9fr);
+  gap: 24px;
 }
 
-.status-panel::before,
-.join-team-panel::before,
-.summary-panel::before,
-.events-panel::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0.72;
+.workday-panel-main {
+  display: grid;
+  gap: 14px;
+  align-content: start;
 }
 
-.status-panel::before {
-  background: radial-gradient(circle at 88% 10%, color-mix(in srgb, var(--ion-color-primary), transparent 84%) 0%, transparent 42%);
+.workday-status-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
 }
 
-.join-team-panel::before {
-  background: radial-gradient(circle at 90% 14%, color-mix(in srgb, var(--ion-color-success), transparent 86%) 0%, transparent 42%);
+.workday-status-row span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--app-border-subtle);
+  border-radius: var(--app-radius-pill);
+  background: color-mix(in srgb, var(--app-surface-1), var(--ion-color-primary) 3%);
+  color: var(--app-text-secondary);
+  font-size: 0.88rem;
 }
 
-.summary-panel::before {
-  background: radial-gradient(circle at 8% 12%, color-mix(in srgb, var(--ion-color-secondary), transparent 88%) 0%, transparent 44%);
+.workday-copy p,
+.panel-head p,
+.superadmin-overview-head p {
+  max-width: 64ch;
 }
 
-.events-panel::before {
-  background: radial-gradient(circle at 92% 92%, color-mix(in srgb, var(--ion-color-tertiary), transparent 86%) 0%, transparent 48%);
+.workday-panel-actions {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid color-mix(in srgb, var(--app-border-subtle), transparent 10%);
+  border-radius: var(--app-radius-shell);
+  background: color-mix(in srgb, var(--app-surface-1), var(--ion-color-primary) 2%);
+  min-width: 0;
 }
 
-.role-hint {
-  margin-bottom: 16px;
+.workday-action-label {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--app-text-tertiary);
 }
 
-.role-hint p {
-  margin-top: 8px;
+.action-stack {
+  display: grid;
+  gap: 10px;
+}
+
+.action-stack ion-button,
+.panel-body ion-button {
+  margin: 0;
+}
+
+.action-stack ion-button + ion-button {
+  margin-top: 0;
+}
+
+.workday-metrics {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  padding-top: 20px;
+  border-top: 1px solid color-mix(in srgb, var(--app-border-subtle), transparent 10%);
 }
 
 .summary-metrics-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 12px;
-  margin-top: 2px;
 }
 
 .summary-metric-card {
@@ -65,21 +111,30 @@
 }
 
 .summary-metric-card p {
-  font-size: clamp(1.05rem, 1.6vw, 1.32rem);
+  font-size: clamp(1.04rem, 1.6vw, 1.34rem);
 }
 
-.superadmin-dashboard-panel .summary-metrics-grid {
-  margin-top: 0;
+.role-hint {
+  margin-top: 2px;
+}
+
+.role-hint p {
+  margin-top: 8px;
+}
+
+.panel-body {
+  display: grid;
+  gap: 14px;
+  align-content: start;
 }
 
 .status-error {
-  margin-bottom: 12px;
+  margin: 0;
 }
 
 .pending-join-list {
   display: grid;
   gap: 12px;
-  margin-top: 18px;
 }
 
 .pending-join-list strong {
@@ -94,7 +149,7 @@
 .pending-join-card span {
   color: var(--app-text-secondary);
   font-size: 0.88rem;
-  line-height: 1.4;
+  line-height: 1.42;
 }
 
 .attendance-action--clock-in {
@@ -117,24 +172,41 @@
   --color: var(--app-attendance-break-end-color);
 }
 
-ion-button + ion-button {
-  margin-top: 10px;
+.events-panel .data-list {
+  gap: 10px;
 }
 
-.join-team-panel ion-card-content,
-.status-panel ion-card-content {
-  align-content: start;
+.events-panel .data-item {
+  --background: color-mix(in srgb, var(--app-surface-1), var(--ion-color-primary) 1.5%);
 }
 
-.pending-join-list strong {
-  overflow-wrap: anywhere;
+@media (max-width: 1080px) {
+  .workday-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .workday-panel-actions {
+    padding: 16px;
+  }
+
+  .summary-metrics-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 767px) {
-  .dashboard-grid ion-col > ion-card + ion-card {
-    margin-top: 14px;
+  .workday-panel,
+  .join-team-panel,
+  .events-panel,
+  .superadmin-overview {
+    padding: 16px;
   }
 
+  .workday-panel {
+    gap: 18px;
+  }
+
+  .workday-metrics,
   .summary-metrics-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -149,14 +221,8 @@ ion-button + ion-button {
 }
 
 @media (max-width: 420px) {
+  .workday-metrics,
   .summary-metrics-grid {
     grid-template-columns: 1fr;
-  }
-}
-
-@media (min-width: 768px) {
-  ion-button[expand="block"] {
-    --padding-top: 14px;
-    --padding-bottom: 14px;
   }
 }

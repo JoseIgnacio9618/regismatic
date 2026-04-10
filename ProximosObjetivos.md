@@ -2,4 +2,4 @@
 -Existe bien la eliminacion de suscripciones y los restos de sub correspondiente para que el usuario use el tiempo que le resta cuadno cancele?  (hacer pruebas)
 - Meter el sistema de cuadrantes y hacer que las suscripciones incluyan un paquete de cuadrantes 
 -Cuando se compra un sub hay que poner bien a donde quiero que se vuelva cuando se paga asi qcomo hacer un modal o algo para que diga algo tipo felicidades tu sub esta comprada
--El fin de periodo actual de la sub no se ve, probar en railway 
+-El fin de periodo actual de la sub no se ve siempre sale Fin del periodo actual Pendiente de sincronizar con Stripe./ en pagos sale tambien Estado de facturación Fin del periodo actual: --

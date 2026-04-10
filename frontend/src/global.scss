@@ -33,10 +33,12 @@ html {
 body {
   margin: 0;
   color: var(--app-text-primary);
-  background:
-    radial-gradient(circle at top left, color-mix(in srgb, var(--ion-color-primary), transparent 96%) 0%, transparent 30%),
-    radial-gradient(circle at bottom right, color-mix(in srgb, var(--ion-color-secondary), transparent 95%) 0%, transparent 34%),
-    linear-gradient(180deg, var(--app-canvas) 0%, color-mix(in srgb, var(--app-canvas), var(--app-surface-2) 36%) 100%);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--app-canvas), white 8%) 0%,
+    var(--app-canvas) 28%,
+    color-mix(in srgb, var(--app-canvas), var(--app-surface-2) 16%) 100%
+  );
   transition: background var(--app-transition-slow), color var(--app-transition-base);
 }
 
@@ -45,11 +47,8 @@ body::before {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--app-text-primary), transparent 98.5%) 0%, transparent 20%),
-    radial-gradient(circle at 1px 1px, color-mix(in srgb, var(--app-text-primary), transparent 95.5%) 1px, transparent 0);
-  background-size: auto, 26px 26px;
-  opacity: 0.18;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--ion-color-primary), transparent 95%) 0%, transparent 18%);
+  opacity: 1;
   z-index: -1;
 }
 
@@ -86,7 +85,7 @@ ion-title {
   margin: 0;
   color: var(--app-text-primary);
   font-weight: 700;
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
 }
 
 h1 {
@@ -143,13 +142,13 @@ ion-toolbar {
   --background: var(--ion-toolbar-background);
   --color: var(--ion-toolbar-color);
   border-bottom: 1px solid var(--app-divider);
-  box-shadow: 0 1px 0 color-mix(in srgb, var(--app-divider), transparent 8%);
+  box-shadow: none;
 }
 
 ion-title {
   font-size: 1rem;
   font-weight: 700;
-  letter-spacing: -0.015em;
+  letter-spacing: 0;
 }
 
 ion-buttons {
@@ -175,10 +174,10 @@ ion-list {
   margin: 0;
   padding: 10px;
   border-radius: var(--app-list-radius);
-  background: color-mix(in srgb, var(--app-surface-1), var(--ion-color-secondary) 4%);
+  background: color-mix(in srgb, var(--app-surface-0), var(--ion-color-primary) 1.5%);
   overflow: hidden;
   isolation: isolate;
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--app-border-subtle), transparent 18%);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--app-border-subtle), transparent 28%);
 }
 
 ion-item {
@@ -228,7 +227,7 @@ ion-item ion-label[position="floating"] {
   font-size: 0.76rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0;
   color: var(--app-text-tertiary);
 }
 
@@ -377,7 +376,7 @@ ion-button {
   isolation: isolate;
   border-radius: var(--border-radius, var(--app-radius-control));
   font-weight: 700;
-  letter-spacing: 0.01em;
+  letter-spacing: 0;
 }
 
 ion-button::part(native) {
@@ -399,16 +398,9 @@ ion-button[fill="solid"] {
 
 ion-button:not([fill])::part(native),
 ion-button[fill="solid"]::part(native) {
-  border-color: color-mix(in srgb, var(--background), black 10%);
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--background), white 10%) 0%,
-    var(--background) 62%,
-    color-mix(in srgb, var(--background), black 6%) 100%
-  );
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, var(--color), transparent 84%),
-    0 8px 16px color-mix(in srgb, var(--background), transparent 76%);
+  border-color: color-mix(in srgb, var(--background), black 8%);
+  background: var(--background);
+  box-shadow: none;
 }
 
 ion-button[fill="outline"],
@@ -418,10 +410,10 @@ ion-button[fill="clear"] {
 
 ion-button[fill="outline"]:not([color]),
 ion-button[fill="outline"][color="primary"] {
-  --background: color-mix(in srgb, var(--ion-color-primary), transparent 94%);
+  --background: color-mix(in srgb, var(--ion-color-primary), transparent 95%);
   --color: var(--ion-color-primary);
   --border-width: 1px;
-  --border-color: color-mix(in srgb, var(--ion-color-primary), transparent 58%);
+  --border-color: color-mix(in srgb, var(--ion-color-primary), transparent 64%);
 }
 
 ion-button[fill="outline"][color="danger"] {
@@ -448,7 +440,7 @@ ion-button[color="medium"][fill="clear"] {
 }
 
 ion-chip {
-  --background: color-mix(in srgb, var(--app-surface-2), var(--ion-color-secondary) 10%);
+  --background: color-mix(in srgb, var(--app-surface-1), var(--ion-color-primary) 6%);
   --color: var(--app-text-primary);
   min-height: 32px;
   border: 1px solid var(--app-border-subtle);
@@ -465,7 +457,7 @@ ion-badge {
   border-radius: var(--app-radius-pill);
   font-size: 0.74rem;
   font-weight: 700;
-  letter-spacing: 0.02em;
+  letter-spacing: 0;
 }
 
 ion-badge[color="light"] {
@@ -487,7 +479,7 @@ ion-card-header {
 ion-card-title {
   font-size: 1.05rem;
   font-weight: 700;
-  letter-spacing: -0.015em;
+  letter-spacing: 0;
 }
 
 ion-card-content {
@@ -501,14 +493,8 @@ ion-card-content {
   overflow: hidden;
   border: 1px solid var(--app-border-subtle);
   border-radius: var(--app-radius-shell);
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--app-surface-1), var(--ion-color-secondary) 6%) 0%,
-    var(--app-surface-0) 100%
-  );
-  box-shadow:
-    var(--app-shadow-sm),
-    inset 0 1px 0 color-mix(in srgb, white, transparent 88%);
+  background: color-mix(in srgb, var(--app-surface-0), var(--ion-color-primary) 1.5%);
+  box-shadow: var(--app-shadow-sm);
 }
 
 .panel > * {
@@ -598,7 +584,7 @@ ion-card-content {
   text-align: center;
   border: 1px dashed color-mix(in srgb, var(--app-border-strong), transparent 15%);
   border-radius: var(--app-radius-md);
-  background: color-mix(in srgb, var(--app-surface-2), transparent 10%);
+  background: color-mix(in srgb, var(--app-surface-1), var(--ion-color-primary) 2%);
 }
 
 .empty-state ion-icon {
@@ -620,11 +606,7 @@ ion-card-content {
   padding: 16px 14px;
   border: 1px solid var(--app-border-subtle);
   border-radius: var(--app-radius-md);
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--app-surface-2), var(--ion-color-secondary) 12%) 0%,
-    color-mix(in srgb, var(--app-surface-1), var(--ion-color-secondary) 6%) 100%
-  );
+  background: color-mix(in srgb, var(--app-surface-1), var(--ion-color-primary) 3%);
 }
 
 .metric-tile strong {
@@ -632,7 +614,7 @@ ion-card-content {
   font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0;
   color: var(--app-text-tertiary);
 }
 
@@ -661,11 +643,7 @@ ion-card-content {
 .app-inline-panel {
   border: 1px solid var(--app-border-subtle);
   border-radius: var(--app-radius-shell);
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--app-surface-2), var(--ion-color-secondary) 10%) 0%,
-    var(--app-surface-1) 100%
-  );
+  background: color-mix(in srgb, var(--app-surface-1), var(--ion-color-primary) 2%);
   overflow: hidden;
   isolation: isolate;
   box-shadow: var(--app-shadow-xs);
@@ -701,12 +679,8 @@ ion-card-content {
 }
 
 .app-inline-panel--accent {
-  border-color: color-mix(in srgb, var(--ion-color-primary), transparent 68%);
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--app-surface-2), var(--ion-color-secondary) 11%) 0%,
-    color-mix(in srgb, var(--app-surface-1), var(--ion-color-primary) 6%) 100%
-  );
+  border-color: color-mix(in srgb, var(--ion-color-primary), transparent 72%);
+  background: color-mix(in srgb, var(--app-surface-1), var(--ion-color-primary) 7%);
 }
 
 .app-choice-card {
@@ -715,7 +689,7 @@ ion-card-content {
   padding: 16px 18px;
   border: 1px solid var(--app-border-subtle);
   border-radius: var(--app-radius-md);
-  background: color-mix(in srgb, var(--app-surface-1), var(--ion-color-secondary) 6%);
+  background: color-mix(in srgb, var(--app-surface-1), var(--ion-color-primary) 2%);
   color: var(--app-text-primary);
   text-align: left;
   cursor: pointer;
@@ -761,9 +735,9 @@ ion-card-content {
   font-size: 0.78rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0;
   color: var(--app-text-tertiary);
-  background: color-mix(in srgb, var(--app-surface-3), var(--ion-color-secondary) 10%);
+  background: color-mix(in srgb, var(--app-surface-2), var(--ion-color-primary) 2%);
 }
 
 @media (max-width: 1024px) {
@@ -1001,11 +975,7 @@ ion-card-content {
 
 .app-auth-wrap::before,
 .app-auth-wrap::after {
-  content: "";
-  position: absolute;
-  pointer-events: none;
-  filter: blur(34px);
-  z-index: -1;
+  display: none;
 }
 
 .app-auth-top-actions {
@@ -1019,9 +989,9 @@ ion-card-content {
 }
 
 .app-theme-toggle {
-  --background: color-mix(in srgb, var(--app-surface-2), var(--app-accent-subtle) 48%);
+  --background: color-mix(in srgb, var(--app-surface-1), var(--ion-color-primary) 5%);
   --color: var(--app-text-primary);
-  --border-radius: var(--app-radius-pill);
+  --border-radius: var(--app-radius-control);
   --padding-start: 12px;
   --padding-end: 12px;
 }
@@ -1034,14 +1004,14 @@ ion-card-content {
   --highlight-color-focused: var(--app-focus-ring);
   --highlight-color-valid: transparent;
   border: 1px solid var(--app-field-border);
-  border-radius: var(--app-radius-pill);
+  border-radius: var(--app-radius-control);
   background: var(--app-field-background);
   color: var(--app-text-primary);
   padding: 2px 8px;
 }
 
 .app-auth-card {
-  width: min(560px, 100%);
+  width: min(520px, 100%);
 }
 
 .app-auth-card ion-card-content {
@@ -1087,11 +1057,11 @@ ion-input,
 ion-textarea,
 ion-select,
 ion-searchbar {
-  --border-radius: 16px;
+  --border-radius: var(--app-radius-control);
 }
 
 ion-searchbar {
-  --background: color-mix(in srgb, var(--app-surface-2), white 10%);
+  --background: color-mix(in srgb, var(--app-surface-1), white 10%);
   --box-shadow: none;
   --color: var(--app-text-primary);
   --placeholder-color: var(--app-text-tertiary);
@@ -1757,11 +1727,11 @@ ion-datetime {
 
   ion-button:not([fill]):hover::part(native),
   ion-button[fill="solid"]:hover::part(native) {
-    filter: saturate(1.06) brightness(1.02);
+    filter: brightness(0.98);
   }
 
   ion-button:hover::part(native) {
-    box-shadow: var(--app-shadow-xs);
+    box-shadow: none;
   }
 
   .app-choice-card:hover {

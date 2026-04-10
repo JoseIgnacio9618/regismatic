@@ -145,6 +145,22 @@ export class DashboardPage implements OnInit {
     return this.i18nService.t("dashboard.state.on_break");
   }
 
+  get stateColor(): "danger" | "medium" | "success" | "warning" {
+    if (this.loadError) {
+      return "danger";
+    }
+
+    if (!this.status || this.status.state === "OFF") {
+      return "medium";
+    }
+
+    if (this.status.state === "ON_BREAK") {
+      return "warning";
+    }
+
+    return "success";
+  }
+
   get effectiveState(): "OFF" | "WORKING" | "ON_BREAK" {
     return this.status?.state ?? "OFF";
   }

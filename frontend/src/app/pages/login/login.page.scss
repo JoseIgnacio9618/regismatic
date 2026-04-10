@@ -1,27 +1,5 @@
-.login-wrap::before,
-.login-wrap::after {
-  border-radius: 50%;
-  opacity: 0.9;
-}
-
-.login-wrap::before {
-  width: 280px;
-  height: 280px;
-  top: 8%;
-  left: max(2%, 12px);
-  background: radial-gradient(circle, color-mix(in srgb, var(--app-brand-base), transparent 78%) 0%, transparent 68%);
-}
-
-.login-wrap::after {
-  width: 240px;
-  height: 240px;
-  right: max(2%, 12px);
-  bottom: 6%;
-  background: radial-gradient(circle, color-mix(in srgb, var(--app-accent-base), transparent 80%) 0%, transparent 68%);
-}
-
 .app-auth-card {
-  width: min(500px, 100%);
+  width: min(460px, 100%);
 }
 
 .app-auth-card ion-card-content {
@@ -41,22 +19,4 @@
   margin-top: 2px;
   font-size: 0.85rem;
   color: var(--app-text-tertiary);
-}
-
-@media (max-width: 767px) {
-  .app-auth-card {
-    width: 100%;
-  }
-
-  .login-wrap::before {
-    width: 220px;
-    height: 220px;
-    top: 4%;
-  }
-
-  .login-wrap::after {
-    width: 200px;
-    height: 200px;
-    bottom: 4%;
-  }
 }

@@ -2,146 +2,117 @@
   <ion-grid fixed class="dashboard-grid">
     <ion-row *ngIf="isSuperadminDashboard; else standardDashboard">
       <ion-col size="12">
-        <ion-card class="glass-card panel status-panel superadmin-dashboard-panel">
-          <ion-card-content>
-            <div class="summary-metrics-grid superadmin-metrics-grid">
-              <article class="metric-tile summary-metric-card">
-                <strong>{{ "dashboard.superadmin_metric_admins" | t }}</strong>
-                <p>{{ superadminOverview.admins }}</p>
-              </article>
-              <article class="metric-tile summary-metric-card">
-                <strong>{{ "dashboard.superadmin_metric_employees" | t }}</strong>
-                <p>{{ superadminOverview.employees }}</p>
-              </article>
-              <article class="metric-tile summary-metric-card">
-                <strong>{{ "dashboard.superadmin_metric_pending_team" | t }}</strong>
-                <p>{{ superadminOverview.pendingJoinRequests }}</p>
-              </article>
-              <article class="metric-tile summary-metric-card">
-                <strong>{{ "dashboard.superadmin_metric_pending_edits" | t }}</strong>
-                <p>{{ superadminOverview.pendingEditRequests }}</p>
-              </article>
-              <article class="metric-tile summary-metric-card">
-                <strong>{{ "dashboard.superadmin_metric_paid_subscriptions" | t }}</strong>
-                <p>{{ superadminOverview.paidSubscriptions }}</p>
-              </article>
-              <article class="metric-tile summary-metric-card">
-                <strong>{{ "dashboard.superadmin_metric_monthly_revenue" | t }}</strong>
-                <p>{{ formatMoney(superadminOverview.monthlyRecurringRevenueEur) }}</p>
-              </article>
-            </div>
+        <section class="glass-card panel superadmin-overview">
+          <div class="superadmin-overview-head">
+            <ion-badge color="warning">{{ "role.SUPERADMIN" | t }}</ion-badge>
+            <h2>{{ "dashboard.summary_title" | t }}</h2>
+          </div>
 
-            <section class="empty-state mt-16 status-error" *ngIf="superadminOverviewError">
-              <ion-icon name="cloud-offline-outline" aria-hidden="true"></ion-icon>
-              <h3>{{ "dashboard.error_load_title" | t }}</h3>
-              <p>{{ superadminOverviewError }}</p>
-              <ion-button size="small" fill="outline" (click)="ionViewWillEnter()">{{ "common.retry" | t }}</ion-button>
-            </section>
-          </ion-card-content>
-        </ion-card>
+          <div class="summary-metrics-grid superadmin-metrics-grid">
+            <article class="metric-tile summary-metric-card">
+              <strong>{{ "dashboard.superadmin_metric_admins" | t }}</strong>
+              <p>{{ superadminOverview.admins }}</p>
+            </article>
+            <article class="metric-tile summary-metric-card">
+              <strong>{{ "dashboard.superadmin_metric_employees" | t }}</strong>
+              <p>{{ superadminOverview.employees }}</p>
+            </article>
+            <article class="metric-tile summary-metric-card">
+              <strong>{{ "dashboard.superadmin_metric_pending_team" | t }}</strong>
+              <p>{{ superadminOverview.pendingJoinRequests }}</p>
+            </article>
+            <article class="metric-tile summary-metric-card">
+              <strong>{{ "dashboard.superadmin_metric_pending_edits" | t }}</strong>
+              <p>{{ superadminOverview.pendingEditRequests }}</p>
+            </article>
+            <article class="metric-tile summary-metric-card">
+              <strong>{{ "dashboard.superadmin_metric_paid_subscriptions" | t }}</strong>
+              <p>{{ superadminOverview.paidSubscriptions }}</p>
+            </article>
+            <article class="metric-tile summary-metric-card">
+              <strong>{{ "dashboard.superadmin_metric_monthly_revenue" | t }}</strong>
+              <p>{{ formatMoney(superadminOverview.monthlyRecurringRevenueEur) }}</p>
+            </article>
+          </div>
+
+          <section class="empty-state status-error" *ngIf="superadminOverviewError">
+            <ion-icon name="cloud-offline-outline" aria-hidden="true"></ion-icon>
+            <h3>{{ "dashboard.error_load_title" | t }}</h3>
+            <p>{{ superadminOverviewError }}</p>
+            <ion-button size="small" fill="outline" (click)="ionViewWillEnter()">{{ "common.retry" | t }}</ion-button>
+          </section>
+        </section>
       </ion-col>
     </ion-row>
 
     <ng-template #standardDashboard>
-    <ion-row>
-      <ion-col size="12" size-md="4">
-        <ion-card class="glass-card panel status-panel">
-          <ion-card-header>
-            <ion-card-title>{{ "dashboard.today_state_title" | t }}</ion-card-title>
-            <p class="microcopy">{{ "dashboard.realtime_microcopy" | t }}</p>
-          </ion-card-header>
-          <ion-card-content>
-            <section class="role-hint app-inline-panel app-inline-panel--accent" *ngIf="authService.isAdmin">
-              <ion-badge [color]="authService.isSuperadmin ? 'warning' : 'primary'">
-                {{ authService.isSuperadmin ? ("role.SUPERADMIN" | t) : ("role.ADMIN" | t) }}
-              </ion-badge>
-              <p>{{ "dashboard.admin_scope_hint" | t }}</p>
-            </section>
+      <ion-row>
+        <ion-col size="12">
+          <section class="glass-card panel workday-panel">
+            <div class="workday-panel-main">
+              <div class="workday-status-row">
+                <ion-badge [color]="stateColor">{{ stateLabel }}</ion-badge>
+                <span>{{ "common.date" | t }}: {{ status?.date || "--" }}</span>
+              </div>
 
-            <p class="muted">{{ "common.date" | t }}: {{ status?.date || '--' }}</p>
-            <ion-badge [color]="loadError ? 'danger' : effectiveState === 'OFF' ? 'medium' : 'success'">{{ stateLabel }}</ion-badge>
+              <div class="workday-copy">
+                <h2>{{ "dashboard.today_state_title" | t }}</h2>
+                <p>{{ "dashboard.realtime_microcopy" | t }}</p>
+              </div>
 
-            <section class="empty-state mt-16 status-error" *ngIf="loadError">
-              <ion-icon name="cloud-offline-outline" aria-hidden="true"></ion-icon>
-              <h3>{{ "dashboard.error_load_title" | t }}</h3>
-              <p>{{ loadError }}</p>
-              <ion-button size="small" fill="outline" (click)="refreshStatus(true)">{{ "common.retry" | t }}</ion-button>
-            </section>
+              <section class="role-hint app-inline-panel app-inline-panel--accent" *ngIf="authService.isAdmin">
+                <ion-badge [color]="authService.isSuperadmin ? 'warning' : 'primary'">
+                  {{ authService.isSuperadmin ? ("role.SUPERADMIN" | t) : ("role.ADMIN" | t) }}
+                </ion-badge>
+                <p>{{ "dashboard.admin_scope_hint" | t }}</p>
+              </section>
 
-            <section class="empty-state mt-16 status-error" *ngIf="isAttendanceLocked">
-              <ion-icon name="lock-closed-outline" aria-hidden="true"></ion-icon>
-              <h3>{{ (isBillingLocked ? "dashboard.attendance_billing_locked_title" : "dashboard.attendance_locked_title") | t }}</h3>
-              <p>{{ attendanceLockDescription }}</p>
-              <ion-note *ngIf="showDeletionWarning" class="item-meta">
-                {{ "dashboard.attendance_data_deletion_warning" | t: { date: formatDateOnly(attendanceDeletionAt || '') } }}
-              </ion-note>
-              <ion-button fill="outline" size="small" *ngIf="showBillingCta" routerLink="/billing">
-                {{ "dashboard.go_billing" | t }}
-              </ion-button>
-            </section>
+              <section class="empty-state status-error" *ngIf="loadError">
+                <ion-icon name="cloud-offline-outline" aria-hidden="true"></ion-icon>
+                <h3>{{ "dashboard.error_load_title" | t }}</h3>
+                <p>{{ loadError }}</p>
+                <ion-button size="small" fill="outline" (click)="refreshStatus(true)">{{ "common.retry" | t }}</ion-button>
+              </section>
 
-            <div class="mt-16" *ngIf="!isAttendanceLocked && effectiveState === 'OFF'">
-              <ion-button expand="block" class="attendance-action attendance-action--clock-in" [disabled]="busy" (click)="handleAction('clockIn')">
-                {{ "dashboard.clock_in" | t }}
-              </ion-button>
+              <section class="empty-state status-error" *ngIf="isAttendanceLocked">
+                <ion-icon name="lock-closed-outline" aria-hidden="true"></ion-icon>
+                <h3>{{ (isBillingLocked ? "dashboard.attendance_billing_locked_title" : "dashboard.attendance_locked_title") | t }}</h3>
+                <p>{{ attendanceLockDescription }}</p>
+                <ion-note *ngIf="showDeletionWarning" class="item-meta">
+                  {{ "dashboard.attendance_data_deletion_warning" | t: { date: formatDateOnly(attendanceDeletionAt || "") } }}
+                </ion-note>
+                <ion-button fill="outline" size="small" *ngIf="showBillingCta" routerLink="/billing">
+                  {{ "dashboard.go_billing" | t }}
+                </ion-button>
+              </section>
             </div>
 
-            <div class="mt-16" *ngIf="!isAttendanceLocked && effectiveState === 'WORKING'">
-              <ion-button expand="block" class="attendance-action attendance-action--break-start" [disabled]="busy" (click)="handleAction('breakStart')">
-                {{ "dashboard.break_start" | t }}
-              </ion-button>
-              <ion-button expand="block" class="attendance-action attendance-action--clock-out" [disabled]="busy" (click)="handleAction('clockOut')">
-                {{ "dashboard.clock_out" | t }}
-              </ion-button>
+            <div class="workday-panel-actions" *ngIf="!isAttendanceLocked">
+              <span class="workday-action-label">{{ "dashboard.summary_title" | t }}</span>
+
+              <div class="action-stack" *ngIf="effectiveState === 'OFF'">
+                <ion-button expand="block" class="attendance-action attendance-action--clock-in" [disabled]="busy" (click)="handleAction('clockIn')">
+                  {{ "dashboard.clock_in" | t }}
+                </ion-button>
+              </div>
+
+              <div class="action-stack" *ngIf="effectiveState === 'WORKING'">
+                <ion-button expand="block" class="attendance-action attendance-action--break-start" [disabled]="busy" (click)="handleAction('breakStart')">
+                  {{ "dashboard.break_start" | t }}
+                </ion-button>
+                <ion-button expand="block" class="attendance-action attendance-action--clock-out" [disabled]="busy" (click)="handleAction('clockOut')">
+                  {{ "dashboard.clock_out" | t }}
+                </ion-button>
+              </div>
+
+              <div class="action-stack" *ngIf="effectiveState === 'ON_BREAK'">
+                <ion-button expand="block" class="attendance-action attendance-action--break-end" [disabled]="busy" (click)="handleAction('breakEnd')">
+                  {{ "dashboard.break_end" | t }}
+                </ion-button>
+              </div>
             </div>
 
-            <div class="mt-16" *ngIf="!isAttendanceLocked && effectiveState === 'ON_BREAK'">
-              <ion-button expand="block" class="attendance-action attendance-action--break-end" [disabled]="busy" (click)="handleAction('breakEnd')">
-                {{ "dashboard.break_end" | t }}
-              </ion-button>
-            </div>
-          </ion-card-content>
-        </ion-card>
-      </ion-col>
-
-      <ion-col size="12" size-md="8">
-        <ion-card class="glass-card panel join-team-panel" *ngIf="showJoinTeamCard">
-          <ion-card-header>
-            <ion-card-title>{{ "dashboard.join_team_title" | t }}</ion-card-title>
-            <p class="microcopy">{{ "dashboard.join_team_desc" | t }}</p>
-          </ion-card-header>
-          <ion-card-content>
-            <ion-item>
-              <ion-label position="stacked">{{ "register_employee.invite_code" | t }}</ion-label>
-              <ion-input [(ngModel)]="inviteCode"></ion-input>
-            </ion-item>
-
-            <ion-item>
-              <ion-label position="stacked">{{ "register_employee.request_message" | t }}</ion-label>
-              <ion-textarea [(ngModel)]="requestMessage" autoGrow="true"></ion-textarea>
-            </ion-item>
-
-            <ion-button expand="block" [disabled]="joinBusy" (click)="submitJoinRequest()">
-              {{ "dashboard.join_team_submit" | t }}
-            </ion-button>
-
-            <section class="pending-join-list" *ngIf="pendingJoinRequests.length > 0">
-              <strong>{{ "dashboard.join_team_pending" | t }}</strong>
-              <article class="pending-join-card app-inline-panel" *ngFor="let request of pendingJoinRequests">
-                <span>{{ request.targetManager.fullName }}</span>
-                <span>{{ request.employee.email }}</span>
-                <span>{{ request.message || ("dashboard.join_team_pending_desc" | t) }}</span>
-              </article>
-            </section>
-          </ion-card-content>
-        </ion-card>
-
-        <ion-card class="glass-card panel summary-panel">
-          <ion-card-header>
-            <ion-card-title>{{ "dashboard.summary_title" | t }}</ion-card-title>
-          </ion-card-header>
-          <ion-card-content>
-            <div class="summary-metrics-grid">
+            <div class="workday-metrics">
               <article class="metric-tile summary-metric-card">
                 <strong>{{ "dashboard.metric.worked" | t }}</strong>
                 <p>{{ minutesToHuman(status?.totals?.workedMinutes || 0) }}</p>
@@ -159,39 +130,77 @@
                 <p>{{ minutesToHuman(status?.totals?.adjustmentsMinutes || 0) }}</p>
               </article>
             </div>
-          </ion-card-content>
-        </ion-card>
+          </section>
+        </ion-col>
+      </ion-row>
 
-        <ion-card class="glass-card panel events-panel">
-          <ion-card-header>
-            <ion-card-title>{{ "dashboard.events_title" | t }}</ion-card-title>
-          </ion-card-header>
-          <ion-card-content>
-            <ion-list lines="none" class="data-list" *ngIf="(status?.events?.length || 0) > 0">
-              <ion-item class="data-item" *ngFor="let event of status?.events">
-                <ion-label>
-                  <h3 class="item-title">{{ ("event_type." + event.type) | t }}</h3>
-                  <ion-note class="item-meta">{{ formatDateTime(event.eventAt) }}</ion-note>
-                  <ion-note class="item-audit" *ngIf="event.modifiedAt && event.modifiedBy">
-                    {{ "common.modified_by" | t: { name: event.modifiedBy.fullName, at: formatDateTime(event.modifiedAt) } }}
-                  </ion-note>
-                  <ion-note class="item-audit" *ngIf="event.modificationReason">
-                    {{ "common.reason_prefix" | t: { reason: event.modificationReason } }}
-                  </ion-note>
-                </ion-label>
-                <ion-badge slot="end" color="light">{{ ("event_source." + event.source) | t }}</ion-badge>
+      <ion-row>
+        <ion-col size="12" size-lg="4" *ngIf="showJoinTeamCard">
+          <section class="glass-card panel join-team-panel">
+            <div class="panel-head">
+              <h2>{{ "dashboard.join_team_title" | t }}</h2>
+              <p>{{ "dashboard.join_team_desc" | t }}</p>
+            </div>
+
+            <div class="panel-body">
+              <ion-item>
+                <ion-label position="stacked">{{ "register_employee.invite_code" | t }}</ion-label>
+                <ion-input [(ngModel)]="inviteCode"></ion-input>
               </ion-item>
-            </ion-list>
 
-            <section class="empty-state" *ngIf="(status?.events?.length || 0) === 0">
-              <ion-icon name="time-outline" aria-hidden="true"></ion-icon>
-              <h3>{{ "dashboard.empty_events_title" | t }}</h3>
-              <p>{{ "dashboard.empty_events_desc" | t }}</p>
-            </section>
-          </ion-card-content>
-        </ion-card>
-      </ion-col>
-    </ion-row>
+              <ion-item>
+                <ion-label position="stacked">{{ "register_employee.request_message" | t }}</ion-label>
+                <ion-textarea [(ngModel)]="requestMessage" autoGrow="true"></ion-textarea>
+              </ion-item>
+
+              <ion-button expand="block" [disabled]="joinBusy" (click)="submitJoinRequest()">
+                {{ "dashboard.join_team_submit" | t }}
+              </ion-button>
+
+              <section class="pending-join-list" *ngIf="pendingJoinRequests.length > 0">
+                <strong>{{ "dashboard.join_team_pending" | t }}</strong>
+                <article class="pending-join-card app-inline-panel" *ngFor="let request of pendingJoinRequests">
+                  <span>{{ request.targetManager.fullName }}</span>
+                  <span>{{ request.employee.email }}</span>
+                  <span>{{ request.message || ("dashboard.join_team_pending_desc" | t) }}</span>
+                </article>
+              </section>
+            </div>
+          </section>
+        </ion-col>
+
+        <ion-col size="12" [attr.size-lg]="showJoinTeamCard ? 8 : 12">
+          <section class="glass-card panel events-panel">
+            <div class="panel-head">
+              <h2>{{ "dashboard.events_title" | t }}</h2>
+            </div>
+
+            <div class="panel-body">
+              <ion-list lines="none" class="data-list" *ngIf="(status?.events?.length || 0) > 0">
+                <ion-item class="data-item" *ngFor="let event of status?.events">
+                  <ion-label>
+                    <h3 class="item-title">{{ ("event_type." + event.type) | t }}</h3>
+                    <ion-note class="item-meta">{{ formatDateTime(event.eventAt) }}</ion-note>
+                    <ion-note class="item-audit" *ngIf="event.modifiedAt && event.modifiedBy">
+                      {{ "common.modified_by" | t: { name: event.modifiedBy.fullName, at: formatDateTime(event.modifiedAt) } }}
+                    </ion-note>
+                    <ion-note class="item-audit" *ngIf="event.modificationReason">
+                      {{ "common.reason_prefix" | t: { reason: event.modificationReason } }}
+                    </ion-note>
+                  </ion-label>
+                  <ion-badge slot="end" color="light">{{ ("event_source." + event.source) | t }}</ion-badge>
+                </ion-item>
+              </ion-list>
+
+              <section class="empty-state" *ngIf="(status?.events?.length || 0) === 0">
+                <ion-icon name="time-outline" aria-hidden="true"></ion-icon>
+                <h3>{{ "dashboard.empty_events_title" | t }}</h3>
+                <p>{{ "dashboard.empty_events_desc" | t }}</p>
+              </section>
+            </div>
+          </section>
+        </ion-col>
+      </ion-row>
     </ng-template>
   </ion-grid>
 </app-main-layout>
