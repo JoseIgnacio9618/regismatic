@@ -9,16 +9,16 @@
   ></app-photo-cropper>
   <div class="login-wrap register-wrap app-auth-wrap">
     <div class="login-top-actions app-auth-top-actions">
+      <button type="button" class="theme-toggle-button app-theme-toggle-button" (click)="toggleTheme()">
+        <ion-icon [name]="themeService.isDark ? 'sunny-outline' : 'moon-outline'"></ion-icon>
+        <span class="app-theme-toggle-label">{{ themeService.isDark ? ("theme.to_light" | t) : ("theme.to_dark" | t) }}</span>
+      </button>
+
       <ion-select class="lang-select app-compact-select" interface="popover" [value]="i18nService.language" (ionChange)="setLanguage($event.detail.value)">
         <ion-select-option value="es">{{ "lang.es" | t }}</ion-select-option>
         <ion-select-option value="en">{{ "lang.en" | t }}</ion-select-option>
         <ion-select-option value="fr">{{ "lang.fr" | t }}</ion-select-option>
       </ion-select>
-
-      <ion-button fill="clear" class="theme-toggle app-theme-toggle" (click)="toggleTheme()">
-        <ion-icon slot="start" [name]="themeService.isDark ? 'sunny-outline' : 'moon-outline'"></ion-icon>
-        {{ themeService.isDark ? ("theme.to_light" | t) : ("theme.to_dark" | t) }}
-      </ion-button>
     </div>
 
     <ion-card class="glass-card app-auth-card">

@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from "@angular/core";
 import { ActivatedRoute } from "@angular/router";
-import { ToastController } from "@ionic/angular";
+import { AlertController, ToastController } from "@ionic/angular";
 import { Subscription } from "rxjs";
 import {
   AttendanceEventRecord,
@@ -87,6 +87,7 @@ export class ReportsPage implements OnInit, OnDestroy {
     private readonly userService: UserService,
     private readonly attendanceService: AttendanceService,
     private readonly route: ActivatedRoute,
+    private readonly alertController: AlertController,
     private readonly toastController: ToastController
   ) {}
 
@@ -408,10 +409,24 @@ export class ReportsPage implements OnInit, OnDestroy {
     void this.loadReport();
   }
 
-  async loadReport(): Promise<void> {
+  async consultReport(): Promise<void> {
+    const loaded = await this.loadReport();
+    if (!loaded || this.authService.isAdmin) {
+      return;
+    }
+
+    if (this.eventsTotal > 0) {
+      setTimeout(() => this.scrollToDetailedRecords(), 120);
+      return;
+    }
+
+    await this.showNoRecordsAlert();
+  }
+
+  async loadReport(): Promise<boolean> {
     if (this.hasPartialDateFilter()) {
       await this.showToast(this.i18nService.t("reports.toast_date_range_incomplete"), "danger");
-      return;
+      return false;
     }
 
     this.loading = true;
@@ -424,17 +439,19 @@ export class ReportsPage implements OnInit, OnDestroy {
         this.applySuperadminPendingRequestsPage();
         if (!this.selectedUserId) {
           this.clearDetailedData();
-          return;
+          return true;
         }
 
         await Promise.all([this.loadSummaryRows(), this.loadEvents()]);
-        return;
+        return true;
       }
 
       const pendingRequestsPromise = this.isStandardAdminView ? this.loadPendingRequests() : Promise.resolve();
       await Promise.all([this.loadSummaryRows(), this.loadEvents(), pendingRequestsPromise]);
+      return true;
     } catch (error) {
       await this.showToast(error instanceof Error ? error.message : this.i18nService.t("reports.toast_load_failed"), "danger");
+      return false;
     } finally {
       this.loading = false;
     }
@@ -512,6 +529,11 @@ export class ReportsPage implements OnInit, OnDestroy {
   scrollToIncidents(): void {
     const incidentsPanel = document.getElementById("incidents-panel");
     incidentsPanel?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  scrollToDetailedRecords(): void {
+    const detailPanel = document.getElementById("detail-panel");
+    detailPanel?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   startAdminEdit(event: AttendanceEventRecord): void {
@@ -753,6 +775,21 @@ export class ReportsPage implements OnInit, OnDestroy {
     if (this.authService.isAdmin) {
       setTimeout(() => this.scrollToIncidents(), 120);
     }
+  }
+
+  private async showNoRecordsAlert(): Promise<void> {
+    const alert = await this.alertController.create({
+      header: this.i18nService.t("reports.alert_no_events_in_period_title"),
+      message: this.i18nService.t("reports.alert_no_events_in_period_message"),
+      buttons: [
+        {
+          text: this.i18nService.t("common.close"),
+          role: "cancel"
+        }
+      ]
+    });
+
+    await alert.present();
   }
 
   private async showToast(message: string, color: "danger" | "success"): Promise<void> {

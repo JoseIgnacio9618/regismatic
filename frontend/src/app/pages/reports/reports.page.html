@@ -470,7 +470,7 @@
                 </div>
 
                 <div class="actions-col report-filter-actions">
-                  <ion-button class="report-action-primary" expand="block" [disabled]="loading" (click)="loadReport()">
+                  <ion-button class="report-action-primary" expand="block" [disabled]="loading" (click)="consultReport()">
                     <ion-icon slot="start" name="search-outline" aria-hidden="true"></ion-icon>
                     {{ "reports.action_consult" | t }}
                   </ion-button>
@@ -579,7 +579,7 @@
 
       <ion-row>
         <ion-col size="12">
-          <ion-card class="glass-card panel detail-panel">
+          <ion-card id="detail-panel" class="glass-card panel detail-panel">
             <ion-card-header>
               <ion-card-title>{{ "reports.detail_title" | t: { count: eventsTotal } }}</ion-card-title>
               <p class="microcopy">{{ "reports.detail_microcopy" | t }}</p>
