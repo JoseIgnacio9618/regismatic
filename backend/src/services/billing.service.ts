@@ -582,6 +582,41 @@ const mapStripeStatus = (status: Stripe.Subscription.Status): BillingSubscriptio
   }
 };
 
+const resolveSubscriptionPeriodBounds = (
+  subscription: Stripe.Subscription
+): { currentPeriodStart: Date | null; currentPeriodEnd: Date | null } => {
+  const topLevelPeriodData = subscription as Stripe.Subscription & {
+    current_period_start?: number;
+    current_period_end?: number;
+  };
+
+  const itemPeriodStarts = subscription.items.data
+    .map((item) => item.current_period_start)
+    .filter((value): value is number => typeof value === "number" && Number.isFinite(value));
+  const itemPeriodEnds = subscription.items.data
+    .map((item) => item.current_period_end)
+    .filter((value): value is number => typeof value === "number" && Number.isFinite(value));
+
+  const currentPeriodStartUnix =
+    itemPeriodStarts.length > 0
+      ? Math.max(...itemPeriodStarts)
+      : typeof topLevelPeriodData.current_period_start === "number"
+        ? topLevelPeriodData.current_period_start
+        : null;
+
+  const currentPeriodEndUnix =
+    itemPeriodEnds.length > 0
+      ? Math.min(...itemPeriodEnds)
+      : typeof topLevelPeriodData.current_period_end === "number"
+        ? topLevelPeriodData.current_period_end
+        : null;
+
+  return {
+    currentPeriodStart: currentPeriodStartUnix ? new Date(currentPeriodStartUnix * 1000) : null,
+    currentPeriodEnd: currentPeriodEndUnix ? new Date(currentPeriodEndUnix * 1000) : null
+  };
+};
+
 const getManagedEmployeesCount = async (adminId: string): Promise<number> => {
   return prisma.user.count({
     where: {
@@ -1172,10 +1207,7 @@ const syncBillingSubscriptionFromStripe = async (stripeSubscriptionId: string) =
   const customerId = typeof subscription.customer === "string" ? subscription.customer : subscription.customer.id;
   const subscriptionItem = subscription.items.data[0];
   const mappedPlan = getPlanByPriceId(subscriptionItem?.price?.id);
-  const periodData = subscription as Stripe.Subscription & {
-    current_period_start?: number;
-    current_period_end?: number;
-  };
+  const periodData = resolveSubscriptionPeriodBounds(subscription);
 
   if (!mappedPlan || mappedPlan.isDemo) {
     throw new AppError("Stripe subscription price is not mapped to a Regismatic plan.", 400);
@@ -1213,8 +1245,8 @@ const syncBillingSubscriptionFromStripe = async (stripeSubscriptionId: string) =
       stripeCustomerId: customerId,
       stripeSubscriptionId: subscription.id,
       stripePriceId: subscriptionItem.price.id,
-      currentPeriodStart: periodData.current_period_start ? new Date(periodData.current_period_start * 1000) : null,
-      currentPeriodEnd: periodData.current_period_end ? new Date(periodData.current_period_end * 1000) : null,
+      currentPeriodStart: periodData.currentPeriodStart,
+      currentPeriodEnd: periodData.currentPeriodEnd,
       cancelAtPeriodEnd: subscription.cancel_at_period_end
     }
   });
