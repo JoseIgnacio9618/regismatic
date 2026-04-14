@@ -104,6 +104,8 @@ export type BillingSummary = {
   managementUrls: {
     checkoutAvailable: boolean;
     portalAvailable: boolean;
+    cancelAvailable: boolean;
+    reactivateAvailable: boolean;
   };
 };
 
@@ -300,6 +302,13 @@ const STRIPE_PRICE_CONFIGS: BillingPriceConfig[] = [
 ];
 
 const ACTIVE_BILLING_STATUSES = new Set<BillingSubscriptionStatus>(["TRIALING", "ACTIVE"]);
+const STRIPE_MANAGEABLE_BILLING_STATUSES = new Set<BillingSubscriptionStatus>([
+  "TRIALING",
+  "ACTIVE",
+  "PAST_DUE",
+  "INCOMPLETE",
+  "UNPAID"
+]);
 
 const normalizeDate = (value: Date | null | undefined): string | null => value?.toISOString() ?? null;
 
@@ -672,6 +681,18 @@ const isSubscriptionUsable = (subscription: BillingSubscriptionRecord): boolean 
   return true;
 };
 
+const canManageStripeSubscription = (subscription: BillingSubscriptionRecord): boolean => {
+  if (subscription.isTrial) {
+    return false;
+  }
+
+  if (!subscription.stripeSubscriptionId && !subscription.stripeCustomerId) {
+    return false;
+  }
+
+  return STRIPE_MANAGEABLE_BILLING_STATUSES.has(subscription.status);
+};
+
 const addMonthsUtc = (date: Date, months: number): Date => {
   const next = new Date(date.getTime());
   next.setUTCMonth(next.getUTCMonth() + months);
@@ -940,7 +961,9 @@ const buildBillingSummary = async (
       cancelAtPeriodEnd: false,
       managementUrls: {
         checkoutAvailable: false,
-        portalAvailable: false
+        portalAvailable: false,
+        cancelAvailable: false,
+        reactivateAvailable: false
       }
     };
   }
@@ -950,6 +973,7 @@ const buildBillingSummary = async (
   const used = await getManagedEmployeesCount(userId);
   const effectiveSeatLimit = resolveEffectiveSeatLimit(ensuredSubscription);
   const remaining = Math.max(0, effectiveSeatLimit.limit - used);
+  const canManageSubscription = STRIPE_ENABLED && canManageStripeSubscription(ensuredSubscription);
 
   return {
     isBypassed: false,
@@ -971,9 +995,20 @@ const buildBillingSummary = async (
     cancelAtPeriodEnd: ensuredSubscription.cancelAtPeriodEnd,
     managementUrls: {
       checkoutAvailable: STRIPE_ENABLED,
-      portalAvailable: STRIPE_ENABLED && Boolean(ensuredSubscription.stripeCustomerId)
+      portalAvailable: STRIPE_ENABLED && Boolean(ensuredSubscription.stripeCustomerId),
+      cancelAvailable: canManageSubscription && !ensuredSubscription.cancelAtPeriodEnd,
+      reactivateAvailable: canManageSubscription && ensuredSubscription.cancelAtPeriodEnd
     }
   };
+};
+
+const buildAdminBillingSummary = async (adminId: string): Promise<BillingSummary> => {
+  const summary = await buildBillingSummary("ADMIN", await loadOrCreateAdminSubscription(adminId), adminId);
+  if (!summary) {
+    throw new AppError("Billing summary is not available for this user.", 500);
+  }
+
+  return summary;
 };
 
 const ensureDemoIpAvailability = async (adminId: string, ipAddress: string | null): Promise<void> => {
@@ -1199,6 +1234,87 @@ export const createBillingPortalSessionForAdmin = async (requesterId: string) =>
   return {
     url: session.url
   };
+};
+
+const resolveStripeSubscriptionIdForManagement = async (subscription: BillingSubscriptionRecord): Promise<string> => {
+  if (subscription.stripeSubscriptionId) {
+    return subscription.stripeSubscriptionId;
+  }
+
+  if (!subscription.stripeCustomerId) {
+    throw new AppError("No Stripe subscription is linked to this administrator yet.", 409);
+  }
+
+  const stripeSubscriptionId = await findMostRelevantStripeSubscriptionIdForCustomer(subscription.stripeCustomerId);
+  if (!stripeSubscriptionId) {
+    throw new AppError("No Stripe subscription is linked to this administrator yet.", 409);
+  }
+
+  return stripeSubscriptionId;
+};
+
+const loadStripeManagementContextForAdmin = async (requesterId: string) => {
+  const requester = await getScopedUserById(requesterId);
+  if (requester.role !== "ADMIN") {
+    throw new AppError("Insufficient permissions.", 403);
+  }
+
+  const stripeClient = ensureStripeReady();
+  const subscription = await loadOrCreateAdminSubscription(requester.id);
+  if (subscription.isTrial) {
+    throw new AppError("Demo billing does not have Stripe subscription controls.", 409);
+  }
+
+  const stripeSubscriptionId = await resolveStripeSubscriptionIdForManagement(subscription);
+  const stripeSubscription = await stripeClient.subscriptions.retrieve(stripeSubscriptionId);
+
+  return {
+    requester,
+    stripeClient,
+    stripeSubscription
+  };
+};
+
+export const cancelStripeSubscriptionForAdmin = async (requesterId: string): Promise<BillingSummary> => {
+  const { requester, stripeClient, stripeSubscription } = await loadStripeManagementContextForAdmin(requesterId);
+
+  if (stripeSubscription.status === "canceled") {
+    throw new AppError("The Stripe subscription is already canceled.", 409);
+  }
+
+  if (stripeSubscription.status === "incomplete_expired") {
+    throw new AppError("This Stripe subscription already expired. Choose a plan again to start a new one.", 409);
+  }
+
+  if (stripeSubscription.cancel_at_period_end) {
+    throw new AppError("The Stripe subscription is already scheduled to cancel at period end.", 409);
+  }
+
+  await stripeClient.subscriptions.update(stripeSubscription.id, {
+    cancel_at_period_end: true
+  });
+
+  await syncBillingSubscriptionFromStripe(stripeSubscription.id);
+  return buildAdminBillingSummary(requester.id);
+};
+
+export const reactivateStripeSubscriptionForAdmin = async (requesterId: string): Promise<BillingSummary> => {
+  const { requester, stripeClient, stripeSubscription } = await loadStripeManagementContextForAdmin(requesterId);
+
+  if (stripeSubscription.status === "canceled" || stripeSubscription.status === "incomplete_expired") {
+    throw new AppError("This Stripe subscription can no longer be reactivated. Choose a plan again to start a new one.", 409);
+  }
+
+  if (!stripeSubscription.cancel_at_period_end) {
+    throw new AppError("The Stripe subscription is already set to renew automatically.", 409);
+  }
+
+  await stripeClient.subscriptions.update(stripeSubscription.id, {
+    cancel_at_period_end: false
+  });
+
+  await syncBillingSubscriptionFromStripe(stripeSubscription.id);
+  return buildAdminBillingSummary(requester.id);
 };
 
 const syncBillingSubscriptionFromStripe = async (stripeSubscriptionId: string) => {

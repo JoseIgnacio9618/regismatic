@@ -1,5 +1,6 @@
-import { Component, OnDestroy } from "@angular/core";
-import { ToastController } from "@ionic/angular";
+import { Component, OnDestroy, OnInit } from "@angular/core";
+import { ActivatedRoute, Router } from "@angular/router";
+import { AlertController, ToastController } from "@ionic/angular";
 import {
   AdminSeatLimitControl,
   BillingAdminSeatLimitStats,
@@ -19,11 +20,12 @@ import { I18nService } from "src/app/core/services/i18n.service";
   styleUrls: ["./billing.page.scss"],
   standalone: false
 })
-export class BillingPage implements OnDestroy {
+export class BillingPage implements OnDestroy, OnInit {
   private readonly activeBillingStatuses = new Set<BillingSubscriptionStatus>(["TRIALING", "ACTIVE"]);
   private hasInitializedInterval = false;
   private adminSearchDebounceHandle: ReturnType<typeof setTimeout> | null = null;
   private adminSeatControlsRequestId = 0;
+  private checkoutQueryHandled = false;
 
   plans: BillingPlan[] = [];
   summary: BillingSummary | null = null;
@@ -43,13 +45,27 @@ export class BillingPage implements OnDestroy {
   limitEditorOpen = false;
   limitEditorControl: AdminSeatLimitControl | null = null;
   limitEditorPreset = "";
+  checkoutFeedbackModalOpen = false;
+  checkoutFeedbackStatus: "success" | "cancel" | null = null;
 
   constructor(
+    private readonly route: ActivatedRoute,
+    private readonly router: Router,
     public readonly authService: AuthService,
     public readonly i18nService: I18nService,
     private readonly billingService: BillingService,
+    private readonly alertController: AlertController,
     private readonly toastController: ToastController
   ) {}
+
+  ngOnInit(): void {
+    const checkout = this.route.snapshot.queryParamMap.get("checkout");
+    if (checkout === "success" || checkout === "cancel") {
+      this.checkoutFeedbackStatus = checkout;
+      this.checkoutFeedbackModalOpen = true;
+      this.checkoutQueryHandled = true;
+    }
+  }
 
   ngOnDestroy(): void {
     if (this.adminSearchDebounceHandle) {
@@ -63,6 +79,44 @@ export class BillingPage implements OnDestroy {
 
   closePlanReferenceModal(): void {
     this.planReferenceModalOpen = false;
+  }
+
+  closeCheckoutFeedbackModal(): void {
+    this.checkoutFeedbackModalOpen = false;
+    this.checkoutFeedbackStatus = null;
+    if (this.checkoutQueryHandled) {
+      void this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { checkout: null },
+        queryParamsHandling: "merge",
+        replaceUrl: true
+      });
+      this.checkoutQueryHandled = false;
+    }
+  }
+
+  checkoutFeedbackTitle(): string {
+    if (this.checkoutFeedbackStatus === "success") {
+      return this.i18nService.t("billing.checkout_success_title");
+    }
+
+    return this.i18nService.t("billing.checkout_cancel_title");
+  }
+
+  checkoutFeedbackMessage(): string {
+    if (this.checkoutFeedbackStatus === "success") {
+      return this.i18nService.t("billing.checkout_success_message");
+    }
+
+    return this.i18nService.t("billing.checkout_cancel_message");
+  }
+
+  checkoutFeedbackButtonLabel(): string {
+    if (this.checkoutFeedbackStatus === "success") {
+      return this.i18nService.t("billing.checkout_success_cta");
+    }
+
+    return this.i18nService.t("common.close");
   }
 
   async ionViewWillEnter(): Promise<void> {
@@ -239,6 +293,14 @@ export class BillingPage implements OnDestroy {
       days: diffDays,
       date: formattedDate
     });
+  }
+
+  canCancelSubscription(billing: BillingSummary | null | undefined): boolean {
+    return Boolean(this.isAdminBilling && billing?.managementUrls.cancelAvailable);
+  }
+
+  canReactivateSubscription(billing: BillingSummary | null | undefined): boolean {
+    return Boolean(this.isAdminBilling && billing?.managementUrls.reactivateAvailable);
   }
 
   billingPeriodValueText(billing: BillingSummary): string {
@@ -610,6 +672,59 @@ export class BillingPage implements OnDestroy {
     }
   }
 
+  async confirmCancelSubscription(): Promise<void> {
+    const billing = this.summary;
+    if (!billing || !this.canCancelSubscription(billing) || this.actionLoading) {
+      return;
+    }
+
+    const alert = await this.alertController.create({
+      header: this.i18nService.t("billing.cancel_confirm_title"),
+      message: this.cancelSubscriptionConfirmMessage(billing),
+      buttons: [
+        {
+          text: this.i18nService.t("common.cancel"),
+          role: "cancel"
+        },
+        {
+          text: this.i18nService.t("billing.cancel_confirm_accept"),
+          role: "destructive",
+          handler: () => {
+            void this.cancelSubscription();
+          }
+        }
+      ]
+    });
+
+    await alert.present();
+  }
+
+  async confirmReactivateSubscription(): Promise<void> {
+    const billing = this.summary;
+    if (!billing || !this.canReactivateSubscription(billing) || this.actionLoading) {
+      return;
+    }
+
+    const alert = await this.alertController.create({
+      header: this.i18nService.t("billing.reactivate_confirm_title"),
+      message: this.i18nService.t("billing.reactivate_confirm_message"),
+      buttons: [
+        {
+          text: this.i18nService.t("common.cancel"),
+          role: "cancel"
+        },
+        {
+          text: this.i18nService.t("billing.reactivate_confirm_accept"),
+          handler: () => {
+            void this.reactivateSubscription();
+          }
+        }
+      ]
+    });
+
+    await alert.present();
+  }
+
   async loadOverview(): Promise<void> {
     const adminSeatControlsRequestId = this.isSuperadminBilling ? ++this.adminSeatControlsRequestId : null;
     this.loading = true;
@@ -754,6 +869,61 @@ export class BillingPage implements OnDestroy {
         this.limitEditorControl = refreshed;
         this.limitEditorPreset = this.detectLimitPreset(refreshed);
       }
+    }
+  }
+
+  private cancelSubscriptionConfirmMessage(billing: BillingSummary): string {
+    if (billing.seatLimitSource === "CUSTOM") {
+      return this.i18nService.t("billing.cancel_confirm_message_custom");
+    }
+
+    const remaining = this.billingPeriodHelpText(billing);
+    if (remaining) {
+      return this.i18nService.t("billing.cancel_confirm_message", {
+        remaining
+      });
+    }
+
+    return this.i18nService.t("billing.cancel_confirm_message_no_date");
+  }
+
+  private async cancelSubscription(): Promise<void> {
+    const billing = this.summary;
+    if (!billing || !this.canCancelSubscription(billing)) {
+      return;
+    }
+
+    this.actionLoading = true;
+    try {
+      this.summary = await this.billingService.cancelSubscription();
+      try {
+        await this.authService.refreshCurrentUser();
+      } catch {}
+      await this.showToast(this.i18nService.t("billing.cancel_success"), "success");
+    } catch (error) {
+      await this.showToast(error instanceof Error ? error.message : this.i18nService.t("billing.cancel_failed"), "danger");
+    } finally {
+      this.actionLoading = false;
+    }
+  }
+
+  private async reactivateSubscription(): Promise<void> {
+    const billing = this.summary;
+    if (!billing || !this.canReactivateSubscription(billing)) {
+      return;
+    }
+
+    this.actionLoading = true;
+    try {
+      this.summary = await this.billingService.reactivateSubscription();
+      try {
+        await this.authService.refreshCurrentUser();
+      } catch {}
+      await this.showToast(this.i18nService.t("billing.reactivate_success"), "success");
+    } catch (error) {
+      await this.showToast(error instanceof Error ? error.message : this.i18nService.t("billing.reactivate_failed"), "danger");
+    } finally {
+      this.actionLoading = false;
     }
   }
 

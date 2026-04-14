@@ -64,6 +64,8 @@ export interface BillingSummary {
   managementUrls: {
     checkoutAvailable: boolean;
     portalAvailable: boolean;
+    cancelAvailable: boolean;
+    reactivateAvailable: boolean;
   };
 }
 

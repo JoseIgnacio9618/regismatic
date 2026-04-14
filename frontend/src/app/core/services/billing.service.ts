@@ -81,6 +81,14 @@ export class BillingService {
     return this.apiService.post<{ url: string }>("/billing/portal-session", {}, true);
   }
 
+  cancelSubscription(): Promise<BillingSummary> {
+    return this.apiService.post<BillingSummary>("/billing/subscription/cancel", {}, true);
+  }
+
+  reactivateSubscription(): Promise<BillingSummary> {
+    return this.apiService.post<BillingSummary>("/billing/subscription/reactivate", {}, true);
+  }
+
   setAdminCustomSeatLimit(adminId: string, seatLimit: number): Promise<AdminSeatLimitControl> {
     return this.apiService.patch<AdminSeatLimitControl>(`/billing/admins/${adminId}/custom-seat-limit`, { seatLimit }, true);
   }

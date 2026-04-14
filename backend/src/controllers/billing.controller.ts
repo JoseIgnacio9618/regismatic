@@ -3,12 +3,14 @@ import { z } from "zod";
 import { AppError } from "../middlewares/error.middleware";
 import {
   assertNonBillingFeatureAccessForUser,
+  cancelStripeSubscriptionForAdmin,
   clearAdminCustomSeatLimit,
   createBillingPortalSessionForAdmin,
   createCheckoutSessionForAdmin,
   getBillingPaymentsHistoryForUser,
   listAdminSeatLimitControls,
   getBillingOverviewForUser,
+  reactivateStripeSubscriptionForAdmin,
   setAdminCustomSeatLimit,
   handleStripeWebhook
 } from "../services/billing.service";
@@ -64,6 +66,24 @@ export const createBillingPortalSessionController = async (req: Request, res: Re
 
   const session = await createBillingPortalSessionForAdmin(req.user.id);
   return res.status(201).json(session);
+};
+
+export const cancelStripeSubscriptionController = async (req: Request, res: Response) => {
+  if (!req.user) {
+    throw new AppError("Not authenticated.", 401);
+  }
+
+  const summary = await cancelStripeSubscriptionForAdmin(req.user.id);
+  return res.json(summary);
+};
+
+export const reactivateStripeSubscriptionController = async (req: Request, res: Response) => {
+  if (!req.user) {
+    throw new AppError("Not authenticated.", 401);
+  }
+
+  const summary = await reactivateStripeSubscriptionForAdmin(req.user.id);
+  return res.json(summary);
 };
 
 export const billingPaymentsHistoryController = async (req: Request, res: Response) => {

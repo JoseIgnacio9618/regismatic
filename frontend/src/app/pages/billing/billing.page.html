@@ -1,4 +1,23 @@
 <app-main-layout [title]="'billing.layout_title' | t">
+  <ion-modal [isOpen]="checkoutFeedbackModalOpen" (didDismiss)="closeCheckoutFeedbackModal()" class="billing-checkout-modal">
+    <ng-template>
+      <ion-content class="checkout-feedback-content">
+        <div class="checkout-feedback-shell">
+          <section class="app-inline-panel app-inline-panel--accent checkout-feedback-panel">
+            <div class="checkout-feedback-icon" [class.checkout-feedback-icon-success]="checkoutFeedbackStatus === 'success'">
+              <ion-icon [name]="checkoutFeedbackStatus === 'success' ? 'checkmark-circle-outline' : 'close-circle-outline'"></ion-icon>
+            </div>
+            <strong>{{ checkoutFeedbackTitle() }}</strong>
+            <p>{{ checkoutFeedbackMessage() }}</p>
+            <ion-button (click)="closeCheckoutFeedbackModal()">
+              {{ checkoutFeedbackButtonLabel() }}
+            </ion-button>
+          </section>
+        </div>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+
   <ion-modal [isOpen]="planReferenceModalOpen" (didDismiss)="closePlanReferenceModal()" class="billing-plan-reference-modal">
     <ng-template>
       <ion-header translucent="true">
@@ -470,6 +489,24 @@
                 <div class="billing-actions">
                   <ion-button expand="block" fill="outline" [disabled]="actionLoading || !billing.managementUrls.portalAvailable" (click)="openPortal()">
                     {{ "billing.open_portal" | t }}
+                  </ion-button>
+                  <ion-button
+                    expand="block"
+                    color="danger"
+                    fill="outline"
+                    *ngIf="canCancelSubscription(billing)"
+                    [disabled]="actionLoading"
+                    (click)="confirmCancelSubscription()"
+                  >
+                    {{ "billing.cancel_subscription" | t }}
+                  </ion-button>
+                  <ion-button
+                    expand="block"
+                    *ngIf="canReactivateSubscription(billing)"
+                    [disabled]="actionLoading"
+                    (click)="confirmReactivateSubscription()"
+                  >
+                    {{ "billing.reactivate_subscription" | t }}
                   </ion-button>
                 </div>
               </ng-container>

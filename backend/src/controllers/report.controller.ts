@@ -10,6 +10,7 @@ const reportQuerySchema = strictObject({
   from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   userId: z.string().optional(),
+  lang: z.enum(["es", "en", "fr"]).optional(),
   page: z.coerce.number().int().min(1).optional(),
   pageSize: z.coerce.number().int().min(1).max(100).optional()
 });
@@ -28,6 +29,7 @@ const getParsedReportQuery = async (req: Request) => {
     requesterRole: req.user.role,
     requesterUserId: req.user.id,
     userId: query.userId,
+    language: query.lang,
     fromUtc: range.fromUtc,
     toUtc: range.toUtc,
     page: query.page,

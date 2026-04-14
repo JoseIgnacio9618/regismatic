@@ -20,8 +20,12 @@
 
     <ion-card class="glass-card app-auth-card">
       <ion-card-content>
-        <h1>{{ "app.name" | t }}</h1>
-        <p>{{ "login.tagline" | t }}</p>
+        <section class="login-brand" aria-label="Regismatic">
+          <div class="login-brand-mark">
+            <img src="assets/icon/favicon.svg" alt="Regismatic" />
+          </div>
+          <h1>{{ "app.name" | t }}</h1>
+        </section>
 
         <ion-item lines="full">
           <ion-label position="stacked">{{ "common.email" | t }}</ion-label>

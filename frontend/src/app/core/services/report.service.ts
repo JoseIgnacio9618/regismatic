@@ -1,5 +1,6 @@
 import { Injectable } from "@angular/core";
 import { ApiService } from "./api.service";
+import { I18nService } from "./i18n.service";
 import { SummaryRow } from "../models/types";
 
 export type SummaryReportResponse = {
@@ -11,7 +12,10 @@ export type SummaryReportResponse = {
 
 @Injectable({ providedIn: "root" })
 export class ReportService {
-  constructor(private readonly apiService: ApiService) {}
+  constructor(
+    private readonly apiService: ApiService,
+    private readonly i18nService: I18nService
+  ) {}
 
   getSummary(from?: string, to?: string, userId?: string, page = 1, pageSize = 50): Promise<SummaryReportResponse> {
     const params = new URLSearchParams();
@@ -40,6 +44,7 @@ export class ReportService {
     if (userId) {
       params.set("userId", userId);
     }
+    params.set("lang", this.i18nService.language);
     return this.apiService.getBlob(`/reports/summary.xlsx?${params.toString()}`, true);
   }
 }
