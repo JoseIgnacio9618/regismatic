@@ -5,15 +5,11 @@ import helmet from "helmet";
 import morgan from "morgan";
 import { ZodError } from "zod";
 import { env } from "./config/env";
-import { prisma } from "./config/prisma";
-import { authRouter } from "./routes/auth.routes";
-import { attendanceRouter } from "./routes/attendance.routes";
-import { billingRouter, billingWebhookRouter } from "./routes/billing.routes";
-import { notificationRouter } from "./routes/notification.routes";
-import { reportRouter } from "./routes/report.routes";
-import { userRouter } from "./routes/user.routes";
 import { AppError, errorMiddleware } from "./middlewares/error.middleware";
 import { requestSanitizationMiddleware } from "./middlewares/request-sanitization.middleware";
+import { billingWebhookRouter } from "./routes/billing.routes";
+import { healthRouter } from "./routes/health.routes";
+import { registerRoutes } from "./routes/register-routes";
 
 export const app = express();
 app.disable("x-powered-by");
@@ -21,14 +17,6 @@ app.disable("x-powered-by");
 if (env.TRUST_PROXY === "true") {
   app.set("trust proxy", 1);
 }
-
-const authLimiter = rateLimit({
-  windowMs: env.AUTH_RATE_LIMIT_WINDOW_MS,
-  max: env.AUTH_RATE_LIMIT_MAX,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { message: "Too many login attempts. Try again later." }
-});
 
 const apiLimiter = rateLimit({
   windowMs: env.API_RATE_LIMIT_WINDOW_MS,
@@ -60,29 +48,9 @@ app.use(express.json({ limit: env.JSON_BODY_LIMIT }));
 app.use(express.urlencoded({ extended: false, limit: env.JSON_BODY_LIMIT }));
 app.use(requestSanitizationMiddleware);
 app.use("/api", apiLimiter);
+app.use(healthRouter);
 
-app.get("/health", (_req, res) => {
-  res.json({ status: "ok" });
-});
-
-app.get("/health/ready", async (_req, res) => {
-  try {
-    await prisma.$queryRaw`SELECT 1`;
-    return res.json({ status: "ready" });
-  } catch {
-    return res.status(503).json({ status: "not_ready" });
-  }
-});
-
-app.use("/api/auth/login", authLimiter);
-app.use("/api/auth/register-admin", authLimiter);
-app.use("/api/auth/register-employee", authLimiter);
-app.use("/api/auth", authRouter);
-app.use("/api/attendance", attendanceRouter);
-app.use("/api/billing", billingRouter);
-app.use("/api/notifications", notificationRouter);
-app.use("/api/reports", reportRouter);
-app.use("/api/users", userRouter);
+registerRoutes(app);
 
 app.use((_req, _res, next) => {
   next(new AppError("Route not found.", 404));
