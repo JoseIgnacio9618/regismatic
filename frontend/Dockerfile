@@ -9,9 +9,12 @@ COPY . .
 RUN sed -i "s|API_BASE_URL_PLACEHOLDER|${VITE_API_BASE_URL}|g" src/environments/environment.prod.ts \
   && npm run build -- --configuration production
 
-FROM nginx:1.27-alpine
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-COPY --from=build /usr/src/app/www /usr/share/nginx/html
+FROM node:20-alpine
+ENV NODE_ENV=production
+WORKDIR /usr/src/app
 
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+COPY --from=build /usr/src/app/www /usr/share/nginx/html
+COPY server.mjs ./server.mjs
+
+EXPOSE 8080
+CMD ["node", "server.mjs"]

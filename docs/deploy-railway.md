@@ -327,6 +327,22 @@ Fuente oficial sobre volumenes:
 Fuente oficial:
 - https://docs.railway.com/networking/domains/working-with-domains
 
+### 10.7. Endpoints WebSocket de estado
+
+Los servicios `api` y `web` exponen un WebSocket en `/status`. Con los dominios
+publicos quedaran disponibles, por ejemplo, en:
+
+```text
+wss://api.tudominio.com/status
+wss://app.tudominio.com/status
+```
+
+El API tambien admite `wss://api.tudominio.com/api/status`, para poder
+registrar directamente su URL base habitual terminada en `/api`.
+
+No requieren un puerto, volumen ni variable adicional: Railway publica el mismo
+`PORT` de cada servicio y admite el upgrade WebSocket.
+
 ## 11. Crear el servicio `web`
 
 ### 11.1. Fuente y builder
