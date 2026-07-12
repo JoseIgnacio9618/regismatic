@@ -18,6 +18,50 @@ function sendWebSocketText(socket: Duplex, value: unknown) {
   socket.write(Buffer.concat([header, payload]));
 }
 
+function respondToWebSocketPings(socket: Duplex) {
+  let pending = Buffer.alloc(0);
+
+  socket.on("data", (chunk: Buffer) => {
+    pending = Buffer.concat([pending, chunk]);
+
+    while (pending.length >= 2) {
+      const firstByte = pending[0];
+      const secondByte = pending[1];
+      const masked = (secondByte & 0x80) !== 0;
+      let payloadLength = secondByte & 0x7f;
+      let headerLength = 2;
+
+      if (payloadLength === 126) {
+        if (pending.length < 4) return;
+        payloadLength = pending.readUInt16BE(2);
+        headerLength = 4;
+      } else if (payloadLength === 127) {
+        socket.destroy();
+        return;
+      }
+
+      const maskLength = masked ? 4 : 0;
+      const frameLength = headerLength + maskLength + payloadLength;
+      if (pending.length < frameLength) return;
+
+      const mask = pending.subarray(headerLength, headerLength + maskLength);
+      const payload = Buffer.from(pending.subarray(headerLength + maskLength, frameLength));
+      pending = pending.subarray(frameLength);
+
+      if (masked) {
+        for (let index = 0; index < payload.length; index += 1) {
+          payload[index] ^= mask[index % 4];
+        }
+      }
+
+      const opcode = firstByte & 0x0f;
+      if (opcode === 0x9 && payload.length <= 125) {
+        socket.write(Buffer.concat([Buffer.from([0x8a, payload.length]), payload]));
+      }
+    }
+  });
+}
+
 const server = createServer(app);
 
 server.on("upgrade", (request, socket) => {
@@ -50,6 +94,7 @@ server.on("upgrade", (request, socket) => {
     + `Sec-WebSocket-Accept: ${accept}\r\n\r\n`
   );
   sendWebSocketText(socket, { status: "online", checkedAt: new Date().toISOString() });
+  respondToWebSocketPings(socket);
   socket.on("error", () => {});
 });
 
