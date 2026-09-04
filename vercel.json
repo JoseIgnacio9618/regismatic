@@ -9,11 +9,19 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "/api/index"
+      "destination": "/api/index?path=$1"
+    },
+    {
+      "source": "/health",
+      "destination": "/api/index?path=health"
+    },
+    {
+      "source": "/health/ready",
+      "destination": "/api/index?path=health/ready"
     },
     {
       "source": "/status",
-      "destination": "/api/index"
+      "destination": "/api/index?path=status"
     }
   ]
 }
