@@ -17,6 +17,11 @@ export default function handler(
     const query = requestUrl.searchParams.toString();
 
     request.url = `${isHealthCheck ? "" : "/api"}/${normalizedPath}${query ? `?${query}` : ""}`;
+
+    // Vercel materializes rewrite query parameters on the request object before
+    // Express parses the rewritten URL. Remove this internal routing value so
+    // strict Zod schemas only receive the application's actual query values.
+    delete (request.query as Record<string, unknown>).path;
   }
 
   return app(request, response);
