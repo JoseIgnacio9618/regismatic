@@ -1,6 +1,5 @@
 import bcrypt from "bcryptjs";
 import { Prisma, type Role } from "@prisma/client";
-import { access } from "node:fs/promises";
 import { prisma } from "../config/prisma";
 import { AppError } from "../middlewares/error.middleware";
 import { assertCanManageUser, assertCanViewUser, getScopedUserById, isElevatedRole } from "./access.service";
@@ -10,7 +9,7 @@ import { buildAuthResponse } from "./auth.service";
 import {
   buildProfilePhotoApiPath,
   deleteStoredProfilePhoto,
-  resolveStoredProfilePhotoAbsolutePath,
+  downloadStoredProfilePhoto,
   saveProfilePhotoFile
 } from "./profile-photo.service";
 
@@ -468,7 +467,7 @@ export const removeUserProfilePhoto = async (params: { requesterId: string; targ
   return mapTeamUser(updated);
 };
 
-export const getUserProfilePhotoFile = async (params: { requesterId: string; targetUserId: string }): Promise<string> => {
+export const getUserProfilePhotoFile = async (params: { requesterId: string; targetUserId: string }): Promise<Blob> => {
   await assertCanViewUser(params.requesterId, params.targetUserId);
 
   const target = await prisma.user.findUnique({
@@ -482,16 +481,5 @@ export const getUserProfilePhotoFile = async (params: { requesterId: string; tar
     throw new AppError("User not found.", 404);
   }
 
-  const absolutePath = resolveStoredProfilePhotoAbsolutePath(target.profilePhotoPath);
-  if (!absolutePath) {
-    throw new AppError("User not found.", 404);
-  }
-
-  try {
-    await access(absolutePath);
-  } catch {
-    throw new AppError("User not found.", 404);
-  }
-
-  return absolutePath;
+  return downloadStoredProfilePhoto(target.profilePhotoPath);
 };

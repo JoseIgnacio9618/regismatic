@@ -33,7 +33,10 @@ const envSchema = z.object({
   STRIPE_CHECKOUT_CANCEL_URL: z.string().optional(),
   STRIPE_BILLING_PORTAL_RETURN_URL: z.string().optional(),
   FCM_SERVICE_ACCOUNT_JSON: z.string().optional(),
-  FCM_SERVICE_ACCOUNT_PATH: z.string().optional()
+  FCM_SERVICE_ACCOUNT_PATH: z.string().optional(),
+  SUPABASE_URL: z.string().url().optional(),
+  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
+  SUPABASE_PROFILE_PHOTOS_BUCKET: z.string().default("profile-photos")
 });
 
 const parsed = envSchema.safeParse(process.env);

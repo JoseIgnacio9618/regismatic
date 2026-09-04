@@ -11,6 +11,7 @@
     "dev:api": "npm run dev --workspace backend",
     "dev:web": "npm run dev --workspace frontend",
     "build": "npm run build --workspace backend && npm run build --workspace frontend",
+    "build:vercel": "npm run prisma:generate --workspace backend && npm run prisma:deploy --workspace backend && npm run build --workspace backend",
     "prisma:generate": "npm run prisma:generate --workspace backend",
     "prisma:migrate": "npm run prisma:migrate --workspace backend",
     "seed": "npm run seed --workspace backend",

@@ -244,12 +244,13 @@ export const getUserProfilePhotoController = async (req: Request, res: Response)
   }
 
   const userId = z.string().min(1).parse(req.params.userId);
-  const absolutePath = await getUserProfilePhotoFile({
+  const photo = await getUserProfilePhotoFile({
     requesterId: req.user.id,
     targetUserId: userId
   });
 
-  return res.sendFile(absolutePath);
+  res.type(photo.type || "application/octet-stream");
+  return res.send(Buffer.from(await photo.arrayBuffer()));
 };
 
 export const removeOwnProfilePhotoController = async (req: Request, res: Response) => {
