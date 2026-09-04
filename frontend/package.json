@@ -6,7 +6,7 @@
     "ng": "ng",
     "start": "ng serve --host 0.0.0.0 --port 8100",
     "dev": "ionic serve --host 0.0.0.0 --port 8100",
-    "build": "ng build",
+    "build": "node scripts/prepare-production-env.mjs && ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "lint": "ng lint",
