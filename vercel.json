@@ -1,4 +1,5 @@
 {
+  "regions": ["fra1"],
   "buildCommand": "npm run prisma:generate --workspace backend",
   "outputDirectory": "public",
   "functions": {
