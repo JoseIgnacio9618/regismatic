@@ -431,15 +431,10 @@
             <ion-card-content>
               <div class="reports-scope-shell">
                 <div>
-                  <ion-badge [color]="scopeBadgeColor">{{ isStandardAdminView ? ("role.ADMIN" | t) : ("role.EMPLOYEE" | t) }}</ion-badge>
                   <h2>{{ scopeTitle }}</h2>
                   <p>{{ scopeDescription }}</p>
                 </div>
 
-                <div class="scope-selection-card app-inline-panel" *ngIf="isStandardAdminView">
-                  <strong>{{ "reports.scope_current_label" | t }}</strong>
-                  <span>{{ selectedScopeLabel }}</span>
-                </div>
               </div>
             </ion-card-content>
           </ion-card>
@@ -452,21 +447,18 @@
             <ion-card-content>
               <div class="report-filters-shell" [class.report-filters-shell-admin]="isStandardAdminView">
                 <div class="report-filter-field">
-                  <app-date-control [label]="'common.from' | t" [showClear]="isStandardAdminView" [(value)]="from"></app-date-control>
+                  <app-date-control [label]="'common.from' | t" [placeholder]="'common.any_date' | t" [showClear]="isStandardAdminView" [(value)]="from"></app-date-control>
                 </div>
 
                 <div class="report-filter-field">
-                  <app-date-control [label]="'common.to' | t" [showClear]="isStandardAdminView" [(value)]="to"></app-date-control>
+                  <app-date-control [label]="'common.to' | t" [placeholder]="'common.any_date' | t" [showClear]="isStandardAdminView" [(value)]="to"></app-date-control>
                 </div>
 
                 <div class="report-filter-field report-filter-field-scope" *ngIf="isStandardAdminView">
-                  <ion-item>
-                    <ion-label position="stacked">{{ "reports.employee_optional" | t }}</ion-label>
-                    <ion-select [(ngModel)]="selectedUserId" interface="popover">
+                  <span class="report-filter-label" id="report-scope-label">{{ "reports.employee_optional" | t }}</span>
+                    <ion-select class="report-scope-select" aria-labelledby="report-scope-label" [(ngModel)]="selectedUserId" interface="popover">
                       <ion-select-option *ngFor="let option of reportScopeOptions" [value]="option.id">{{ option.label }}</ion-select-option>
                     </ion-select>
-                  </ion-item>
-                  <p class="inline-help">{{ "reports.filter_scope_hint" | t }}</p>
                 </div>
 
                 <div class="actions-col report-filter-actions">

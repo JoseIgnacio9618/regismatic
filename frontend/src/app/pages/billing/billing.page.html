@@ -558,8 +558,15 @@
                     <section class="price-callout app-inline-panel" [class.price-callout-current]="isCurrentPrice(selectedPrice)">
                       <span class="price-callout-kicker">{{ formatCycleLabel(selectedPrice.interval) }}</span>
                       <strong class="price-figure">{{ formatPriceOption(selectedPrice) }}</strong>
-                      <p>{{ formatPriceHint(selectedPrice) }}</p>
+                      <p *ngIf="selectedPrice.monthlyEquivalentEur || selectedPrice.pricePerSeatEur">{{ formatPriceHint(selectedPrice) }}</p>
                     </section>
+
+                    <p class="plan-action-note" *ngIf="isCurrentPrice(selectedPrice)">
+                      {{ "common.selected" | t }}
+                    </p>
+                    <p class="plan-action-note" *ngIf="!isCurrentPrice(selectedPrice) && (!selectedPrice.checkoutEnabled || !selectedPrice.priceId)">
+                      {{ "billing.plan_cycle_unavailable" | t }}
+                    </p>
 
                     <ion-button
                       expand="block"
@@ -570,12 +577,6 @@
                       {{ planActionLabel(plan, selectedPrice) }}
                     </ion-button>
 
-                    <p class="plan-action-note" *ngIf="isCurrentPrice(selectedPrice)">
-                      {{ "common.selected" | t }}
-                    </p>
-                    <p class="plan-action-note" *ngIf="!isCurrentPrice(selectedPrice) && (!selectedPrice.checkoutEnabled || !selectedPrice.priceId)">
-                      {{ "billing.plan_cycle_unavailable" | t }}
-                    </p>
                   </ng-container>
 
                   <ng-template #unavailableCycle>

@@ -7,14 +7,21 @@
   --app-accent-base-rgb: 127, 141, 153;
 
   --app-page-max-width: 1240px;
-  --app-page-padding: 18px;
+  --app-page-padding: 32px;
   --app-toolbar-height: 64px;
+  --app-space-1: 4px;
+  --app-space-2: 8px;
+  --app-space-3: 12px;
+  --app-space-4: 16px;
+  --app-space-6: 24px;
+  --app-space-8: 32px;
+  --app-panel-padding: 24px;
 
   --app-radius-xs: 4px;
   --app-radius-sm: 6px;
   --app-radius-md: 8px;
-  --app-radius-lg: 8px;
-  --app-radius-xl: 8px;
+  --app-radius-lg: 12px;
+  --app-radius-xl: 16px;
   --app-radius-pill: 999px;
   --app-radius-control: var(--app-radius-md);
   --app-radius-shell: var(--app-radius-lg);
@@ -163,13 +170,13 @@ body.light-theme {
   --app-focus-shadow: rgba(46, 139, 131, 0.2);
 
   --app-attendance-clock-in-bg: #6aa67d;
-  --app-attendance-clock-in-color: #ffffff;
+  --app-attendance-clock-in-color: #10251b;
   --app-attendance-break-start-bg: #d79646;
-  --app-attendance-break-start-color: #ffffff;
+  --app-attendance-break-start-color: #291b09;
   --app-attendance-clock-out-bg: #6f8fb0;
-  --app-attendance-clock-out-color: #ffffff;
+  --app-attendance-clock-out-color: #132333;
   --app-attendance-break-end-bg: #5fae7c;
-  --app-attendance-break-end-color: #ffffff;
+  --app-attendance-break-end-color: #10251b;
 
   --app-shadow-xs: 0 1px 2px rgba(18, 31, 36, 0.04);
   --app-shadow-sm: 0 10px 24px rgba(18, 31, 36, 0.06);
@@ -314,13 +321,13 @@ html:not(.light-theme):not(.dark-theme) body {
   --app-focus-shadow: rgba(122, 204, 194, 0.22);
 
   --app-attendance-clock-in-bg: #77b696;
-  --app-attendance-clock-in-color: #ffffff;
+  --app-attendance-clock-in-color: #10251b;
   --app-attendance-break-start-bg: #d7a66a;
-  --app-attendance-break-start-color: #ffffff;
+  --app-attendance-break-start-color: #291b09;
   --app-attendance-clock-out-bg: #a6b7c9;
-  --app-attendance-clock-out-color: #ffffff;
+  --app-attendance-clock-out-color: #132333;
   --app-attendance-break-end-bg: #6fc29a;
-  --app-attendance-break-end-color: #ffffff;
+  --app-attendance-break-end-color: #10251b;
 
   --app-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.18);
   --app-shadow-sm: 0 12px 24px rgba(0, 0, 0, 0.22);

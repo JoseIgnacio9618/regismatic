@@ -1,5 +1,5 @@
 .billing-grid {
-  padding-bottom: 32px;
+  padding-bottom: 0;
 }
 
 .superadmin-hero,
@@ -70,7 +70,7 @@
 }
 
 .billing-table-shell {
-  margin-inline: -16px;
+  margin-inline: 0;
   border: 0;
   border-radius: 0;
   background: transparent;
@@ -161,7 +161,7 @@
 .plan-reference-card,
 .plan-card {
   gap: 12px;
-  min-height: 100%;
+  min-height: 0;
   padding: 16px;
 }
 
@@ -174,7 +174,7 @@
 }
 
 .plans-grid {
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
 }
 
@@ -484,3 +484,16 @@
     grid-template-columns: 1fr;
   }
 }
+
+.plans-toolbar { padding: 0 0 16px; border: 0; border-bottom: 1px solid var(--app-divider); border-radius: 0; background: transparent; margin-bottom: 0; }
+.billing-status-card { margin-bottom: 0; }
+.billing-status-copy > strong { display: block; font-size: 1.35rem; margin-top: 6px; }
+.plan-card { padding: 18px; gap: 16px; }
+.plan-card .price-callout { border: 0; background: transparent; padding: 4px 0; }
+.price-figure { display: block; font-size: 1.35rem; margin-top: 6px; }
+.plan-card > ion-button { margin: auto 0 0; }
+.billing-actions { margin-top: 4px; }
+.billing-grid .data-list { gap: 0; }
+.billing-grid .data-list .data-item { --background: transparent; background: transparent; border: 0; border-bottom: 1px solid var(--app-divider); border-radius: 0; margin-top: 0; }
+@media (max-width: 767px) { .plans-toolbar { padding: 0 0 16px; } .superadmin-metrics-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 540px) { .plans-grid { grid-template-columns: 1fr; } }

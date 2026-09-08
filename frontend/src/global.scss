@@ -33,17 +33,12 @@ html {
 body {
   margin: 0;
   color: var(--app-text-primary);
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--app-canvas), white 8%) 0%,
-    var(--app-canvas) 28%,
-    color-mix(in srgb, var(--app-canvas), var(--app-surface-2) 16%) 100%
-  );
+  background: var(--app-canvas);
   transition: background var(--app-transition-slow), color var(--app-transition-base);
 }
 
 body::before {
-  content: "";
+  content: none;
   position: fixed;
   inset: 0;
   pointer-events: none;
@@ -377,6 +372,16 @@ ion-button {
   border-radius: var(--border-radius, var(--app-radius-control));
   font-weight: 700;
   letter-spacing: 0;
+  text-transform: none;
+  font-size: 0.875rem;
+}
+
+ion-button[size="small"] {
+  --padding-top: 8px;
+  --padding-bottom: 8px;
+  --padding-start: 12px;
+  --padding-end: 12px;
+  min-height: 36px;
 }
 
 ion-button::part(native) {
@@ -473,17 +478,17 @@ ion-card {
 }
 
 ion-card-header {
-  padding: 22px 22px 0;
+  padding: var(--app-panel-padding) var(--app-panel-padding) 0;
 }
 
 ion-card-title {
-  font-size: 1.05rem;
+  font-size: 1.125rem;
   font-weight: 700;
   letter-spacing: 0;
 }
 
 ion-card-content {
-  padding: 20px 22px 22px;
+  padding: 16px var(--app-panel-padding) var(--app-panel-padding);
 }
 
 .glass-card,
@@ -493,8 +498,62 @@ ion-card-content {
   overflow: hidden;
   border: 1px solid var(--app-border-subtle);
   border-radius: var(--app-radius-shell);
-  background: color-mix(in srgb, var(--app-surface-0), var(--ion-color-primary) 1.5%);
-  box-shadow: var(--app-shadow-sm);
+  background: var(--app-surface-0);
+  box-shadow: none;
+}
+
+// The page shell owns width and gutters; Ionic's fixed grid must not add a
+// second, breakpoint-dependent container inside it.
+app-main-layout .page-shell > ion-grid {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  max-width: none;
+  padding: 0;
+}
+
+app-main-layout .page-shell > ion-grid > ion-row {
+  margin-inline: -8px;
+  align-items: flex-start;
+  row-gap: 0;
+}
+
+app-main-layout .page-shell > ion-grid > ion-row > ion-col {
+  padding: 8px;
+  min-width: 0;
+}
+
+app-main-layout .page-shell h2 {
+  font-size: 1.125rem;
+  line-height: 1.35;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+app-main-layout :where(.page-shell) p { font-size: 0.875rem; line-height: 1.55; }
+
+.app-auth-card ion-item {
+  margin: 0;
+  --inner-padding-top: 6px;
+  --inner-padding-bottom: 6px;
+}
+
+.app-auth-card ion-input { min-height: 32px; --padding-top: 4px; --padding-bottom: 4px; }
+.app-auth-card ion-button { margin: 0; }
+.app-auth-card .mt-16 { margin-top: 4px; }
+.app-auth-card > ion-card-content > h1 { font-size: 1.65rem; line-height: 1.25; letter-spacing: -0.03em; }
+
+app-main-layout .page-shell .workspace-panel ion-card-content { padding: 0; }
+
+app-main-layout .scope-panel {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+app-main-layout .page-shell .scope-panel ion-card-content {
+  padding: 0 0 16px;
+  border-bottom: 1px solid var(--app-divider);
 }
 
 .panel > * {
@@ -524,6 +583,9 @@ ion-card-content {
   display: grid;
   gap: 12px;
   margin: 0;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .data-list ion-item {
@@ -580,9 +642,9 @@ ion-card-content {
   display: grid;
   justify-items: center;
   gap: 8px;
-  padding: 28px 22px;
+  padding: 24px 20px;
   text-align: center;
-  border: 1px dashed color-mix(in srgb, var(--app-border-strong), transparent 15%);
+  border: 0;
   border-radius: var(--app-radius-md);
   background: color-mix(in srgb, var(--app-surface-1), var(--ion-color-primary) 2%);
 }
@@ -602,11 +664,13 @@ ion-card-content {
 }
 
 .metric-tile {
-  min-height: 100%;
+  min-width: 0;
+  min-height: 0;
   padding: 16px 14px;
-  border: 1px solid var(--app-border-subtle);
-  border-radius: var(--app-radius-md);
-  background: color-mix(in srgb, var(--app-surface-1), var(--ion-color-primary) 3%);
+  border: 0;
+  border-inline-start: 2px solid var(--app-border-subtle);
+  border-radius: 0;
+  background: transparent;
 }
 
 .metric-tile strong {
@@ -624,6 +688,7 @@ ion-card-content {
   font-weight: 800;
   line-height: 1.15;
   color: var(--app-text-primary);
+  font-variant-numeric: tabular-nums;
 }
 
 .report-pagination {
@@ -646,7 +711,7 @@ ion-card-content {
   background: color-mix(in srgb, var(--app-surface-1), var(--ion-color-primary) 2%);
   overflow: hidden;
   isolation: isolate;
-  box-shadow: var(--app-shadow-xs);
+  box-shadow: none;
   padding: 16px 18px;
 }
 
@@ -705,7 +770,7 @@ ion-card-content {
   border-radius: var(--app-radius-shell);
   background: var(--app-surface-1);
   box-shadow: var(--app-shadow-xs);
-  scrollbar-gutter: stable both-edges;
+  scrollbar-gutter: auto;
 }
 
 .app-data-table {
@@ -965,10 +1030,10 @@ ion-card-content {
 }
 
 .app-auth-wrap {
-  min-height: 100vh;
+  min-height: 100svh;
   display: grid;
   place-items: center;
-  padding: 28px;
+  padding: 88px 24px 32px;
   position: relative;
   isolation: isolate;
 }
@@ -1448,12 +1513,13 @@ ion-datetime {
 
 .app-date-control .p-inputtext {
   width: 100%;
-  min-height: 54px;
-  padding: 15px 44px 15px 15px;
+  min-height: 46px;
+  padding: 12px 44px 12px 14px;
   border: 1px solid var(--app-field-border);
   border-radius: var(--app-radius-md);
   background: var(--app-field-background);
   color: var(--app-text-primary);
+  -webkit-text-fill-color: var(--app-text-primary);
   box-shadow: var(--app-shadow-xs);
   font-size: 0.96rem;
   transition:
@@ -1558,13 +1624,12 @@ ion-datetime {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  flex-wrap: wrap;
-  gap: 12px;
+  flex-wrap: nowrap;
+  gap: 4px;
   min-width: 0;
   line-height: 1.15;
 }
 
-.app-date-control-overlay .p-datepicker-title button,
 .app-date-control-overlay .p-datepicker-prev-button,
 .app-date-control-overlay .p-datepicker-next-button {
   display: inline-flex;
@@ -1587,6 +1652,9 @@ ion-datetime {
 .app-date-control-overlay .p-datepicker-select-month,
 .app-date-control-overlay .p-datepicker-select-year {
   display: inline-flex;
+  width: auto;
+  height: auto;
+  flex: 0 0 auto;
   align-items: center;
   justify-content: center;
   padding: 6px 12px;
@@ -1792,6 +1860,10 @@ ion-datetime {
 }
 
 @media (max-width: 767px) {
+  app-main-layout { --app-panel-padding: 16px; }
+
+  app-main-layout .page-shell .scope-panel ion-card-content { padding: 0 0 16px; }
+
   .app-auth-wrap {
     place-items: start center;
     align-content: start;

@@ -9,8 +9,10 @@
   ></app-photo-cropper>
   <ion-toolbar class="app-toolbar">
     <ion-title>
-      <span class="title-mark"></span>
-      {{ title }}
+      <a class="app-wordmark" routerLink="/dashboard" aria-label="Regismatic">
+        <img src="assets/icon/favicon.svg" alt="" width="28" height="28" />
+        <span>Regismatic</span>
+      </a>
     </ion-title>
     <ion-buttons slot="end" class="toolbar-actions desktop-actions">
       <ion-button fill="clear" [class.active-nav]="isActive('/dashboard')" (click)="go('/dashboard')">{{ "nav.dashboard" | t }}</ion-button>
@@ -18,7 +20,6 @@
       <ion-button fill="clear" *ngIf="canAccessTeam" [class.active-nav]="isActive('/users')" (click)="go('/users')">{{ "nav.team" | t }}</ion-button>
       <ion-button fill="clear" *ngIf="canAccessBilling" [class.active-nav]="isActive('/billing')" (click)="go('/billing')">{{ "nav.billing" | t }}</ion-button>
       <ion-button fill="clear" *ngIf="canAccessBillingHistory" [class.active-nav]="isActive('/billing-history')" (click)="go('/billing-history')">{{ "nav.payments" | t }}</ion-button>
-      <ion-badge *ngIf="authService.user" class="toolbar-role-chip" [color]="currentRoleColor">{{ currentRoleLabel }}</ion-badge>
       <ion-button fill="clear" [id]="desktopNotificationsTriggerId" class="notification-button" [attr.aria-label]="'nav.notifications' | t">
         <ion-icon slot="icon-only" name="notifications-outline" aria-hidden="true"></ion-icon>
         <ng-container *ngIf="(notificationService.unreadCount$ | async) as unreadCount">
@@ -282,6 +283,7 @@
 
 <ion-content class="app-main-content">
   <div class="page-shell">
+    <header class="page-heading"><h1>{{ title }}</h1></header>
     <ng-content></ng-content>
   </div>
 </ion-content>

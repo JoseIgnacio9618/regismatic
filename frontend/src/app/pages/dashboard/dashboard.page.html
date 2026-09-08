@@ -61,9 +61,6 @@
               </div>
 
               <section class="role-hint app-inline-panel app-inline-panel--accent" *ngIf="authService.isAdmin">
-                <ion-badge [color]="authService.isSuperadmin ? 'warning' : 'primary'">
-                  {{ authService.isSuperadmin ? ("role.SUPERADMIN" | t) : ("role.ADMIN" | t) }}
-                </ion-badge>
                 <p>{{ "dashboard.admin_scope_hint" | t }}</p>
               </section>
 

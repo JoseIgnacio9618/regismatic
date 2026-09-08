@@ -56,7 +56,7 @@
                     <p>{{ account.admin.email }}</p>
                   </div>
                   <ion-badge [color]="subscriptionStatusColor(account.subscription.status)">
-                    {{ account.subscription.status }}
+                    {{ ("billing.status." + account.subscription.status) | t }}
                   </ion-badge>
                 </div>
 

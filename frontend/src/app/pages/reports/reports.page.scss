@@ -1,58 +1,5 @@
 .reports-grid {
-  row-gap: 20px;
-}
-
-.scope-panel,
-.filter-panel,
-.result-panel,
-.detail-panel,
-.requests-panel,
-.superadmin-admins-panel,
-.superadmin-employees-panel {
-  position: relative;
-}
-
-.scope-panel::before,
-.filter-panel::before,
-.result-panel::before,
-.detail-panel::before,
-.requests-panel::before,
-.superadmin-admins-panel::before,
-.superadmin-employees-panel::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
-.scope-panel::before {
-  background:
-    radial-gradient(circle at 14% 18%, color-mix(in srgb, var(--ion-color-primary), transparent 84%) 0%, transparent 40%),
-    radial-gradient(circle at 88% 20%, color-mix(in srgb, var(--ion-color-warning), transparent 88%) 0%, transparent 42%);
-}
-
-.filter-panel::before {
-  background: radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--ion-color-primary), transparent 86%) 0%, transparent 45%);
-}
-
-.result-panel::before {
-  background: radial-gradient(circle at 0% 100%, color-mix(in srgb, var(--ion-color-secondary), transparent 88%) 0%, transparent 46%);
-}
-
-.detail-panel::before {
-  background: radial-gradient(circle at 4% 8%, color-mix(in srgb, var(--ion-color-tertiary), transparent 86%) 0%, transparent 48%);
-}
-
-.requests-panel::before {
-  background: radial-gradient(circle at 94% 10%, color-mix(in srgb, var(--ion-color-success), transparent 88%) 0%, transparent 48%);
-}
-
-.superadmin-admins-panel::before {
-  background: radial-gradient(circle at 10% 12%, color-mix(in srgb, var(--ion-color-warning), transparent 90%) 0%, transparent 42%);
-}
-
-.superadmin-employees-panel::before {
-  background: radial-gradient(circle at 90% 14%, color-mix(in srgb, var(--ion-color-primary), transparent 90%) 0%, transparent 44%);
+  row-gap: 8px;
 }
 
 .actions-col {
@@ -65,13 +12,13 @@
 
 .report-filters-shell {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr)) minmax(220px, 280px);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px 16px;
   align-items: start;
 }
 
 .report-filters-shell-admin {
-  grid-template-columns: repeat(2, minmax(0, 1fr)) minmax(0, 1.2fr) minmax(220px, 280px);
+  grid-template-columns: repeat(2, minmax(0, 1fr)) minmax(0, 1.4fr);
 }
 
 .report-filter-field,
@@ -80,17 +27,12 @@
 }
 
 .report-filter-actions {
-  align-self: stretch;
-  padding: 4px 0 0;
-  border: 1px solid color-mix(in srgb, var(--app-border-subtle), transparent 6%);
-  border-radius: var(--app-radius-md);
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--app-surface-2), var(--ion-color-primary) 6%) 0%,
-    color-mix(in srgb, var(--app-surface-1), var(--ion-color-secondary) 4%) 100%
-  );
-  box-shadow: var(--app-shadow-xs);
-  padding: 14px;
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 0 0;
+  border-top: 1px solid var(--app-divider);
 }
 
 .report-filter-actions ion-button {
@@ -103,10 +45,10 @@
 }
 
 .report-action-secondary-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-left: auto;
 }
 
 .report-action-secondary {
@@ -116,13 +58,13 @@
 
 .reports-scope-shell {
   display: grid;
-  grid-template-columns: minmax(0, 1.7fr) minmax(240px, 0.9fr);
+  grid-template-columns: 1fr;
   gap: 18px;
   align-items: start;
 }
 
 .reports-scope-shell h2 {
-  margin: 10px 0 8px;
+  margin: 0 0 8px;
 }
 
 .reports-scope-shell p {
@@ -130,7 +72,11 @@
 }
 
 .scope-selection-card {
-  padding: 18px 20px;
+  padding: 12px 16px;
+  border: 0;
+  border-inline-start: 2px solid var(--app-border-subtle);
+  border-radius: 0;
+  background: transparent;
 }
 
 .scope-selection-card strong {
@@ -382,7 +328,7 @@
   .report-filters-shell,
   .report-filters-shell-admin,
   .report-filters-shell-superadmin {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .actions-col,
@@ -400,11 +346,15 @@
   }
 
   .report-filter-actions {
-    padding: 12px;
+    padding: 12px 0 0;
+    flex-direction: row;
+    align-items: center;
   }
 
   .report-action-secondary-grid {
-    grid-template-columns: 1fr;
+    margin-left: 0;
+    flex: 1;
+    justify-content: flex-end;
   }
 
   .superadmin-admin-toolbar {
@@ -426,4 +376,24 @@
   .request-chips {
     gap: 6px;
   }
+}
+
+.report-filter-field-scope { display: grid; gap: 8px; }
+.report-filter-label {
+  font-size: 0.76rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.05em; color: var(--app-text-tertiary);
+}
+.report-scope-select {
+  min-height: 46px; height: 46px; padding: 0 14px;
+  --padding-top: 0; --padding-bottom: 0;
+  border: 1px solid var(--app-field-border);
+  border-radius: var(--app-radius-control);
+  background: var(--app-field-background); font-size: 0.96rem;
+}
+.reports-scope-shell p { font-size: 0.875rem; max-width: 64ch; }
+.requests-panel .empty-state { padding: 16px; gap: 4px; }
+@media (max-width: 480px) {
+  .report-action-secondary-grid { margin-left: 0; width: 100%; flex: auto; justify-content: flex-start; }
+  .report-filter-actions { flex-wrap: wrap; }
+  .report-action-secondary-grid ion-button { flex: 1; }
 }

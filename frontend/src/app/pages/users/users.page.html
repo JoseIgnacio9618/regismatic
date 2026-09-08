@@ -116,7 +116,7 @@
                   <strong>{{ billing.plan.name }}</strong>
                   <span>{{ "billing.seat_usage_value" | t: { used: billing.seatUsage.used, limit: billing.seatUsage.limit, remaining: billing.seatUsage.remaining } }}</span>
                   <span *ngIf="billing.isTrial">{{ "billing.trial_ends" | t }}: {{ formatBillingDate(billing.trialEndsAt) }}</span>
-                  <span *ngIf="!billing.isTrial">{{ "billing.period_ends" | t }}: {{ formatBillingDate(billing.currentPeriodEnd) }}</span>
+                  <span *ngIf="!billing.isTrial && billing.currentPeriodEnd">{{ "billing.period_ends" | t }}: {{ formatBillingDate(billing.currentPeriodEnd) }}</span>
                 </section>
               </div>
 
@@ -300,7 +300,6 @@
         <ion-card class="glass-card panel team-panel">
           <ion-card-header>
             <ion-card-title>{{ "users.team_title" | t }}</ion-card-title>
-            <p class="microcopy">{{ "users.team_microcopy" | t }}</p>
           </ion-card-header>
           <ion-card-content>
             <section class="join-requests-panel" *ngIf="!isSuperadmin && pendingJoinRequests.length > 0">

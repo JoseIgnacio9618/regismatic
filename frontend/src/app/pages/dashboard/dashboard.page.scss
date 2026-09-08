@@ -1,5 +1,5 @@
 .dashboard-grid {
-  row-gap: 20px;
+  row-gap: 8px;
 }
 
 .workday-panel,
@@ -7,8 +7,8 @@
 .events-panel,
 .superadmin-overview {
   display: grid;
-  gap: 18px;
-  padding: 22px;
+  gap: 20px;
+  padding: var(--app-panel-padding);
 }
 
 .panel-head,
@@ -27,6 +27,7 @@
 .workday-panel {
   grid-template-columns: minmax(0, 1.6fr) minmax(260px, 0.9fr);
   gap: 24px;
+  align-items: start;
 }
 
 .workday-panel-main {
@@ -46,10 +47,7 @@
   display: inline-flex;
   align-items: center;
   min-height: 32px;
-  padding: 0 12px;
-  border: 1px solid var(--app-border-subtle);
-  border-radius: var(--app-radius-pill);
-  background: color-mix(in srgb, var(--app-surface-1), var(--ion-color-primary) 3%);
+  padding: 0;
   color: var(--app-text-secondary);
   font-size: 0.88rem;
 }
@@ -64,10 +62,8 @@
   display: grid;
   align-content: start;
   gap: 12px;
-  padding: 18px;
-  border: 1px solid color-mix(in srgb, var(--app-border-subtle), transparent 10%);
-  border-radius: var(--app-radius-shell);
-  background: color-mix(in srgb, var(--app-surface-1), var(--ion-color-primary) 2%);
+  padding: 0;
+  align-self: center;
   min-width: 0;
 }
 
@@ -115,11 +111,18 @@
 }
 
 .role-hint {
-  margin-top: 2px;
+  margin-top: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
 }
 
 .role-hint p {
-  margin-top: 8px;
+  margin-top: 0;
+  font-size: 0.875rem;
+  max-width: 52ch;
+  color: var(--app-text-tertiary);
 }
 
 .panel-body {
@@ -173,20 +176,28 @@
 }
 
 .events-panel .data-list {
-  gap: 10px;
+  gap: 0;
 }
 
 .events-panel .data-item {
-  --background: color-mix(in srgb, var(--app-surface-1), var(--ion-color-primary) 1.5%);
+  --background: transparent;
+  --inner-padding-top: 8px;
+  --inner-padding-bottom: 8px;
+  border: 0;
+  border-bottom: 1px solid var(--app-divider);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  margin-top: 0;
 }
 
-@media (max-width: 1080px) {
+@media (max-width: 800px) {
   .workday-panel {
     grid-template-columns: 1fr;
   }
 
   .workday-panel-actions {
-    padding: 16px;
+    padding: 0;
   }
 
   .summary-metrics-grid {
@@ -223,6 +234,6 @@
 @media (max-width: 420px) {
   .workday-metrics,
   .summary-metrics-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

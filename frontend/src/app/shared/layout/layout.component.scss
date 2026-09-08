@@ -2,6 +2,29 @@
   background: transparent;
 }
 
+.app-wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--app-text-primary);
+  text-decoration: none;
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: -0.035em;
+}
+
+.app-wordmark img { display: block; }
+
+.page-heading {
+  margin-bottom: var(--app-space-6);
+}
+
+.page-heading h1 {
+  font-size: clamp(1.5rem, 2.4vw, 1.9rem);
+  line-height: 1.25;
+  letter-spacing: -0.035em;
+}
+
 .app-toolbar {
   --min-height: var(--app-toolbar-height);
   --padding-start: 14px;
@@ -24,16 +47,6 @@ ion-title {
   font-size: 1.05rem;
 }
 
-.title-mark {
-  display: inline-block;
-  width: 7px;
-  height: 7px;
-  margin-right: 8px;
-  border-radius: var(--app-radius-pill);
-  background: var(--app-accent-strong);
-  vertical-align: middle;
-}
-
 .toolbar-actions {
   display: flex;
   align-items: center;
@@ -53,6 +66,7 @@ ion-title {
   border-radius: var(--app-radius-control);
   font-size: 0.9rem;
   font-weight: 600;
+  text-transform: none;
 }
 
 .toolbar-actions ion-button::part(native) {
@@ -66,13 +80,6 @@ ion-title {
 
 .desktop-actions ion-button {
   flex-shrink: 0;
-}
-
-.toolbar-role-chip {
-  margin: 0;
-  font-size: 0.72rem;
-  text-transform: uppercase;
-  border: 1px solid var(--app-border-subtle);
 }
 
 .mobile-actions {
@@ -262,7 +269,7 @@ ion-title {
 }
 
 .page-shell {
-  padding: 22px var(--app-page-padding) calc(64px + env(safe-area-inset-bottom, 0px));
+  padding: var(--app-space-8) var(--app-page-padding) calc(40px + env(safe-area-inset-bottom, 0px));
   max-width: var(--app-page-max-width);
   margin: 0 auto;
   width: min(100%, var(--app-page-max-width));
@@ -371,8 +378,7 @@ ion-title {
   }
 
   .menu-button-label,
-  .menu-caret-icon,
-  .toolbar-role-chip {
+  .menu-caret-icon {
     display: none;
   }
 }
@@ -439,8 +445,7 @@ ion-title {
   }
 
   .page-shell {
-    padding-top: 14px;
-    padding-bottom: calc(48px + env(safe-area-inset-bottom, 0px));
+    padding: 20px 16px calc(28px + env(safe-area-inset-bottom, 0px));
   }
 
   .menu-profile-actions {

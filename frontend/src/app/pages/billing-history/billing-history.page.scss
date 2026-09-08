@@ -1,5 +1,5 @@
 .billing-history-grid {
-  padding-bottom: 32px;
+  padding-bottom: 0;
 }
 
 .history-toolbar {
@@ -139,6 +139,10 @@
 
 @media (max-width: 480px) {
   .account-metrics {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+.account-metrics .metric-chip { border: 0; border-inline-start: 2px solid var(--app-border-subtle); border-radius: 0; background: transparent; }
+.account-info-list { padding: 0; background: transparent; box-shadow: none; }
+.history-toolbar { border: 0; border-bottom: 1px solid var(--app-divider); border-radius: 0; background: transparent; padding: 0 0 16px; }

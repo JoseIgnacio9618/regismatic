@@ -1,51 +1,17 @@
 .users-grid {
-  row-gap: 20px;
-}
-
-.scope-panel,
-.form-panel,
-.team-panel,
-.workspace-panel {
-  position: relative;
-}
-
-.scope-panel::before,
-.form-panel::before,
-.team-panel::before,
-.workspace-panel::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
-.scope-panel::before {
-  background:
-    radial-gradient(circle at 12% 18%, color-mix(in srgb, var(--ion-color-primary), transparent 84%) 0%, transparent 38%),
-    radial-gradient(circle at 88% 24%, color-mix(in srgb, var(--ion-color-secondary), transparent 88%) 0%, transparent 42%);
-}
-
-.form-panel::before {
-  background: radial-gradient(circle at 6% 8%, color-mix(in srgb, var(--ion-color-primary), transparent 88%) 0%, transparent 45%);
-}
-
-.team-panel::before {
-  background: radial-gradient(circle at 92% 6%, color-mix(in srgb, var(--ion-color-secondary), transparent 88%) 0%, transparent 48%);
-}
-
-.workspace-panel::before {
-  background:
-    radial-gradient(circle at 10% 20%, color-mix(in srgb, var(--ion-color-primary), transparent 90%) 0%, transparent 38%),
-    radial-gradient(circle at 92% 18%, color-mix(in srgb, var(--ion-color-tertiary), transparent 90%) 0%, transparent 40%);
+  row-gap: 8px;
 }
 
 .workspace-switch {
   max-width: 420px;
 }
 
+.workspace-panel { border: 0; background: transparent; border-radius: 0; }
+.workspace-panel ion-card-content { padding: 0; }
+
 .scope-hero {
   display: grid;
-  grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr);
+  grid-template-columns: minmax(0, 1.4fr) minmax(320px, 1fr);
   gap: 20px;
   align-items: start;
 }
@@ -68,7 +34,7 @@
 
 .scope-metrics {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
   gap: 12px;
 }
 
@@ -143,7 +109,7 @@
 }
 
 .create-side-panel {
-  min-height: 100%;
+  min-height: 0;
 }
 
 .compact-metrics {
@@ -242,7 +208,7 @@
 }
 
 .team-table-shell {
-  margin-inline: -16px;
+  margin-inline: 0;
   overflow-x: auto;
   border: 0;
   border-radius: 0;
@@ -253,7 +219,7 @@
 
 .team-toolbar {
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(220px, 0.6fr);
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 14px;
   margin-bottom: 16px;
   align-items: start;
@@ -298,22 +264,22 @@
 }
 
 .team-table {
-  min-width: 920px;
+  min-width: 820px;
   table-layout: fixed;
 }
 
 .team-table thead th:first-child,
 .team-table tbody td:first-child {
-  padding-left: 24px;
+  padding-left: 12px;
 }
 
 .team-table thead th:last-child,
 .team-table tbody td:last-child {
-  padding-right: 24px;
+  padding-right: 12px;
 }
 
 .team-col-name {
-  width: 34%;
+  width: 29%;
 }
 
 .team-col-role {
@@ -321,7 +287,7 @@
 }
 
 .team-col-manager {
-  width: 24%;
+  width: 22%;
 }
 
 .team-col-created {
@@ -329,7 +295,7 @@
 }
 
 .team-col-actions {
-  width: 14%;
+  width: 21%;
 }
 
 .team-table thead th:last-child {
@@ -423,7 +389,7 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 10px;
+  gap: 4px;
   min-width: 0;
   max-width: 220px;
   margin-left: auto;
@@ -497,7 +463,7 @@
 
 @media (max-width: 767px) {
   .scope-metrics {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(85px, 1fr));
   }
 
   .role-picker-head,
@@ -658,14 +624,26 @@
 
 @media (max-width: 420px) {
   .scope-metrics {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .team-user-cell {
-    grid-template-columns: 1fr;
+    grid-template-columns: auto minmax(0, 1fr);
   }
 
   .table-actions {
     grid-template-columns: 1fr;
   }
 }
+
+.scope-copy p { font-size: 0.875rem; }
+.scope-metric {
+  padding: 12px; border: 0; border-inline-start: 2px solid var(--app-border-subtle);
+  border-radius: 0; background: transparent;
+}
+.scope-metric span { font-size: 0.8rem; }
+.billing-notice { margin-top: 12px; padding: 12px 16px; font-size: 0.84rem; }
+.manager-name, .created-at { border: 0; background: transparent; padding: 0; min-height: 0; border-radius: 0; }
+.table-actions ion-button { min-height: 32px; height: auto; font-size: 0.76rem; }
+.team-results-summary { background: transparent; border: 0; padding: 0; min-height: 24px; }
+@media (max-width: 767px) { .table-actions ion-button { min-height: 44px; } }
